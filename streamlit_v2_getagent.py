@@ -5,7 +5,7 @@ import json
 import inspect
 
 # OpenAI client
-client = OpenAI(api_key="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")
+client = OpenAI(api_key="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")
 
 
 # Agent class
