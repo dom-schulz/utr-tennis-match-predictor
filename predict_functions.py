@@ -164,8 +164,8 @@ def get_score(players, player_profiles, model):
 
 def make_prediction(player_1, player_2, location):
     # get data to fit to model
-    data = pd.read_csv('atp_utr_tennis_matches.csv')
-    utr_history = pd.read_csv('utr_history.csv')
+    data = pd.read_csv('project-tennis-test-bucket/atp_utr_tennis_matches.csv')
+    utr_history = pd.read_csv('project-tennis-test-bucket/utr_history.csv')
 
     # random.seed(30)
 
