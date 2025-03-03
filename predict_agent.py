@@ -14,7 +14,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 import random
 from colorama import Fore, Style, init
-from adjusted_predict import *
+from predict_functions import *
 ## Need to check if libraries are all needed, just copy pasted from Jared's predict.py
 
 
