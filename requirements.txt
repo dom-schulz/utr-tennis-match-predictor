@@ -1,3 +1,5 @@
 streamlit
 openai
 pydantic==2.5.2
+gcsfs
+st-files-connection
