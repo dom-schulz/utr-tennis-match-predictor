@@ -4,19 +4,10 @@ from pydantic import BaseModel
 import json
 import inspect
 
-api_key_path = ""
-
-# Read the API key from the secret file
-try:
-    with open(api_key_path) as file:
-        pulled_api_key = file.read().strip()  # Read and remove any extra whitespace/newlines
-except FileNotFoundError:
-    raise RuntimeError("API key secret file not found. Ensure Docker secrets are correctly configured.")
-
-
+my_api_key = st.secrets['openai_key']
 
 # OpenAI client
-client = OpenAI(api_key=pulled_api_key)
+client = OpenAI(api_key=my_api_key)
 
 
 # Agent class
