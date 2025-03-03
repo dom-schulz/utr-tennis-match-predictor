@@ -1,6 +1,8 @@
 streamlit
 openai
-pydantic==2.5.2
-gcsfs
+pydantic
 st-files-connection
-sklearn
+pandas
+numpy
+scikit-learn
+colorama
