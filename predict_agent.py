@@ -137,9 +137,6 @@ def run_full_turn(agent, messages):
         message = response.choices[0].message
         messages.append(message)
 
-        # if message.content:  # print Agent response
-        #     print("Agent:", message.content)
-
         if not message.tool_calls:  # if finished handling tool calls, break
             break
 
@@ -182,7 +179,6 @@ def gather_list_check_existence(player_1, player_2, location, player_list):
     if player_1 in player_list and player_2 in player_list:
         # SEND JSON TO BACKEND
         return_json = json.dumps({"player_1": player_1, "player_2": player_2, "location": location})
-        # print(F'type json: {type(return_json)}')
         return return_json
     else:
         return "INVALID_PLAYERS"
@@ -268,77 +264,3 @@ if user_query := st.chat_input("Your request:"):
         else:
             with st.chat_message(role):
                 st.markdown(content)
-
-
-
-
-
-
-
-# # ========== Streamlit UI ==========
-# st.title("Tennis Match Predictor Agent 🤖")
-# st.write("Enter two player names and a match location to check if they exist in the dataset.")
-
-
-# # Ensure chat history persists across reruns
-# if "messages" not in st.session_state:
-#     st.session_state.messages = []
-
-# # Display chat history using `st.chat_message`
-# # print(F'messages: {st.session_state.messages}')
-# for msg in st.session_state.messages:
-#     if isinstance(msg, dict):  # If dict message type
-        
-#         if msg['role'] == "user": # User messages produce message to output
-#             content = msg.get("content")
-#             role = "user"
-#         elif msg['role'] == "tool": # Tool calls don't produce message to output
-#             continue 
-#         else: # Error, produce role
-#             raise ValueError(f"Invalid dictionary role: {msg['role']}")     
-    
-#     else:  # Handles ChatCompletionMessage object
-#         if msg.role == "assistant":
-#             # Tool calls produce None content, no message to output if so    
-#             if content is None:
-#                 # print(f'Content is None: {content}')
-#                 continue
-#             else: 
-#                 content = msg.content
-#                 role = "assistant"
-    
-#         else: # Error, produce role
-#             raise ValueError(f"Invalid ChatCompletionMessage role: {msg['role']}")
-    
-    
-#     # print(f'content: {content}')
-#     with st.chat_message(role):
-#         st.markdown(content)
-
-
-# # User input field at the bottom
-# if user_query := st.chat_input("Your request:"):
-#     # Append user message
-#     st.session_state.messages.append({"role": "user", "content": user_query})
-#     with st.chat_message("user"):
-#         st.markdown(user_query)
-    
-#     # Generate response
-#     new_messages = run_full_turn(get_agent, st.session_state.messages)
-#     # print(f'new messages: {new_messages}')
-#     st.session_state.messages.extend(new_messages)
-    
-#     # Display assistant response
-#     for msg in new_messages:
-#         role = msg.role if hasattr(msg, "role") else msg["role"]
-#         content = msg.content if hasattr(msg, "content") else msg["content"]
-#         # print(f'role: {role}')
-#         # print(F'content: {content}')
-#         if content is None or role == "tool" or role =="user":
-#             continue 
-#         else: 
-#             print(f'role: {role}')
-#             with st.chat_message(role):
-#                 print(F'content: {content}')
-
-#                 st.markdown(content)
