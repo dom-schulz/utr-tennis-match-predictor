@@ -211,7 +211,7 @@ get_agent = Agent(name="Get Agent",
 
 
 # ========== Streamlit UI ==========
-st.title("Tennis Match Predictor Agent 🤖")
+st.title("Tennis Timmy 🤖")
 st.write("Enter two player names and a match location to check if they exist in the dataset.")
 
 # Ensure chat history persists across reruns
