@@ -20,19 +20,19 @@ RUN wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/134.0.6
     && rm -rf chromedriver-linux64.zip chromedriver-linux64 \
     && chmod +x /usr/local/bin/chromedriver
 
-# Install Python dependencies
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first to leverage Docker cache
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code (excluding creds.py)
-WORKDIR /app
-COPY scrape_history.py .
-COPY scraper.py .
-COPY profile_id.csv .
+# Copy application files
+COPY . .
 
 # Set environment variables
 ENV DISPLAY=:99
 ENV GCS_BUCKET_NAME=utr_scraper_bucket
 
 # Run the script with Xvfb
-CMD ["sh", "-c", "Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & python3 temp_history.py"]
+CMD ["sh", "-c", "Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & python3 scrape_history.py"]
