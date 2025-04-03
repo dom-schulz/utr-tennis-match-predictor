@@ -1,12 +1,32 @@
 # Use the official Python image with a more recent version
 FROM python:3.11-slim
 
+# Use the official Python image with a more recent version
+FROM python:3.11-slim
+
 # Install Chrome and dependencies
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
     unzip \
     xvfb \
+    fonts-liberation \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libatspi2.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libdrm2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    xdg-utils \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     && apt-get update \
@@ -20,9 +40,10 @@ RUN wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/134.0.6
     && rm -rf chromedriver-linux64.zip chromedriver-linux64 \
     && chmod +x /usr/local/bin/chromedriver
 
-# Create and set permissions for Chrome profile directory
-RUN mkdir -p /tmp/chrome-profile \
-    && chmod -R 777 /tmp
+# Create necessary directories and set permissions
+RUN mkdir -p /tmp/chrome-profile /tmp/.X11-unix \
+    && chmod -R 777 /tmp \
+    && chmod 1777 /tmp/.X11-unix
 
 WORKDIR /app
 
