@@ -4,13 +4,15 @@ from google.cloud import storage
 import csv
 import io
 import os
+from selenium import webdriver
 
 # Set bucket name from environment variable
 BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "utr_scraper_bucket")
 UPLOAD_FILE_NAME = "utr_history.csv"  # file to upload to GCS after scraping
 DOWNLOAD_FILE_NAME = "profile_id.csv"  # file to download from GCS before scraping
 
-# Get credentials from environment variables
+# Get credentials from environment variables, secrets passed in as environment 
+# variables via built in functionality in Cloud Run
 email = os.getenv("UTR_EMAIL")
 password = os.getenv("UTR_PASSWORD")
 
@@ -30,7 +32,11 @@ data = download_blob.download_as_string()
 profile_ids = pd.read_csv(io.BytesIO(data)) # read string data into dataframe, it needs to be converted to bytes before reading
 
 # Read profile_id.csv and scrape UTR history
-scrape_utr_history(profile_ids, email, password, offset=0, stop=-1, writer=writer)
+options = webdriver.ChromeOptions()
+options.add_argument('--headless')  # Run in headless mode
+options.add_argument('--no-sandbox')  # Required for running in Docker
+options.add_argument('--disable-dev-shm-usage')  # Overcome limited resource problems
+scrape_utr_history(profile_ids, email, password, offset=0, stop=-1, writer=writer, options=options)
 
 # Upload the CSV data to GCS
 upload_blob.upload_from_string(csv_buffer.getvalue(), content_type='text/csv')

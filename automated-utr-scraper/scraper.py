@@ -40,7 +40,7 @@ def sign_in(driver, log_in_url, email, password):
             EC.presence_of_element_located((By.ID, "onetrust-accept-btn-handler"))
         )
         cookie_button.click()
-        time.sleep(1)
+    time.sleep(1)
     except Exception:
         pass  # If no cookie banner, continue
 
@@ -365,7 +365,7 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
         print(f"Error during sign in: {str(e)}")
         driver.quit()
         raise
-    
+        
     for i in range(len(df)):
         if i == stop:
                 break

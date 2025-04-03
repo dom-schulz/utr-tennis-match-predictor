@@ -1,45 +1,13 @@
-# Use the official Python image with a more recent version
-FROM python:3.11-slim
+# Use the official Selenium standalone Chrome image
+FROM selenium/standalone-chrome
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg \
-    unzip \
-    xvfb \
-    fonts-liberation \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libatspi2.0-0 \
-    libcups2 \
-    libdbus-1-3 \
-    libdrm2 \
-    libgbm1 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxrandr2 \
-    xdg-utils \
+# Install any necessary dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Chrome for Testing
-RUN wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/120.0.6099.109/linux64/chrome-linux64.zip" \
-    && unzip chrome-linux64.zip \
-    && mv chrome-linux64 /usr/local/bin/chrome \
-    && rm chrome-linux64.zip \
-    && chmod -R 755 /usr/local/bin/chrome
-
-# Install ChromeDriver
-RUN wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/120.0.6099.109/linux64/chromedriver-linux64.zip" \
-    && unzip chromedriver-linux64.zip \
-    && mv chromedriver-linux64/chromedriver /usr/local/bin/ \
-    && rm -rf chromedriver-linux64.zip chromedriver-linux64 \
-    && chmod +x /usr/local/bin/chromedriver
-
+# Set the working directory
 WORKDIR /app
 
 # Copy requirements first to leverage Docker cache
@@ -53,16 +21,11 @@ COPY . .
 ENV DISPLAY=:99
 ENV GCS_BUCKET_NAME=utr_scraper_bucket
 ENV PORT=8080
-ENV PATH="/usr/local/bin/chrome:${PATH}"
-ENV CHROME_BIN="/usr/local/bin/chrome/chrome"
-ENV CHROME_DRIVER="/usr/local/bin/chromedriver"
 
 # Create necessary directories and set permissions
 RUN mkdir -p /tmp/chrome-profile /tmp/.X11-unix \
     && chmod -R 777 /tmp \
-    && chmod 1777 /tmp/.X11-unix \
-    && chown -R root:root /usr/local/bin/chrome \
-    && chown -R root:root /usr/local/bin/chromedriver
+    && chmod 1777 /tmp/.X11-unix
 
 # Create a simple HTTP server script
 RUN echo 'from http.server import HTTPServer, BaseHTTPRequestHandler\n\
