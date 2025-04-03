@@ -39,8 +39,8 @@ def sign_in(driver, log_in_url, email, password):
             EC.presence_of_element_located((By.ID, "onetrust-accept-btn-handler"))
         )
         cookie_button.click()
-    time.sleep(1)
-    except:
+        time.sleep(1)
+    except Exception:
         pass  # If no cookie banner, continue
 
     email_box = driver.find_element(By.ID, 'emailInput')
@@ -302,7 +302,8 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
     
     # Initialize Chrome options
     options = webdriver.ChromeOptions()
-    options.add_argument('--headless=new')  # Use new headless mode
+    options.binary_location = "/usr/local/bin/chrome/chrome"
+    options.add_argument('--headless=new')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--disable-gpu')
@@ -321,21 +322,39 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
     options.add_argument('--user-data-dir=/tmp/chrome-profile')
     options.add_argument('--profile-directory=Default')
     options.add_argument('--window-size=1920,1080')
+    options.add_argument('--disable-setuid-sandbox')
+    options.add_argument('--disable-seccomp-filter-sandbox')
+    options.add_argument('--disable-breakpad')
+    options.add_argument('--disable-client-side-phishing-detection')
+    options.add_argument('--disable-cast')
+    options.add_argument('--disable-cast-streaming-hw-encoding')
+    options.add_argument('--disable-cloud-import')
+    options.add_argument('--disable-default-apps')
+    options.add_argument('--disable-domain-reliability')
+    options.add_argument('--disable-features=TranslateUI')
+    options.add_argument('--disable-hang-monitor')
+    options.add_argument('--disable-ipc-flooding-protection')
+    options.add_argument('--disable-prompt-on-repost')
+    options.add_argument('--disable-sync')
+    options.add_argument('--disable-background-timer-throttling')
+    options.add_argument('--disable-backgrounding-occluded-windows')
+    options.add_argument('--disable-renderer-backgrounding')
+    options.add_argument('--metrics-recording-only')
+    options.add_argument('--mute-audio')
+    options.add_argument('--no-first-run')
+    options.add_argument('--password-store=basic')
+    options.add_argument('--use-mock-keychain')
+    options.add_argument('--single-process')
+    options.add_argument('--disable-blink-features=AutomationControlled')
     
     try:
-        # Use webdriver-manager to handle ChromeDriver
-        service = ChromeService(ChromeDriverManager().install())
+        # Use the installed ChromeDriver
+        service = ChromeService('/usr/local/bin/chromedriver')
         driver = webdriver.Chrome(service=service, options=options)
         print("ChromeDriver initialized successfully")
     except Exception as e:
         print(f"Error initializing ChromeDriver: {str(e)}")
-        # Fallback to direct path if webdriver-manager fails
-        try:
-            driver = webdriver.Chrome(service=ChromeService('/usr/local/bin/chromedriver'), options=options)
-            print("ChromeDriver initialized using fallback method")
-        except Exception as e:
-            print(f"Fallback initialization failed: {str(e)}")
-            raise
+        raise
     
     log_in_url = "https://app.utrsports.net/login"
     
