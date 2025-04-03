@@ -1,7 +1,13 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo/utr-scraper-image:latest', '.']
+    args:
+      - 'build'
+      - '-t'
+      - 'us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo/utr-scraper-image:latest'
+      - '-f'
+      - 'automated-utr-scraper/Dockerfile'  # Path to Dockerfile in the automated utr scraper folder
+      - '.'  
 images:
   - 'us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo/utr-scraper-image:latest'
 options:
-  logging: CLOUD_LOGGING_ONLY  
+  logging: CLOUD_LOGGING_ONLY  # Optional: or use REGIONAL_USER_OWNED_BUCKET
