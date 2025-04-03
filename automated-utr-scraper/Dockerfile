@@ -25,13 +25,13 @@ RUN apt-get update && apt-get install -y \
     libxrandr2 \
     xdg-utils \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
+    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     && apt-get update \
-    && apt-get install -y google-chrome-stable \
+    && apt-get install -y google-chrome-stable=120.0.6099.109-1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install ChromeDriver
-RUN wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/134.0.6998.165/linux64/chromedriver-linux64.zip" \
+# Install ChromeDriver (matching Chrome version)
+RUN wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/120.0.6099.109/linux64/chromedriver-linux64.zip" \
     && unzip chromedriver-linux64.zip \
     && mv chromedriver-linux64/chromedriver /usr/local/bin/ \
     && rm -rf chromedriver-linux64.zip chromedriver-linux64 \
@@ -71,7 +71,7 @@ class Handler(BaseHTTPRequestHandler):\n\
         self.send_response(200)\n\
         self.end_headers()\n\
         self.wfile.write(b"Starting UTR scraper...\\n")\n\
-        # Run the scraper in the background\n\
+        # Run the scraper in the background with Xvfb\n\
         subprocess.Popen(["sh", "-c", "rm -rf /tmp/chrome-profile/* && Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & python3 scrape_history_gcp.py"])\n\
 \n\
 if __name__ == "__main__":\n\
