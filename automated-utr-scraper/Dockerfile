@@ -3,7 +3,11 @@ FROM selenium/standalone-chrome
 
 # Install required packages
 USER root
-RUN apt-get update && apt-get install -y python3-venv && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    python3-venv \
+    wget \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create a new directory with correct permissions
 RUN mkdir -p /home/seluser/app && chown -R seluser:seluser /home/seluser/app
@@ -27,6 +31,8 @@ COPY --chown=seluser:seluser . .
 ENV DISPLAY=:99
 ENV GCS_BUCKET_NAME=utr_scraper_bucket
 ENV PORT=8080
+ENV CHROME_BIN=/usr/bin/google-chrome
+ENV CHROME_DRIVER=/usr/bin/chromedriver
 
 # Create Chrome profile directory in user's home
 RUN mkdir -p /home/seluser/chrome-profile
