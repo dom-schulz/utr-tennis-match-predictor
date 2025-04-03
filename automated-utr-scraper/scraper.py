@@ -309,6 +309,7 @@ def scrape_utr_history(profile_ids, email, password, offset=0, stop=-1, writer=N
     options.add_experimental_option('excludeSwitches', ['enable-automation'])
     options.add_experimental_option('useAutomationExtension', False)
     
+    driver = None
     try:
         driver = webdriver.Chrome(options=options)
         driver.execute_cdp_cmd('Network.setUserAgentOverride', {
@@ -319,60 +320,62 @@ def scrape_utr_history(profile_ids, email, password, offset=0, stop=-1, writer=N
         log_in_url = "https://app.utrsports.net/login"
         
         sign_in(driver, log_in_url, email, password)
-    except Exception as e:
-        print(f"Error during sign in: {str(e)}")
-        driver.quit()
-        raise
         
-    for i in range(len(profile_ids)):
-        if i == stop:
+        for i in range(len(profile_ids)):
+            if i == stop:
                 break
                 
-        try:
-            search_url = f"https://app.utrsports.net/profiles/{round(profile_ids['p_id'][i+offset])}?t=6"
-        except:
-            continue
-
-        load_page(driver, search_url)
-
-        time.sleep(0.25)
-
-        scroll_page(driver)
-
-        try:
-            time.sleep(1)
-            show_all = driver.find_element(By.LINK_TEXT, 'Show all')
-            show_all.click()
-        except:
             try:
-                time.sleep(2)
+                search_url = f"https://app.utrsports.net/profiles/{round(profile_ids['p_id'][i+offset])}?t=6"
+            except:
+                continue
+
+            load_page(driver, search_url)
+
+            time.sleep(0.25)
+
+            scroll_page(driver)
+
+            try:
+                time.sleep(1)
                 show_all = driver.find_element(By.LINK_TEXT, 'Show all')
                 show_all.click()
             except:
-                print(f"{profile_ids['f_name'][i]} | {profile_ids['l_name'][i]} | {profile_ids['p_id'][i]}")
-                continue
-                
-        time.sleep(1)
+                try:
+                    time.sleep(2)
+                    show_all = driver.find_element(By.LINK_TEXT, 'Show all')
+                    show_all.click()
+                except:
+                    print(f"{profile_ids['f_name'][i]} | {profile_ids['l_name'][i]} | {profile_ids['p_id'][i]}")
+                    continue
+                    
+            time.sleep(1)
 
-        scroll_page(driver)
+            scroll_page(driver)
 
-        # Now that the page is rendered, parse the page with BeautifulSoup
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
+            # Now that the page is rendered, parse the page with BeautifulSoup
+            soup = BeautifulSoup(driver.page_source, 'html.parser')
 
-        container = soup.find("div", class_="newStatsTabContent__section__1TQzL p0 bg-transparent")
-        
-        utrs = container.find_all("div", class_="row")
-        
-        for j in range(len(utrs)):
-            if j == 0:
-                continue
-            utr = utrs[j].find("div", class_="newStatsTabContent__historyItemRating__GQUXw").text
-            utr_date = utrs[j].find("div", class_="newStatsTabContent__historyItemDate__jFJyD").text
+            container = soup.find("div", class_="newStatsTabContent__section__1TQzL p0 bg-transparent")
+            
+            utrs = container.find_all("div", class_="row")
+            
+            for j in range(len(utrs)):
+                if j == 0:
+                    continue
+                utr = utrs[j].find("div", class_="newStatsTabContent__historyItemRating__GQUXw").text
+                utr_date = utrs[j].find("div", class_="newStatsTabContent__historyItemDate__jFJyD").text
 
-            data_row = [profile_ids['f_name'][i+offset], profile_ids['l_name'][i+offset], utr_date, utr]
+                data_row = [profile_ids['f_name'][i+offset], profile_ids['l_name'][i+offset], utr_date, utr]
 
-            writer.writerow(data_row)
+                writer.writerow(data_row)
 
-    # Close the driver
-        driver.quit() 
+    except Exception as e:
+        print(f"Error during scraping: {str(e)}")
+        if driver:
+            driver.quit()
+        raise
+    finally:
+        if driver:
+            driver.quit()
 ###
