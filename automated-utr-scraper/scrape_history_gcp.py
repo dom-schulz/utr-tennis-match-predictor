@@ -6,9 +6,10 @@ import io
 import os
 from selenium import webdriver
 import logging
+import time
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Set bucket name from environment variable
@@ -35,66 +36,93 @@ csv_buffer = io.StringIO()
 writer = csv.writer(csv_buffer) # take file like object (csv_buffer) and prepares it for writing
 writer.writerow(['f_name', 'l_name', 'date', 'utr']) # write headers to csv
 
-def download_blob(bucket_name, source_blob_name, destination_file_name):
+def download_from_gcs(bucket_name, source_blob_name, destination_file_name):
     """Downloads a blob from the bucket."""
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(source_blob_name)
     blob.download_to_filename(destination_file_name)
-    logger.info(f"Downloaded {source_blob_name} from {bucket_name} to {destination_file_name}.")
+    logger.info(f"Downloaded {source_blob_name} from {bucket_name}")
 
-def upload_blob(bucket_name, source_file_name, destination_blob_name):
+def upload_to_gcs(bucket_name, source_file_name, destination_blob_name):
     """Uploads a file to the bucket."""
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(destination_blob_name)
     blob.upload_from_filename(source_file_name)
-    logger.info(f"Uploaded {source_file_name} to {bucket_name} as {destination_blob_name}.")
+    logger.info(f"Uploaded {source_file_name} to {bucket_name}")
 
-def main():
+# Start execution
+start_time = time.time()
+logger.info("Starting UTR scraper...")
+
+# Get credentials from environment variables
+email = os.environ.get('UTR_EMAIL')
+password = os.environ.get('UTR_PASSWORD')
+
+if not email or not password:
+    logger.error("UTR credentials not found in environment variables")
+    exit(1)
+
+# Download profile_ids.csv from GCS
+bucket_name = 'utr_scraper_bucket'
+source_blob_name = 'profile_id.csv'
+destination_file_name = 'profile_id.csv'
+
+try:
+    download_from_gcs(bucket_name, source_blob_name, destination_file_name)
+    logger.info("Successfully downloaded profile_ids.csv")
+except Exception as e:
+    logger.error(f"Error downloading profile_ids.csv: {str(e)}")
+    exit(1)
+
+# Read the CSV file
+try:
+    profile_ids = pd.read_csv(destination_file_name)
+    logger.info(f"Successfully read {len(profile_ids)} profiles")
+except Exception as e:
+    logger.error(f"Error reading profile_ids.csv: {str(e)}")
+    exit(1)
+
+# Create output file
+output_file = 'utr_history.csv'
+with open(output_file, 'w', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow(['First Name', 'Last Name', 'Date', 'UTR'])
+    
     try:
-        logger.info("Starting UTR scraper...")
+        # Process profiles in smaller batches
+        batch_size = 10
+        total_profiles = len(profile_ids)
         
-        # Get credentials from environment variables
-        email = os.environ.get('UTR_EMAIL')
-        password = os.environ.get('UTR_PASSWORD')
-        
-        if not email or not password:
-            logger.error("UTR credentials not found in environment variables")
-            return
-        
-        logger.info("Credentials loaded successfully")
-        
-        # Download profile_ids.csv from GCS
-        bucket_name = 'utr_scraper_bucket'
-        download_blob(bucket_name, 'profile_id.csv', 'profile_id.csv')
-        logger.info("Profile IDs downloaded successfully")
-        
-        # Read profile IDs
-        profile_ids = pd.read_csv('profile_id.csv')
-        logger.info(f"Loaded {len(profile_ids)} profile IDs")
-        
-        # Create output file
-        output_file = 'utr_history.csv'
-        with open(output_file, 'w', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(['First Name', 'Last Name', 'Date', 'UTR'])
+        for i in range(0, total_profiles, batch_size):
+            batch_end = min(i + batch_size, total_profiles)
+            logger.info(f"Processing profiles {i+1} to {batch_end} of {total_profiles}")
             
-            logger.info("Starting to scrape UTR history...")
+            # Check if we're approaching the timeout
+            elapsed_time = time.time() - start_time
+            if elapsed_time > 840:  # 14 minutes
+                logger.warning("Approaching timeout, saving progress...")
+                break
+            
+            scrape_utr_history(profile_ids.iloc[i:batch_end], email, password, 
+                             offset=0, stop=-1, writer=writer)
+            
+            # Upload progress after each batch
             try:
-                scrape_utr_history(profile_ids, email, password, offset=0, stop=-1, writer=writer)
-                logger.info("UTR history scraping completed successfully")
+                upload_to_gcs(bucket_name, output_file, 'utr_history.csv')
+                logger.info(f"Successfully uploaded batch {i//batch_size + 1}")
             except Exception as e:
-                logger.error(f"Error during scraping: {str(e)}")
-                raise
+                logger.error(f"Error uploading batch: {str(e)}")
         
-        # Upload results to GCS
-        upload_blob(bucket_name, output_file, 'utr_history.csv')
-        logger.info("Results uploaded to GCS successfully")
+        logger.info("Scraping completed successfully")
         
     except Exception as e:
-        logger.error(f"An error occurred: {str(e)}")
-        raise
-
-if __name__ == "__main__":
-    main() 
+        logger.error(f"Error during scraping: {str(e)}")
+        # Try to upload partial results
+        try:
+            upload_to_gcs(bucket_name, output_file, 'utr_history.csv')
+            logger.info("Uploaded partial results")
+        except Exception as upload_error:
+            logger.error(f"Error uploading partial results: {str(upload_error)}")
+        raise 
