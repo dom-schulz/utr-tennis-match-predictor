@@ -39,5 +39,8 @@ COPY . .
 ENV DISPLAY=:99
 ENV GCS_BUCKET_NAME=utr_scraper_bucket
 
+# Expose the port that Cloud Run will use
+EXPOSE 8080
+
 # Clean up any existing Chrome profiles and run the script with Xvfb
 CMD ["sh", "-c", "rm -rf /tmp/chrome-profile/* && Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & python3 scrape_history_gcp.py"]
