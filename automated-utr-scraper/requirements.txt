@@ -3,7 +3,6 @@ selenium==4.16.0
 beautifulsoup4==4.12.2
 pandas==1.5.3
 numpy==1.23.5
-google-cloud-secret-manager==2.16.1
 python-dateutil==2.8.2
 webdriver-manager==4.0.1
 google-cloud-storage==2.10.0
