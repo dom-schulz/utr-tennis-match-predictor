@@ -294,50 +294,42 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
 ###
 
 ### Get UTR History ###
-def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
-    start_time = time.time()
-    timeout = 30  # 30 seconds timeout
-    
-    print(f"\nStarting scrape with offset={offset}, stop={stop}")
-    print(f"Total profiles to process: {len(df.iloc[offset:stop])}")
-    
-    # Initialize Chrome options
+def scrape_utr_history(profile_ids, email, password, offset=0, stop=-1, writer=None):
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
-    options.add_argument('--disable-gpu')
-    options.add_argument('--window-size=1024,768')
     options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--disable-gpu')
+    options.add_argument('--window-size=1920,1080')
     options.add_argument('--disable-extensions')
-    options.add_argument('--disable-notifications')
-    options.add_argument('--disable-popup-blocking')
-    options.add_argument('--disable-web-security')
-    options.add_argument('--ignore-certificate-errors')
-    options.add_argument('--ignore-ssl-errors')
+    options.add_argument('--disable-software-rasterizer')
+    options.add_argument('--disable-dev-tools')
+    options.add_argument('--remote-debugging-port=9222')
+    options.add_argument('--disable-blink-features=AutomationControlled')
+    options.add_experimental_option('excludeSwitches', ['enable-automation'])
+    options.add_experimental_option('useAutomationExtension', False)
     
     try:
-        # Initialize Chrome driver
         driver = webdriver.Chrome(options=options)
-        print("ChromeDriver initialized successfully")
-    except Exception as e:
-        print(f"Error initializing ChromeDriver: {str(e)}")
-        raise
-    
-    log_in_url = "https://app.utrsports.net/login"
-    
-    try:
+        driver.execute_cdp_cmd('Network.setUserAgentOverride', {
+            "userAgent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+        })
+        driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        
+        log_in_url = "https://app.utrsports.net/login"
+        
         sign_in(driver, log_in_url, email, password)
     except Exception as e:
         print(f"Error during sign in: {str(e)}")
         driver.quit()
         raise
         
-    for i in range(len(df)):
+    for i in range(len(profile_ids)):
         if i == stop:
                 break
                 
         try:
-            search_url = f"https://app.utrsports.net/profiles/{round(df['p_id'][i+offset])}?t=6"
+            search_url = f"https://app.utrsports.net/profiles/{round(profile_ids['p_id'][i+offset])}?t=6"
         except:
             continue
 
@@ -357,7 +349,7 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
                 show_all = driver.find_element(By.LINK_TEXT, 'Show all')
                 show_all.click()
             except:
-                print(f"{df['f_name'][i]} | {df['l_name'][i]} | {df['p_id'][i]}")
+                print(f"{profile_ids['f_name'][i]} | {profile_ids['l_name'][i]} | {profile_ids['p_id'][i]}")
                 continue
                 
         time.sleep(1)
@@ -377,7 +369,7 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
             utr = utrs[j].find("div", class_="newStatsTabContent__historyItemRating__GQUXw").text
             utr_date = utrs[j].find("div", class_="newStatsTabContent__historyItemDate__jFJyD").text
 
-            data_row = [df['f_name'][i+offset], df['l_name'][i+offset], utr_date, utr]
+            data_row = [profile_ids['f_name'][i+offset], profile_ids['l_name'][i+offset], utr_date, utr]
 
             writer.writerow(data_row)
 
