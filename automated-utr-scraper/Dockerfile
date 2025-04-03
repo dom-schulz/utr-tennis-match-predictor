@@ -1,16 +1,16 @@
 # Use the official Selenium standalone Chrome image
 FROM selenium/standalone-chrome
 
-# Set the working directory and fix permissions
-WORKDIR /app
-RUN chown -R seluser:seluser /app
+# Create a new directory with correct permissions
+RUN mkdir -p /home/seluser/app && chown -R seluser:seluser /home/seluser/app
+WORKDIR /home/seluser/app
 
 # Switch to seluser (the user in selenium/standalone-chrome)
 USER seluser
 
 # Create and activate virtual environment
-RUN python3 -m venv /app/venv
-ENV PATH="/app/venv/bin:$PATH"
+RUN python3 -m venv /home/seluser/app/venv
+ENV PATH="/home/seluser/app/venv/bin:$PATH"
 
 # Copy requirements first to leverage Docker cache
 COPY --chown=seluser:seluser requirements.txt .
@@ -45,7 +45,7 @@ class Handler(BaseHTTPRequestHandler):\n\
         self.end_headers()\n\
         self.wfile.write(b"Starting UTR scraper...\\n")\n\
         # Run the scraper in the background with Xvfb\n\
-        subprocess.Popen(["sh", "-c", "rm -rf /tmp/chrome-profile/* && Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & /app/venv/bin/python3 scrape_history_gcp.py"])\n\
+        subprocess.Popen(["sh", "-c", "rm -rf /tmp/chrome-profile/* && Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & /home/seluser/app/venv/bin/python3 scrape_history_gcp.py"])\n\
 \n\
 if __name__ == "__main__":\n\
     logger.info("Starting HTTP server on port %s", os.environ.get("PORT", 8080))\n\
@@ -53,4 +53,4 @@ if __name__ == "__main__":\n\
     server.serve_forever()' > server.py
 
 # Run the HTTP server
-CMD ["/app/venv/bin/python3", "server.py"]
+CMD ["/home/seluser/app/venv/bin/python3", "server.py"]
