@@ -1,32 +1,24 @@
 from scraper import *
 import pandas as pd
-from google.cloud import storage, secretmanager
+from google.cloud import storage
 import csv
 import io
 import os
-
-# Helper function to get credentials from Secret Manager
-def get_secret(secret_id):
-    client = secretmanager.SecretManagerServiceClient()
-    name = f"projects/cpsc324-project-452600/secrets/{secret_id}/versions/latest"
-    response = client.access_secret_version(request={"name": name})
-    return response.payload.data.decode("UTF-8")
 
 # Set bucket name from environment variable
 BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "utr_scraper_bucket")
 UPLOAD_FILE_NAME = "utr_history.csv"  # file to upload to GCS after scraping
 DOWNLOAD_FILE_NAME = "profile_id.csv"  # file to download from GCS before scraping
 
-# Get credentials from Secret Manager
-email = get_secret("utr-email")
-password = get_secret("utr-password")
+# Get credentials from environment variables
+email = os.getenv("UTR_EMAIL")
+password = os.getenv("UTR_PASSWORD")
 
 # Initialize GCS client
 client = storage.Client() 
 bucket = client.bucket(BUCKET_NAME)
 upload_blob = bucket.blob(UPLOAD_FILE_NAME)
 download_blob = bucket.blob(DOWNLOAD_FILE_NAME)
-
 
 # Create and initialize StringIO object to write CSV data
 csv_buffer = io.StringIO()
