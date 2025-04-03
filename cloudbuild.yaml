@@ -5,4 +5,4 @@ images:
   - 'us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo/utr-scraper-image:latest'
 options:
   logging: CLOUD_LOGGING_ONLY  
-  machineType: 'e2-small'  # Use e2-small to stay cost-effective
+  machineType: 'E2_SMALL'  # Use e2-small to stay cost-effective
