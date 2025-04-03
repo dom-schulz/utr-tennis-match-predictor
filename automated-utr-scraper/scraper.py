@@ -40,7 +40,7 @@ def sign_in(driver, log_in_url, email, password):
             EC.presence_of_element_located((By.ID, "onetrust-accept-btn-handler"))
         )
         cookie_button.click()
-        time.sleep(1)
+    time.sleep(1)
     except Exception:
         pass  # If no cookie banner, continue
 
@@ -303,25 +303,21 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
     
     # Initialize Chrome options
     options = webdriver.ChromeOptions()
-    options.binary_location = os.environ.get('CHROME_BIN', '/usr/local/bin/chrome/chrome')
-    options.add_argument('--headless')  # Use standard headless mode
+    options.add_argument('--headless')
     options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--disable-gpu')
-    options.add_argument('--window-size=1920,1080')
+    options.add_argument('--window-size=1024,768')
+    options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--disable-extensions')
     options.add_argument('--disable-notifications')
     options.add_argument('--disable-popup-blocking')
     options.add_argument('--disable-web-security')
     options.add_argument('--ignore-certificate-errors')
     options.add_argument('--ignore-ssl-errors')
-    options.add_argument('--user-data-dir=/tmp/chrome-profile')
-    options.add_argument('--profile-directory=Default')
     
     try:
-        # Use the installed ChromeDriver
-        service = ChromeService(os.environ.get('CHROME_DRIVER', '/usr/local/bin/chromedriver'))
-        driver = webdriver.Chrome(service=service, options=options)
+        # Initialize Chrome driver
+        driver = webdriver.Chrome(options=options)
         print("ChromeDriver initialized successfully")
     except Exception as e:
         print(f"Error initializing ChromeDriver: {str(e)}")
