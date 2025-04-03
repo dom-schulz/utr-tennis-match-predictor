@@ -26,7 +26,7 @@ RUN wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/134.0.6
 RUN mkdir -p /tmp/chrome-profile \
     && chmod -R 777 /tmp
 
-WORKDIR /app
+WORKDIR /automated-utr-scraper
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
