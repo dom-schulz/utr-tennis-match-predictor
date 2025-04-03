@@ -4,9 +4,13 @@ FROM selenium/standalone-chrome
 # Set the working directory
 WORKDIR /app
 
+# Create and activate virtual environment
+RUN python3 -m venv /app/venv
+ENV PATH="/app/venv/bin:$PATH"
+
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
 COPY . .
@@ -37,7 +41,7 @@ class Handler(BaseHTTPRequestHandler):\n\
         self.end_headers()\n\
         self.wfile.write(b"Starting UTR scraper...\\n")\n\
         # Run the scraper in the background with Xvfb\n\
-        subprocess.Popen(["sh", "-c", "rm -rf /tmp/chrome-profile/* && Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & python3 scrape_history_gcp.py"])\n\
+        subprocess.Popen(["sh", "-c", "rm -rf /tmp/chrome-profile/* && Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & /app/venv/bin/python3 scrape_history_gcp.py"])\n\
 \n\
 if __name__ == "__main__":\n\
     logger.info("Starting HTTP server on port %s", os.environ.get("PORT", 8080))\n\
@@ -45,4 +49,4 @@ if __name__ == "__main__":\n\
     server.serve_forever()' > server.py
 
 # Run the HTTP server
-CMD ["python3", "server.py"]
+CMD ["/app/venv/bin/python3", "server.py"]
