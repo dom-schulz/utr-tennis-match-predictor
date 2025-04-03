@@ -36,6 +36,24 @@ COPY . .
 # Set environment variables
 ENV DISPLAY=:99
 ENV GCS_BUCKET_NAME=utr_scraper_bucket
+ENV PORT=8080
 
-# Clean up any existing Chrome profiles and run the script with Xvfb
-CMD ["sh", "-c", "rm -rf /tmp/chrome-profile/* && Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & python3 scrape_history_gcp.py"]
+# Create a simple HTTP server script
+RUN echo 'from http.server import HTTPServer, BaseHTTPRequestHandler\n\
+import os\n\
+import subprocess\n\
+\n\
+class Handler(BaseHTTPRequestHandler):\n\
+    def do_GET(self):\n\
+        self.send_response(200)\n\
+        self.end_headers()\n\
+        self.wfile.write(b"Starting UTR scraper...\\n")\n\
+        # Run the scraper in the background\n\
+        subprocess.Popen(["sh", "-c", "rm -rf /tmp/chrome-profile/* && Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & python3 scrape_history_gcp.py"])\n\
+\n\
+if __name__ == "__main__":\n\
+    server = HTTPServer(("", int(os.environ.get("PORT", 8080))), Handler)\n\
+    server.serve_forever()' > server.py
+
+# Run the HTTP server
+CMD ["python3", "server.py"]
