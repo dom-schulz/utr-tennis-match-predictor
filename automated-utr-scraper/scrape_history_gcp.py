@@ -32,11 +32,7 @@ data = download_blob.download_as_string()
 profile_ids = pd.read_csv(io.BytesIO(data)) # read string data into dataframe, it needs to be converted to bytes before reading
 
 # Read profile_id.csv and scrape UTR history
-options = webdriver.ChromeOptions()
-options.add_argument('--headless')  # Run in headless mode
-options.add_argument('--no-sandbox')  # Required for running in Docker
-options.add_argument('--disable-dev-shm-usage')  # Overcome limited resource problems
-scrape_utr_history(profile_ids, email, password, offset=0, stop=-1, writer=writer, options=options)
+scrape_utr_history(profile_ids, email, password, offset=0, stop=-1, writer=writer)
 
 # Upload the CSV data to GCS
 upload_blob.upload_from_string(csv_buffer.getvalue(), content_type='text/csv')
