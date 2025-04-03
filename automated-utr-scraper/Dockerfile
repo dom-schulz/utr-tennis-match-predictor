@@ -1,19 +1,23 @@
 # Use the official Selenium standalone Chrome image
 FROM selenium/standalone-chrome
 
-# Set the working directory
+# Set the working directory and fix permissions
 WORKDIR /app
+RUN chown -R seluser:seluser /app
+
+# Switch to seluser (the user in selenium/standalone-chrome)
+USER seluser
 
 # Create and activate virtual environment
 RUN python3 -m venv /app/venv
 ENV PATH="/app/venv/bin:$PATH"
 
 # Copy requirements first to leverage Docker cache
-COPY requirements.txt .
+COPY --chown=seluser:seluser requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
-COPY . .
+COPY --chown=seluser:seluser . .
 
 # Set environment variables
 ENV DISPLAY=:99
