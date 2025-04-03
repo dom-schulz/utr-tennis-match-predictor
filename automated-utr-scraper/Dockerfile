@@ -47,4 +47,4 @@ ENV GCS_BUCKET_NAME=utr-scraper-bucket
 EXPOSE 8080
 
 # The CMD will download the files from GCS and run your script
-CMD ["sh", "-c", "gsutil cp gs://GCS_BUCKET_NAME/scraper.py /app/ && gsutil cp gs://GCS_BUCKET_NAME/scrape_history_gcp.py /app/ && gsutil cp gs://GCS_BUCKET_NAME/profile_id.csv /app/ && python3 /app/scrape_history_gcp.py"]
+CMD ["sh", "-c", "gsutil cp gs://${GCS_BUCKET_NAME}/scraper.py /app/ && gsutil cp gs://${GCS_BUCKET_NAME}/scrape_history_gcp.py /app/ && gsutil cp gs://${GCS_BUCKET_NAME}/profile_id.csv /app/ && python3 /app/scrape_history_gcp.py"]
