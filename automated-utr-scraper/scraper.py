@@ -39,7 +39,7 @@ def sign_in(driver, log_in_url, email, password):
             EC.presence_of_element_located((By.ID, "onetrust-accept-btn-handler"))
         )
         cookie_button.click()
-        time.sleep(1)
+    time.sleep(1)
     except:
         pass  # If no cookie banner, continue
 
@@ -322,15 +322,34 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
     options.add_argument('--profile-directory=Default')
     options.add_argument('--window-size=1920,1080')
     
-    driver = webdriver.Chrome(service=ChromeService('/usr/local/bin/chromedriver'), options=options)
+    try:
+        # Use webdriver-manager to handle ChromeDriver
+        service = ChromeService(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=options)
+        print("ChromeDriver initialized successfully")
+    except Exception as e:
+        print(f"Error initializing ChromeDriver: {str(e)}")
+        # Fallback to direct path if webdriver-manager fails
+        try:
+            driver = webdriver.Chrome(service=ChromeService('/usr/local/bin/chromedriver'), options=options)
+            print("ChromeDriver initialized using fallback method")
+        except Exception as e:
+            print(f"Fallback initialization failed: {str(e)}")
+            raise
+    
     log_in_url = "https://app.utrsports.net/login"
-
-    sign_in(driver, log_in_url, email, password)
-
+    
+    try:
+        sign_in(driver, log_in_url, email, password)
+    except Exception as e:
+        print(f"Error during sign in: {str(e)}")
+        driver.quit()
+        raise
+    
     for i in range(len(df)):
         if i == stop:
-            break
-        
+                break
+                
         try:
             search_url = f"https://app.utrsports.net/profiles/{round(df['p_id'][i+offset])}?t=6"
         except:
@@ -354,7 +373,7 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
             except:
                 print(f"{df['f_name'][i]} | {df['l_name'][i]} | {df['p_id'][i]}")
                 continue
-
+                
         time.sleep(1)
 
         scroll_page(driver)
@@ -377,5 +396,5 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
             writer.writerow(data_row)
 
     # Close the driver
-    driver.quit()
+        driver.quit() 
 ###
