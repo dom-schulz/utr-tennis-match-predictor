@@ -40,7 +40,7 @@ def sign_in(driver, log_in_url, email, password):
             EC.presence_of_element_located((By.ID, "onetrust-accept-btn-handler"))
         )
         cookie_button.click()
-    time.sleep(1)
+        time.sleep(1)
     except Exception:
         pass  # If no cookie banner, continue
 
