@@ -1,6 +1,10 @@
 # Use the official Selenium standalone Chrome image
 FROM selenium/standalone-chrome
 
+# Install required packages
+USER root
+RUN apt-get update && apt-get install -y python3-venv && rm -rf /var/lib/apt/lists/*
+
 # Create a new directory with correct permissions
 RUN mkdir -p /home/seluser/app && chown -R seluser:seluser /home/seluser/app
 WORKDIR /home/seluser/app
