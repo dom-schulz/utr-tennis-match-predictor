@@ -4,6 +4,5 @@ steps:
 images:
   - 'us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo/utr-scraper-image:latest'
 options:
-  logging: CLOUD_LOGGING_ONLY # or REGIONAL_USER_OWNED_BUCKET or NONE
-  machineType: 'N1_HIGHCPU_8'  # Optional: specify machine type if needed
-timeout: 1200s  # Optional: specify a timeout (adjust as needed)
+  logging: CLOUD_LOGGING_ONLY  
+  machineType: 'e2-small'  # Use e2-small to stay cost-effective
