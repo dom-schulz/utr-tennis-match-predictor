@@ -1,18 +1,12 @@
 # Use the official Selenium standalone Chrome image
 FROM selenium/standalone-chrome
 
-# Install any necessary dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 \
-    python3-pip \
-    && rm -rf /var/lib/apt/lists/*
-
 # Set the working directory
 WORKDIR /app
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy application files
 COPY . .
