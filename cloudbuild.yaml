@@ -1,11 +1,11 @@
 steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/utr-tennis-docker-repo/utr-scraper', '.']
+    args: ['build', '-t', 'us-west1-docker.pkg.dev/$PROJECT_ID/utr-tennis-docker-repo/utr-scraper', '.']
 
   # Push the container image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/utr-tennis-docker-repo/utr-scraper']
+    args: ['push', 'us-west1-docker.pkg.dev/$PROJECT_ID/utr-tennis-docker-repo/utr-scraper']
 
 images:
-  - 'us-central1-docker.pkg.dev/$PROJECT_ID/utr-tennis-docker-repo/utr-scraper' 
+  - 'us-west1-docker.pkg.dev/$PROJECT_ID/utr-tennis-docker-repo/utr-scraper' 
