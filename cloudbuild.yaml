@@ -1,11 +1,11 @@
 steps:
-  # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-west1-docker.pkg.dev/$PROJECT_ID/utr-tennis-docker-repo/utr-scraper', '.']
-
-  # Push the container image to Artifact Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-west1-docker.pkg.dev/$PROJECT_ID/utr-tennis-docker-repo/utr-scraper']
-
+    args: ['build', '-t', 'us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo/utr-scraper-image:latest', '.']
 images:
-  - 'us-west1-docker.pkg.dev/$PROJECT_ID/utr-tennis-docker-repo/utr-scraper' 
+  - 'us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo/utr-scraper-image:latest'
+options:
+  logging: CLOUD_LOGGING_ONLY # Optional: specify this if you want logs in Google Cloud Logging
+  machineType: 'N1_HIGHCPU_8' # Optional: specify your machine type (based on your needs)
+  build:
+    service_account: 'projects/cpsc324-project-452600/serviceAccounts/my-service-account@cpsc324-project-452600.iam.gserviceaccount.com' # Replace with your service account
+    logs_bucket: gs://utr-scraper-build-logs
