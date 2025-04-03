@@ -31,7 +31,7 @@ RUN wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/120.0.6
     && unzip chrome-linux64.zip \
     && mv chrome-linux64 /usr/local/bin/chrome \
     && rm chrome-linux64.zip \
-    && chmod +x /usr/local/bin/chrome/chrome
+    && chmod -R 755 /usr/local/bin/chrome
 
 # Install ChromeDriver
 RUN wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/120.0.6099.109/linux64/chromedriver-linux64.zip" \
@@ -54,11 +54,15 @@ ENV DISPLAY=:99
 ENV GCS_BUCKET_NAME=utr_scraper_bucket
 ENV PORT=8080
 ENV PATH="/usr/local/bin/chrome:${PATH}"
+ENV CHROME_BIN="/usr/local/bin/chrome/chrome"
+ENV CHROME_DRIVER="/usr/local/bin/chromedriver"
 
 # Create necessary directories and set permissions
 RUN mkdir -p /tmp/chrome-profile /tmp/.X11-unix \
     && chmod -R 777 /tmp \
-    && chmod 1777 /tmp/.X11-unix
+    && chmod 1777 /tmp/.X11-unix \
+    && chown -R root:root /usr/local/bin/chrome \
+    && chown -R root:root /usr/local/bin/chromedriver
 
 # Create a simple HTTP server script
 RUN echo 'from http.server import HTTPServer, BaseHTTPRequestHandler\n\

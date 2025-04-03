@@ -15,6 +15,7 @@ import numpy as np
 from datetime import datetime
 import random
 from dateutil.relativedelta import relativedelta
+import os
 
 '''
 NOTES:
@@ -302,7 +303,7 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
     
     # Initialize Chrome options
     options = webdriver.ChromeOptions()
-    options.binary_location = "/usr/local/bin/chrome/chrome"
+    options.binary_location = os.environ.get('CHROME_BIN', '/usr/local/bin/chrome/chrome')
     options.add_argument('--headless=new')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
@@ -349,7 +350,7 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
     
     try:
         # Use the installed ChromeDriver
-        service = ChromeService('/usr/local/bin/chromedriver')
+        service = ChromeService(os.environ.get('CHROME_DRIVER', '/usr/local/bin/chromedriver'))
         driver = webdriver.Chrome(service=service, options=options)
         print("ChromeDriver initialized successfully")
     except Exception as e:
