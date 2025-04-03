@@ -1,9 +1,6 @@
 # Use the official Python image with a more recent version
 FROM python:3.11-slim
 
-# Use the official Python image with a more recent version
-FROM python:3.11-slim
-
 # Install Chrome and dependencies
 RUN apt-get update && apt-get install -y \
     wget \
@@ -63,9 +60,14 @@ ENV PORT=8080
 RUN echo 'from http.server import HTTPServer, BaseHTTPRequestHandler\n\
 import os\n\
 import subprocess\n\
+import logging\n\
+\n\
+logging.basicConfig(level=logging.INFO)\n\
+logger = logging.getLogger(__name__)\n\
 \n\
 class Handler(BaseHTTPRequestHandler):\n\
     def do_GET(self):\n\
+        logger.info("Received request, starting scraper...")\n\
         self.send_response(200)\n\
         self.end_headers()\n\
         self.wfile.write(b"Starting UTR scraper...\\n")\n\
@@ -73,6 +75,7 @@ class Handler(BaseHTTPRequestHandler):\n\
         subprocess.Popen(["sh", "-c", "rm -rf /tmp/chrome-profile/* && Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & python3 scrape_history_gcp.py"])\n\
 \n\
 if __name__ == "__main__":\n\
+    logger.info("Starting HTTP server on port %s", os.environ.get("PORT", 8080))\n\
     server = HTTPServer(("", int(os.environ.get("PORT", 8080))), Handler)\n\
     server.serve_forever()' > server.py
 
