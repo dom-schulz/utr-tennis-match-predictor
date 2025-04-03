@@ -28,10 +28,8 @@ ENV DISPLAY=:99
 ENV GCS_BUCKET_NAME=utr_scraper_bucket
 ENV PORT=8080
 
-# Create necessary directories and set permissions
-RUN mkdir -p /tmp/chrome-profile /tmp/.X11-unix \
-    && chmod -R 777 /tmp \
-    && chmod 1777 /tmp/.X11-unix
+# Create Chrome profile directory in user's home
+RUN mkdir -p /home/seluser/chrome-profile
 
 # Create a simple HTTP server script
 RUN echo 'from http.server import HTTPServer, BaseHTTPRequestHandler\n\
@@ -49,7 +47,7 @@ class Handler(BaseHTTPRequestHandler):\n\
         self.end_headers()\n\
         self.wfile.write(b"Starting UTR scraper...\\n")\n\
         # Run the scraper in the background with Xvfb\n\
-        subprocess.Popen(["sh", "-c", "rm -rf /tmp/chrome-profile/* && Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & /home/seluser/app/venv/bin/python3 scrape_history_gcp.py"])\n\
+        subprocess.Popen(["sh", "-c", "rm -rf /home/seluser/chrome-profile/* && Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & /home/seluser/app/venv/bin/python3 scrape_history_gcp.py"])\n\
 \n\
 if __name__ == "__main__":\n\
     logger.info("Starting HTTP server on port %s", os.environ.get("PORT", 8080))\n\
