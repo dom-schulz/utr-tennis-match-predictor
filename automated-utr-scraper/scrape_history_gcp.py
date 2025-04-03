@@ -7,6 +7,7 @@ import os
 from selenium import webdriver
 import logging
 import time
+from google.cloud import compute_v1
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -19,11 +20,8 @@ DOWNLOAD_FILE_NAME = "profile_id.csv"  # file to download from GCS before scrapi
 
 # Get credentials from environment variables, secrets passed in as environment 
 # variables via built in functionality in Cloud Run
-# email = os.getenv("UTR_EMAIL")
-# password = os.getenv("UTR_PASSWORD")
-
-email = 'jz1352@gmail.com'
-password = 'Mr.Milom0nst3r!%'
+email = os.getenv("UTR_EMAIL")
+password = os.getenv("UTR_PASSWORD")
 
 # Initialize GCS client
 client = storage.Client() 
@@ -51,6 +49,26 @@ def upload_to_gcs(bucket_name, source_file_name, destination_blob_name):
     blob = bucket.blob(destination_blob_name)
     blob.upload_from_filename(source_file_name)
     logger.info(f"Uploaded {source_file_name} to {bucket_name}")
+
+def stop_instance():
+    """Stops the current Compute Engine instance."""
+    try:
+        # Get instance metadata
+        metadata_client = compute_v1.InstancesClient()
+        project = 'cpsc324-project-452600'
+        zone = 'us-west1-a'
+        instance_name = 'utr-scraper-vm'
+        
+        logger.info("Stopping Compute Engine instance...")
+        operation = metadata_client.stop(
+            project=project,
+            zone=zone,
+            instance=instance_name
+        )
+        operation.result()  # Wait for the operation to complete
+        logger.info("Instance stopped successfully")
+    except Exception as e:
+        logger.error(f"Error stopping instance: {str(e)}")
 
 # Start execution
 start_time = time.time()
@@ -101,7 +119,7 @@ with open(output_file, 'w', newline='') as f:
             
             # Check if we're approaching the timeout
             elapsed_time = time.time() - start_time
-            if elapsed_time > 840:  # 14 minutes
+            if elapsed_time > 3540:  # 59 minutes
                 logger.warning("Approaching timeout, saving progress...")
                 break
             
@@ -125,4 +143,7 @@ with open(output_file, 'w', newline='') as f:
             logger.info("Uploaded partial results")
         except Exception as upload_error:
             logger.error(f"Error uploading partial results: {str(upload_error)}")
-        raise 
+        raise
+    finally:
+        # Stop the instance after scraping is complete
+        stop_instance() 
