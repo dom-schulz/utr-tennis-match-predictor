@@ -300,24 +300,27 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
     print(f"\nStarting scrape with offset={offset}, stop={stop}")
     print(f"Total profiles to process: {len(df.iloc[offset:stop])}")
     
-    ##### Edits to ensure chrome driver is headless and doesn't crash on GCP #####
+    # Initialize Chrome options
     options = webdriver.ChromeOptions()
-    options.add_argument('--headless')  # Run in headless mode
-    options.add_argument('--no-sandbox')  # Required for running as root
-    options.add_argument('--disable-dev-shm-usage')  # Overcome limited resource problems
-    options.add_argument('--disable-gpu')  # Disable GPU hardware acceleration
-    options.add_argument('--disable-extensions')  # Disable extensions
-    options.add_argument('--disable-infobars')  # Disable infobars
+    options.add_argument('--headless=new')  # Use new headless mode
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--disable-gpu')
+    options.add_argument('--disable-software-rasterizer')
+    options.add_argument('--remote-debugging-port=9222')
+    options.add_argument('--disable-extensions')
+    options.add_argument('--disable-dev-tools')
+    options.add_argument('--no-default-browser-check')
+    options.add_argument('--disable-infobars')
     options.add_argument('--disable-notifications')
     options.add_argument('--disable-popup-blocking')
-    options.add_argument('--disable-software-rasterizer')
     options.add_argument('--disable-web-security')
     options.add_argument('--ignore-certificate-errors')
     options.add_argument('--ignore-ssl-errors')
     options.add_argument('--ignore-certificate-errors-spki-list')
     options.add_argument('--user-data-dir=/tmp/chrome-profile')
     options.add_argument('--profile-directory=Default')
-    options.add_argument('--window-size=1920,1080')  # Set a standard window size
+    options.add_argument('--window-size=1920,1080')
     
     driver = webdriver.Chrome(service=ChromeService('/usr/local/bin/chromedriver'), options=options)
     log_in_url = "https://app.utrsports.net/login"
