@@ -31,7 +31,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code into the container
-COPY . .
+COPY *.py *.csv ./
 
 # Run the scraper script
 CMD ["python", "scrape_history_gcp.py"]
