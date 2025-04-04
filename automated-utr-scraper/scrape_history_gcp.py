@@ -47,8 +47,9 @@ def upload_to_gcs(bucket_name, source_file_name, destination_blob_name):
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(destination_blob_name)
+    logger.info(f"Starting upload of {source_file_name} to {bucket_name}")
     blob.upload_from_filename(source_file_name)
-    logger.info(f"Uploaded {source_file_name} to {bucket_name}")
+    logger.info(f"Successfully uploaded {source_file_name} to {bucket_name}")
 
 def stop_instance():
     """Stops the current Compute Engine instance."""
