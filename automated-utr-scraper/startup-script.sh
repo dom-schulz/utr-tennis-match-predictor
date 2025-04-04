@@ -36,7 +36,6 @@ sudo docker run -d --name utr-scraper \
     -e UTR_PASSWORD="$UTR_PASSWORD" \
     -e GOOGLE_CLOUD_PROJECT="cpsc324-project-452600" \
     -e GCS_BUCKET_NAME="utr_scraper_bucket" \
-    -e GOOGLE_APPLICATION_CREDENTIALS="/app/credentials.json" \
     us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo/utr-scraper-image:latest
 
 # Output container logs
