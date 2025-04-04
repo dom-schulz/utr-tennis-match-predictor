@@ -133,49 +133,31 @@ except Exception as e:
 
 # Create output file
 output_file = 'utr_history.csv'
-with open(output_file, 'w', newline='') as f:
-    writer = csv.writer(f)
-    writer.writerow(['First Name', 'Last Name', 'Date', 'UTR'])
-    
-    try:
-        # Process all profiles in one go
-        logger.info(f"Processing {len(profile_ids)} profiles")
-        save_logs_to_gcs(f"Processing {len(profile_ids)} profiles")
-        
-        # Scrape UTR history for all profiles
-        scrape_utr_history(profile_ids, email, password, 
-                          offset=0, stop=-1, writer=writer)
-        
-        # Upload results
-        try:
-            upload_to_gcs(output_file, 'utr_history.csv')
-            logger.info("Successfully uploaded results")
-            save_logs_to_gcs("Successfully uploaded results")
-        except Exception as e:
-            logger.error(f"Error uploading results: {str(e)}")
-            save_logs_to_gcs(f"Error uploading results: {str(e)}")
-        
-        logger.info("Scraping completed successfully")
-        save_logs_to_gcs("Scraping completed successfully")
-        
-    except Exception as e:
-        logger.error(f"Error during scraping: {str(e)}")
-        save_logs_to_gcs(f"Error during scraping: {str(e)}")
-        # Try to upload partial results
-        try:
-            upload_to_gcs(output_file, 'utr_history.csv')
-            logger.info("Uploaded partial results")
-            save_logs_to_gcs("Uploaded partial results")
-        except Exception as upload_error:
-            logger.error(f"Error uploading partial results: {str(upload_error)}")
-            save_logs_to_gcs(f"Error uploading partial results: {str(upload_error)}")
-        raise
-    finally:
-        # Log completion but don't stop the VM
-        logger.info("Execution finished, VM stopping disabled for debugging")
-        save_logs_to_gcs("Execution finished, VM stopping disabled for debugging")
-        # Commented out the stop_instance call
-        # stop_instance()
 
+# Scrape UTR history for all profiles and get the resulting dataframe
+logger.info(f"Processing {len(profile_ids)} profiles")
+save_logs_to_gcs(f"Processing {len(profile_ids)} profiles")
+
+results_df = scrape_utr_history(profile_ids, email, password, 
+                      offset=0, stop=-1, writer=None)
+
+try:
+    # Log the number of records found
+    logger.info(f"Scraping completed. Found {len(results_df)} UTR records")
+    save_logs_to_gcs(f"Scraping completed. Found {len(results_df)} UTR records")
+    
+    # Save dataframe to local CSV file
+    results_df.to_csv(output_file, index=False)
+    logger.info(f"Saved {len(results_df)} records to local file {output_file}")
+    
+    # Upload the CSV file to GCS bucket
+    upload_to_gcs(output_file, UPLOAD_FILE_NAME)
+    logger.info(f"Successfully uploaded {output_file} to {BUCKET_NAME}/{UPLOAD_FILE_NAME}")
+    save_logs_to_gcs(f"Successfully uploaded {len(results_df)} records to {BUCKET_NAME}/{UPLOAD_FILE_NAME}")
+    
+except Exception as e:
+    logger.error(f"Error saving or uploading results: {str(e)}")
+    save_logs_to_gcs(f"Error saving or uploading results: {str(e)}")
+    
 logger.info("Script execution complete, VM will continue running for debugging")
 save_logs_to_gcs("Script execution complete, VM will continue running for debugging") 

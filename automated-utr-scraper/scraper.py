@@ -16,6 +16,7 @@ from datetime import datetime
 import random
 from dateutil.relativedelta import relativedelta
 import os
+import pandas as pd
 
 '''
 NOTES:
@@ -304,6 +305,9 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
     driver = webdriver.Chrome(options=chrome_options)
     url = 'https://app.utrsports.net/'
 
+    # Initialize a list to store all scraped data
+    all_data = []
+
     sign_in(driver, url, email, password)
 
     for i in range(len(df)):
@@ -311,8 +315,18 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
             break
         
         try:
-            search_url = f"https://app.utrsports.net/profiles/{round(df['p_id'][i+offset])}?t=6"
-        except:
+            # Try to use p_id first, fall back to profile_id if it exists
+            if 'p_id' in df.columns:
+                profile_id = df['p_id'][i+offset]
+            elif 'profile_id' in df.columns:
+                profile_id = df['profile_id'][i+offset]
+            else:
+                print("No profile ID column found")
+                continue
+                
+            search_url = f"https://app.utrsports.net/profiles/{round(profile_id)}?t=6"
+        except Exception as e:
+            print(f"Error creating search URL: {str(e)}")
             continue
 
         load_page(driver, search_url)
@@ -331,7 +345,10 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
                 show_all = driver.find_element(By.LINK_TEXT, 'Show all')
                 show_all.click()
             except:
-                print(f"{df['f_name'][i]} | {df['l_name'][i]} | {df['p_id'][i]}")
+                # Try to use appropriate column names
+                f_name = df['f_name'][i+offset] if 'f_name' in df.columns else df['first_name'][i+offset] if 'first_name' in df.columns else "Unknown"
+                l_name = df['l_name'][i+offset] if 'l_name' in df.columns else df['last_name'][i+offset] if 'last_name' in df.columns else "Unknown"
+                print(f"{f_name} | {l_name} | {profile_id}")
                 continue
 
         time.sleep(1)
@@ -343,18 +360,44 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
 
         container = soup.find("div", class_="newStatsTabContent__section__1TQzL p0 bg-transparent")
         
+        if not container:
+            print(f"No container found for profile ID: {profile_id}")
+            continue
+            
         utrs = container.find_all("div", class_="row")
         
         for j in range(len(utrs)):
             if j == 0:
                 continue
-            utr = utrs[j].find("div", class_="newStatsTabContent__historyItemRating__GQUXw").text
-            utr_date = utrs[j].find("div", class_="newStatsTabContent__historyItemDate__jFJyD").text
+                
+            try:
+                utr_elem = utrs[j].find("div", class_="newStatsTabContent__historyItemRating__GQUXw")
+                date_elem = utrs[j].find("div", class_="newStatsTabContent__historyItemDate__jFJyD")
+                
+                if not utr_elem or not date_elem:
+                    continue
+                    
+                utr = utr_elem.text
+                utr_date = date_elem.text
 
-            data_row = [df['f_name'][i+offset], df['l_name'][i+offset], utr_date, utr]
+                # Try to get first and last name using appropriate column names
+                f_name = df['f_name'][i+offset] if 'f_name' in df.columns else df['first_name'][i+offset] if 'first_name' in df.columns else "Unknown"
+                l_name = df['l_name'][i+offset] if 'l_name' in df.columns else df['last_name'][i+offset] if 'last_name' in df.columns else "Unknown"
 
-            writer.writerow(data_row)
+                # Add to our data list
+                all_data.append([f_name, l_name, utr_date, utr])
+
+                # Also write to CSV if a writer was provided
+                if writer:
+                    writer.writerow([f_name, l_name, utr_date, utr])
+            except Exception as e:
+                print(f"Error processing UTR entry: {str(e)}")
+                continue
 
     # Close the driver
     driver.quit()
+    
+    # Create and return DataFrame
+    result_df = pd.DataFrame(all_data, columns=['f_name', 'l_name', 'date', 'utr'])
+    return result_df
 ###
