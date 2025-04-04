@@ -18,6 +18,14 @@ from dateutil.relativedelta import relativedelta
 import os
 import logging
 
+# Set up logging to output to console
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
+logger = logging.getLogger(__name__)
+
 '''
 NOTES:
     - Scraper can't go past Denver, CO (19th row in cities.csv). Gives error:

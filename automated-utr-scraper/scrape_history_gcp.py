@@ -74,10 +74,13 @@ def stop_instance():
 # Start execution
 start_time = time.time()
 logger.info("Starting UTR scraper...")
+logger.info("Script version: 1.0.1 - Direct Execution")
 
 # Get credentials from environment variables
 email = os.environ.get('UTR_EMAIL')
 password = os.environ.get('UTR_PASSWORD')
+
+logger.info(f"Environment variables - Email set: {email is not None}, Password set: {password is not None}")
 
 if not email or not password:
     logger.error("UTR credentials not found in environment variables")
