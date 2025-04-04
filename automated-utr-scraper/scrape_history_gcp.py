@@ -65,34 +65,21 @@ def save_logs_to_gcs(log_message):
     except Exception as e:
         logger.error(f"Error saving log to GCS: {str(e)}")
 
+# Function kept for compatibility but now it just logs instead of stopping VM
 def stop_instance():
-    """Stops the current Compute Engine instance."""
+    """Previously stopped the VM, now just logs for debugging."""
     try:
-        # Get instance metadata
-        metadata_client = compute_v1.InstancesClient()
-        project = 'cpsc324-project-452600'
-        zone = 'us-west1-a'
-        instance_name = 'utr-scraper-vm'
-        
-        logger.info("Stopping Compute Engine instance...")
-        save_logs_to_gcs("Stopping Compute Engine instance...")
-        operation = metadata_client.stop(
-            project=project,
-            zone=zone,
-            instance=instance_name
-        )
-        operation.result()  # Wait for the operation to complete
-        logger.info("Instance stopped successfully")
-        save_logs_to_gcs("Instance stopped successfully")
+        logger.info("VM stopping functionality disabled for debugging")
+        save_logs_to_gcs("VM stopping functionality disabled for debugging")
     except Exception as e:
-        logger.error(f"Error stopping instance: {str(e)}")
-        save_logs_to_gcs(f"Error stopping instance: {str(e)}")
+        logger.error(f"Error in stop_instance placeholder: {str(e)}")
+        save_logs_to_gcs(f"Error in stop_instance placeholder: {str(e)}")
 
 # Start execution
 start_time = time.time()
 logger.info("Starting UTR scraper...")
-logger.info("Script version: 1.0.1 - GCP Execution")
-save_logs_to_gcs("Starting UTR scraper on GCP...")
+logger.info("Script version: 1.0.2 - GCP Debug Execution (VM stop disabled)")
+save_logs_to_gcs("Starting UTR scraper on GCP... (VM stop disabled)")
 
 # Get credentials from environment variables
 email = os.environ.get('UTR_EMAIL')
@@ -193,7 +180,11 @@ with open(output_file, 'w', newline='') as f:
             save_logs_to_gcs(f"Error uploading partial results: {str(upload_error)}")
         raise
     finally:
-        # Stop the instance after scraping is complete
-        logger.info("Execution finished, stopping VM instance")
-        save_logs_to_gcs("Execution finished, stopping VM instance")
-        stop_instance() 
+        # Log completion but don't stop the VM
+        logger.info("Execution finished, VM stopping disabled for debugging")
+        save_logs_to_gcs("Execution finished, VM stopping disabled for debugging")
+        # Commented out the stop_instance call
+        # stop_instance()
+
+logger.info("Script execution complete, VM will continue running for debugging")
+save_logs_to_gcs("Script execution complete, VM will continue running for debugging") 
