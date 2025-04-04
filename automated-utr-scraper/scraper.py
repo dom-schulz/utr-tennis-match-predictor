@@ -16,6 +16,7 @@ from datetime import datetime
 import random
 from dateutil.relativedelta import relativedelta
 import os
+import logging
 
 '''
 NOTES:
@@ -295,87 +296,64 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
 
 ### Get UTR History ###
 def scrape_utr_history(profile_ids, email, password, offset=0, stop=-1, writer=None):
-    options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--disable-gpu')
-    options.add_argument('--window-size=1920,1080')
-    options.add_argument('--disable-extensions')
-    options.add_argument('--disable-software-rasterizer')
-    options.add_argument('--disable-dev-tools')
-    options.add_argument('--remote-debugging-port=9222')
-    options.add_argument('--disable-blink-features=AutomationControlled')
-    options.add_experimental_option('excludeSwitches', ['enable-automation'])
-    options.add_experimental_option('useAutomationExtension', False)
-    
+    """Scrapes UTR history for a list of profile IDs."""
     driver = None
     try:
-        driver = webdriver.Chrome(options=options)
-        driver.execute_cdp_cmd('Network.setUserAgentOverride', {
-            "userAgent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-        })
-        driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        driver = setup_driver()
+        sign_in(driver, email, password)
         
-        log_in_url = "https://app.utrsports.net/login"
-        
-        sign_in(driver, log_in_url, email, password)
-        
-        for i in range(len(profile_ids)):
-            if i == stop:
+        for index, row in profile_ids.iterrows():
+            if stop != -1 and index >= stop:
                 break
-                
-            try:
-                search_url = f"https://app.utrsports.net/profiles/{round(profile_ids['p_id'][i+offset])}?t=6"
-            except:
+            if index < offset:
                 continue
-
-            load_page(driver, search_url)
-
-            time.sleep(0.25)
-
-            scroll_page(driver)
-
+                
+            profile_id = row['profile_id']
+            first_name = row['first_name']
+            last_name = row['last_name']
+            
+            logger.info(f"Scraping UTR history for {first_name} {last_name} (ID: {profile_id})")
+            
             try:
-                time.sleep(1)
-                show_all = driver.find_element(By.LINK_TEXT, 'Show all')
-                show_all.click()
-            except:
-                try:
-                    time.sleep(2)
-                    show_all = driver.find_element(By.LINK_TEXT, 'Show all')
-                    show_all.click()
-                except:
-                    print(f"{profile_ids['f_name'][i]} | {profile_ids['l_name'][i]} | {profile_ids['p_id'][i]}")
-                    continue
-                    
-            time.sleep(1)
-
-            scroll_page(driver)
-
-            # Now that the page is rendered, parse the page with BeautifulSoup
-            soup = BeautifulSoup(driver.page_source, 'html.parser')
-
-            container = soup.find("div", class_="newStatsTabContent__section__1TQzL p0 bg-transparent")
-            
-            utrs = container.find_all("div", class_="row")
-            
-            for j in range(len(utrs)):
-                if j == 0:
-                    continue
-                utr = utrs[j].find("div", class_="newStatsTabContent__historyItemRating__GQUXw").text
-                utr_date = utrs[j].find("div", class_="newStatsTabContent__historyItemDate__jFJyD").text
-
-                data_row = [profile_ids['f_name'][i+offset], profile_ids['l_name'][i+offset], utr_date, utr]
-
-                writer.writerow(data_row)
-
+                # Navigate to profile page
+                driver.get(f"https://app.utrsports.net/Profile/Player/{profile_id}")
+                time.sleep(2)  # Wait for page to load
+                
+                # Click on History tab
+                history_tab = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'History')]"))
+                )
+                history_tab.click()
+                time.sleep(2)  # Wait for history to load
+                
+                # Get all history rows
+                history_rows = WebDriverWait(driver, 10).until(
+                    EC.presence_of_all_elements_located((By.CSS_SELECTOR, "table.table tbody tr"))
+                )
+                
+                # Process each history row
+                for row in history_rows:
+                    try:
+                        cells = row.find_elements(By.TAG_NAME, "td")
+                        if len(cells) >= 3:
+                            date = cells[0].text.strip()
+                            utr = cells[2].text.strip()
+                            
+                            if writer:
+                                writer.writerow([first_name, last_name, date, utr])
+                            else:
+                                print(f"{first_name},{last_name},{date},{utr}")
+                    except Exception as e:
+                        logger.error(f"Error processing history row: {str(e)}")
+                        continue
+                
+            except Exception as e:
+                logger.error(f"Error scraping profile {profile_id}: {str(e)}")
+                continue
+                
     except Exception as e:
-        print(f"Error during scraping: {str(e)}")
-        if driver:
-            driver.quit()
+        logger.error(f"Error in scrape_utr_history: {str(e)}")
         raise
     finally:
         if driver:
             driver.quit()
-###
