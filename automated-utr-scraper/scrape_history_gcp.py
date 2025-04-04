@@ -34,14 +34,16 @@ csv_buffer = io.StringIO()
 writer = csv.writer(csv_buffer) # take file like object (csv_buffer) and prepares it for writing
 writer.writerow(['f_name', 'l_name', 'date', 'utr']) # write headers to csv
 
-def upload_to_gcs(bucket_name, source_file_name, destination_blob_name):
+def upload_to_gcs(source_file_name, destination_blob_name):
     """Uploads a file to the bucket."""
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
-    blob = bucket.blob(destination_blob_name)
-    logger.info(f"Starting upload of {source_file_name} to {bucket_name}")
-    blob.upload_from_filename(source_file_name)
-    logger.info(f"Successfully uploaded {source_file_name} to {bucket_name}")
+    try:
+        blob = bucket.blob(destination_blob_name)
+        logger.info(f"Starting upload of {source_file_name} to {BUCKET_NAME}")
+        blob.upload_from_filename(source_file_name)
+        logger.info(f"Successfully uploaded {source_file_name} to {BUCKET_NAME}")
+    except Exception as e:
+        logger.error(f"Error uploading file: {str(e)}")
+        save_logs_to_gcs(f"Error uploading file: {str(e)}")
 
 def save_logs_to_gcs(log_message):
     """Saves log messages to a file in GCS."""
@@ -136,33 +138,22 @@ with open(output_file, 'w', newline='') as f:
     writer.writerow(['First Name', 'Last Name', 'Date', 'UTR'])
     
     try:
-        # Process profiles in smaller batches
-        batch_size = 10
-        total_profiles = len(profile_ids)
+        # Process all profiles in one go
+        logger.info(f"Processing {len(profile_ids)} profiles")
+        save_logs_to_gcs(f"Processing {len(profile_ids)} profiles")
         
-        for i in range(0, total_profiles, batch_size):
-            batch_end = min(i + batch_size, total_profiles)
-            logger.info(f"Processing profiles {i+1} to {batch_end} of {total_profiles}")
-            save_logs_to_gcs(f"Processing profiles {i+1} to {batch_end} of {total_profiles}")
-            
-            # Check if we're approaching the timeout
-            elapsed_time = time.time() - start_time
-            if elapsed_time > 3540:  # 59 minutes
-                logger.warning("Approaching timeout, saving progress...")
-                save_logs_to_gcs("Approaching timeout, saving progress...")
-                break
-            
-            scrape_utr_history(profile_ids.iloc[i:batch_end], email, password, 
-                             offset=0, stop=-1, writer=writer)
-            
-            # Upload progress after each batch
-            try:
-                upload_to_gcs(bucket_name, output_file, 'utr_history.csv')
-                logger.info(f"Successfully uploaded batch {i//batch_size + 1}")
-                save_logs_to_gcs(f"Successfully uploaded batch {i//batch_size + 1}")
-            except Exception as e:
-                logger.error(f"Error uploading batch: {str(e)}")
-                save_logs_to_gcs(f"Error uploading batch: {str(e)}")
+        # Scrape UTR history for all profiles
+        scrape_utr_history(profile_ids, email, password, 
+                          offset=0, stop=-1, writer=writer)
+        
+        # Upload results
+        try:
+            upload_to_gcs(output_file, 'utr_history.csv')
+            logger.info("Successfully uploaded results")
+            save_logs_to_gcs("Successfully uploaded results")
+        except Exception as e:
+            logger.error(f"Error uploading results: {str(e)}")
+            save_logs_to_gcs(f"Error uploading results: {str(e)}")
         
         logger.info("Scraping completed successfully")
         save_logs_to_gcs("Scraping completed successfully")
@@ -172,7 +163,7 @@ with open(output_file, 'w', newline='') as f:
         save_logs_to_gcs(f"Error during scraping: {str(e)}")
         # Try to upload partial results
         try:
-            upload_to_gcs(bucket_name, output_file, 'utr_history.csv')
+            upload_to_gcs(output_file, 'utr_history.csv')
             logger.info("Uploaded partial results")
             save_logs_to_gcs("Uploaded partial results")
         except Exception as upload_error:

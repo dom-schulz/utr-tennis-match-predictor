@@ -15,6 +15,7 @@ import numpy as np
 from datetime import datetime
 import random
 from dateutil.relativedelta import relativedelta
+import os
 
 '''
 NOTES:
@@ -285,8 +286,22 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
 
 ### Get UTR History ###
 def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
-    # Initialize the Selenium WebDriver (make sure you have the appropriate driver installed)
-    driver = webdriver.Chrome()
+    # Set up Chrome options for headless operation in Docker
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--window-size=1920,1080')
+    chrome_options.add_argument('--disable-extensions')
+    chrome_options.add_argument('--disable-infobars')
+    
+    # Chrome binary location
+    if os.environ.get('CHROME_BIN'):
+        chrome_options.binary_location = os.environ.get('CHROME_BIN')
+    
+    # Initialize the Selenium WebDriver with options
+    driver = webdriver.Chrome(options=chrome_options)
     url = 'https://app.utrsports.net/'
 
     sign_in(driver, url, email, password)
