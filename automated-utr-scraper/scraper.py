@@ -17,6 +17,7 @@ import random
 from dateutil.relativedelta import relativedelta
 import pandas as pd
 import os
+import tempfile
 
 '''
 NOTES:
@@ -95,14 +96,24 @@ def scroll_page(driver):
 
 ### Get UTR Rating ###
 def scrape_player_matches(profile_ids, utr_history, matches, email, password, offset=0, stop=1, writer=None):
+    # Create a unique temp directory for Chrome user data
+    import time
+    import tempfile
+    unique_id = str(int(time.time()))
+    temp_dir = tempfile.mkdtemp(prefix=f"chrome_temp_{unique_id}_")
+    print(f"Created temporary user data directory: {temp_dir}")
+    
     # Initialize the Selenium WebDriver with proper Docker container settings
+    print("Setting up Chrome options...")
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument('--disable-gpu')
     chrome_options.add_argument('--window-size=1920,1080')
-    chrome_options.add_argument('--remote-debugging-port=9222')
+    
+    # Use the unique temp directory for user data
+    chrome_options.add_argument(f'--user-data-dir={temp_dir}')
     chrome_options.add_argument('--disable-extensions')
     chrome_options.add_argument('--disable-setuid-sandbox')
     
@@ -112,16 +123,31 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
     chrome_options.add_argument('--ignore-certificate-errors')
     
     # Set binary location explicitly based on Docker environment
-    chrome_binary = os.environ.get('CHROME_BIN', '/usr/local/bin/chrome/chrome')
+    chrome_binary = os.environ.get('CHROME_BIN', '/usr/bin/google-chrome-stable')
+    print(f"Setting Chrome binary location to: {chrome_binary}")
     chrome_options.binary_location = chrome_binary
     
     # Create a service object
     chrome_driver_path = os.environ.get('CHROME_DRIVER', '/usr/local/bin/chromedriver')
+    print(f"Setting ChromeDriver path to: {chrome_driver_path}")
     chrome_service = ChromeService(executable_path=chrome_driver_path)
     
     # Initialize driver with service and options
-    driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
-    
+    print("Initializing Chrome driver for player matches...")
+    try:
+        driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+        print("Chrome driver initialized successfully!")
+    except Exception as e:
+        print(f"ERROR initializing Chrome driver: {str(e)}")
+        # Clean up temp directory
+        try:
+            import shutil
+            if os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir, ignore_errors=True)
+        except:
+            pass
+        raise
+        
     url = 'https://app.utrsports.net/'
     today = date.today()
 
@@ -306,8 +332,16 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
 
                 writer.writerow(data_row)
 
-    # Close the driver
+    # Close the driver and clean up temp directories
     driver.quit()
+    # Clean up temp directories
+    try:
+        import shutil
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir, ignore_errors=True)
+        print("Cleaned up temporary directories")
+    except Exception as e:
+        print(f"Warning: Could not clean up temp directories: {str(e)}")
 ###
 
 ### Get UTR History ###
@@ -320,6 +354,11 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
     print(f"Chrome binary exists: {os.path.exists('/usr/local/bin/chrome/chrome')}")
     print(f"ChromeDriver exists: {os.path.exists('/usr/local/bin/chromedriver')}")
     
+    # Create a unique temp directory for Chrome user data
+    unique_id = str(int(time.time()))
+    temp_dir = tempfile.mkdtemp(prefix=f"chrome_temp_{unique_id}_")
+    print(f"Created temporary user data directory: {temp_dir}")
+    
     # Initialize the Selenium WebDriver with proper Docker container settings
     print("Setting up Chrome options...")
     chrome_options = webdriver.ChromeOptions()
@@ -328,7 +367,9 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument('--disable-gpu')
     chrome_options.add_argument('--window-size=1920,1080')
-    chrome_options.add_argument('--remote-debugging-port=9222')
+    
+    # Use the unique temp directory for user data
+    chrome_options.add_argument(f'--user-data-dir={temp_dir}')
     chrome_options.add_argument('--disable-extensions')
     chrome_options.add_argument('--disable-setuid-sandbox')
     
@@ -337,8 +378,11 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
     chrome_options.add_argument('--disable-browser-side-navigation')
     chrome_options.add_argument('--ignore-certificate-errors')
     
+    # Remove remote-debugging-port to avoid conflicts
+    # chrome_options.add_argument('--remote-debugging-port=9222')
+    
     # Set binary location explicitly based on Docker environment
-    chrome_binary = os.environ.get('CHROME_BIN', '/usr/local/bin/chrome/chrome')
+    chrome_binary = os.environ.get('CHROME_BIN', '/usr/bin/google-chrome-stable')
     print(f"Setting Chrome binary location to: {chrome_binary}")
     chrome_options.binary_location = chrome_binary
     
@@ -357,12 +401,34 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
         # Try a different approach if that fails
         try:
             print("Trying alternative initialization approach...")
+            # Create a new unique temp directory
+            temp_dir_alt = tempfile.mkdtemp(prefix=f"chrome_temp_alt_{unique_id}_")
+            print(f"Created alternative temporary directory: {temp_dir_alt}")
+            
+            # Update the user-data-dir
+            chrome_options = webdriver.ChromeOptions()
+            chrome_options.add_argument('--headless')
+            chrome_options.add_argument('--no-sandbox')
+            chrome_options.add_argument('--disable-dev-shm-usage')
+            chrome_options.add_argument(f'--user-data-dir={temp_dir_alt}')
+            chrome_options.add_argument('--disable-gpu')
+            chrome_options.binary_location = chrome_binary
+            
             from selenium.webdriver.chrome.service import Service
             service = Service(executable_path=chrome_driver_path)
             driver = webdriver.Chrome(service=service, options=chrome_options)
             print("Alternative initialization successful!")
         except Exception as e2:
             print(f"Alternative initialization also failed: {str(e2)}")
+            # Clean up temp directories
+            try:
+                import shutil
+                if os.path.exists(temp_dir):
+                    shutil.rmtree(temp_dir, ignore_errors=True)
+                if os.path.exists(temp_dir_alt):
+                    shutil.rmtree(temp_dir_alt, ignore_errors=True)
+            except:
+                pass
             raise
     
     url = 'https://app.utrsports.net/'
@@ -494,8 +560,18 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
 
     print(f"Total data rows collected: {len(data_rows)}")
     
-    # Close the driver
+    # Close the driver and clean up temp directories
     driver.quit()
+    # Clean up temp directories
+    try:
+        import shutil
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir, ignore_errors=True)
+        if 'temp_dir_alt' in locals() and os.path.exists(temp_dir_alt):
+            shutil.rmtree(temp_dir_alt, ignore_errors=True)
+        print("Cleaned up temporary directories")
+    except Exception as e:
+        print(f"Warning: Could not clean up temp directories: {str(e)}")
     
     # Create and return DataFrame
     df_result = pd.DataFrame(data_rows, columns=['first_name', 'last_name', 'date', 'utr'])
