@@ -32,10 +32,15 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
 RUN echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
 RUN apt-get update && apt-get install -y google-chrome-stable
 
-# Install specific compatible version of ChromeDriver
-RUN CHROME_VERSION=$(google-chrome-stable --version | grep -oP '(?<=Google Chrome )[0-9]+') \
-    && echo "Chrome version: $CHROME_VERSION" \
-    && wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/120.0.6099.109/linux64/chromedriver-linux64.zip" \
+# Get Chrome version and install matching ChromeDriver
+RUN CHROME_MAJOR_VERSION=$(google-chrome-stable --version | grep -oP '(?<=Google Chrome )[0-9]+') \
+    && echo "Chrome major version: $CHROME_MAJOR_VERSION" \
+    && if [ "$CHROME_MAJOR_VERSION" = "135" ]; then \
+         wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/135.0.7049.52/linux64/chromedriver-linux64.zip"; \
+       else \
+         LATEST_DRIVER_URL=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_$CHROME_MAJOR_VERSION") \
+         && wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$LATEST_DRIVER_URL/linux64/chromedriver-linux64.zip"; \
+       fi \
     && unzip chromedriver-linux64.zip \
     && mv chromedriver-linux64/chromedriver /usr/local/bin/ \
     && chmod +x /usr/local/bin/chromedriver \
