@@ -29,6 +29,10 @@ sudo docker pull us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo
 sudo docker stop $(sudo docker ps -a -q --filter "name=utr-scraper" 2>/dev/null) 2>/dev/null || true
 sudo docker rm $(sudo docker ps -a -q --filter "name=utr-scraper" 2>/dev/null) 2>/dev/null || true
 
+# Remove any previous shutdown signal if it exists
+gsutil rm -f gs://utr_scraper_bucket/shutdown_signal.txt 2>/dev/null || true
+echo "Removed any previous shutdown signals"
+
 # Starting container with image
 echo "Starting container with image: us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo/utr-scraper-image:latest"
 sudo docker run -d --name utr-scraper \
@@ -39,4 +43,56 @@ sudo docker run -d --name utr-scraper \
     us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo/utr-scraper-image:latest
 
 # Output container logs
-echo "Container started. To view logs, run: sudo docker logs utr-scraper" 
+echo "Container started. To view logs, run: sudo docker logs utr-scraper"
+
+# Start monitoring loop to check for shutdown signal
+echo "Starting shutdown signal monitor"
+
+# Create a background job that checks for the shutdown signal
+(
+    # Loop until shutdown signal is found or 8 hours pass (as a safety measure)
+    START_TIME=$(date +%s)
+    MAX_RUNTIME=$((8 * 60 * 60))  # 8 hours in seconds
+    
+    while true; do
+        # Check if the signal file exists
+        if gsutil -q stat gs://utr_scraper_bucket/shutdown_signal.txt; then
+            echo "Shutdown signal detected. Shutting down VM..."
+            
+            # Download the signal file to log its contents
+            gsutil cp gs://utr_scraper_bucket/shutdown_signal.txt /tmp/shutdown_signal.txt
+            echo "Signal file contents:"
+            cat /tmp/shutdown_signal.txt
+            
+            # Delete the signal file so it doesn't affect future runs
+            echo "Deleting shutdown signal file..."
+            gsutil rm gs://utr_scraper_bucket/shutdown_signal.txt
+            
+            # Stop the container gracefully
+            echo "Stopping Docker container..."
+            sudo docker stop utr-scraper
+            
+            # Shutdown the VM
+            echo "Shutting down VM in 30 seconds..."
+            sudo shutdown -h +1
+            
+            # Exit the loop
+            break
+        fi
+        
+        # Check if max runtime exceeded
+        CURRENT_TIME=$(date +%s)
+        ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+        if [ $ELAPSED_TIME -gt $MAX_RUNTIME ]; then
+            echo "Maximum runtime of 8 hours exceeded. Shutting down VM..."
+            sudo shutdown -h +1
+            break
+        fi
+        
+        # Wait for 2 minutes before checking again
+        sleep 120
+    done
+) &
+
+# Log that monitoring has started
+echo "Shutdown signal monitor started in background" 
