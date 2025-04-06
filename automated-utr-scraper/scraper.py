@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import time
 import csv
@@ -7,8 +8,7 @@ from datetime import date
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 import numpy as np
@@ -17,7 +17,12 @@ import random
 from dateutil.relativedelta import relativedelta
 import pandas as pd
 import os
-import tempfile
+import logging
+import traceback
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 '''
 NOTES:
@@ -31,105 +36,67 @@ NOTES:
         * ...
 '''
 
+# Function to get configured Chrome options for headless mode in Docker
+def get_chrome_options():
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--window-size=1920,1080")
+    
+    # Add user agent to avoid detection
+    chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+    
+    # Disable images to save bandwidth and speed up scraping
+    prefs = {"profile.managed_default_content_settings.images": 2}
+    chrome_options.add_experimental_option("prefs", prefs)
+    
+    logger.info("Chrome options configured for headless mode")
+    return chrome_options
+
 ### Sign In UTR ###
 def sign_in(driver, log_in_url, email, password):
-    driver.get(log_in_url)
-
-    time.sleep(2)  # Wait longer for the page to load completely
-    
-    # First try to handle OneTrust cookie banner if it exists
+    logger.info(f"Attempting to sign in to UTR with email: {email[:3]}***")
     try:
-        print("Looking for cookie consent banner...")
-        # Try to find the cookie accept button by various possible selectors
-        cookie_buttons = [
-            (By.ID, "onetrust-accept-btn-handler"),
-            (By.XPATH, "//button[contains(@id, 'onetrust-accept')]"),
-            (By.XPATH, "//button[contains(text(), 'Accept')]"),
-            (By.XPATH, "//button[contains(text(), 'I agree')]"),
-            (By.XPATH, "//button[contains(@class, 'onetrust-close-btn-handler')]"),
-            (By.XPATH, "//div[@id='onetrust-button-group']//button"),
-            (By.CSS_SELECTOR, "#onetrust-banner-sdk .ot-sdk-container button")
-        ]
-        
-        for selector_type, selector in cookie_buttons:
-            try:
-                cookie_button = driver.find_element(selector_type, selector)
-                print(f"Found cookie button with selector: {selector_type}={selector}")
-                # Try to click using JavaScript which is more reliable
-                driver.execute_script("arguments[0].click();", cookie_button)
-                print("Clicked cookie consent button")
-                time.sleep(1)
-                break
-            except Exception as e:
-                print(f"Cookie button not found with {selector_type}={selector}")
-                continue
-        
-        # If we can't find specific buttons, try to close the banner with JavaScript
-        try:
-            driver.execute_script("""
-                // Try to close OneTrust banner using its JavaScript API if available
-                if (typeof OneTrust !== 'undefined') {
-                    OneTrust.Close();
-                }
-                // Try to remove the banner elements directly
-                const banners = [
-                    document.getElementById('onetrust-banner-sdk'),
-                    document.getElementById('onetrust-consent-sdk')
-                ];
-                banners.forEach(banner => {
-                    if (banner) banner.remove();
-                });
-            """)
-            print("Attempted to close cookie banner with JavaScript")
-            time.sleep(1)
-        except Exception as e:
-            print(f"JavaScript banner removal failed: {e}")
-    
-    except Exception as e:
-        print(f"Error handling cookie banner: {e}")
+        driver.get(log_in_url)
+        time.sleep(2)  # Increased from 1 to ensure page loads
 
-    # Now try to log in
-    try:
-        print("Finding login elements...")
+        # Verify page loaded correctly
+        page_source = driver.page_source
+        if "emailInput" not in page_source:
+            logger.error("Login page elements not found. Page source: " + page_source[:200] + "...")
+            raise Exception("Login page not loaded correctly")
+        
         email_box = driver.find_element(By.ID, 'emailInput')
         password_box = driver.find_element(By.ID, 'passwordInput')
         login_button = driver.find_element(By.CSS_SELECTOR, 'button.btn.btn-primary.btn-xl.btn-block')
 
-        print("Entering credentials...")
+        email_box.clear()  # Clear in case there's text
         email_box.send_keys(email)
+        logger.info("Email entered successfully")
+        
+        password_box.clear()  # Clear in case there's text
         password_box.send_keys(password)
-        time.sleep(1)
+        logger.info("Password entered successfully")
         
-        # Try to use JavaScript to click the button as it's more reliable
-        print("Clicking login button with JavaScript...")
-        driver.execute_script("arguments[0].click();", login_button)
+        time.sleep(0.5)
+        login_button.click()
+        logger.info("Login button clicked")
         
-        # If JavaScript click fails, try a direct click as fallback
-        try:
-            time.sleep(0.5)
-            # Check if we're still on the login page
-            if "login" in driver.current_url.lower():
-                print("JavaScript click may have failed, trying direct click...")
-                login_button.click()
-        except Exception as e:
-            print(f"Direct click fallback failed: {e}")
-            
-        print("Login attempted")
-        time.sleep(3.5)  # Wait longer to ensure login completes
-    
-    except Exception as e:
-        print(f"Error during login process: {e}")
-        print("Page source:")
-        print(driver.page_source[:1000] + "..." if len(driver.page_source) > 1000 else driver.page_source)
-        
-    # Verify login was successful
-    try:
-        if "login" in driver.current_url.lower():
-            print("WARNING: Still on login page, login may have failed")
+        # Wait longer for login to complete - especially important in headless mode
+        time.sleep(4)  # Increased from 2.5
+
+        # Verify login success by checking for elements that would only appear post-login
+        if "Sign Out" in driver.page_source or "My Account" in driver.page_source:
+            logger.info("Login successful")
         else:
-            print("Successfully navigated away from login page")
-    except:
-        pass
+            logger.warning("Login might have failed - typical post-login elements not found")
+            logger.warning("Current URL after login attempt: " + driver.current_url)
+    except Exception as e:
+        logger.error(f"Error during sign in: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise
 
 ### URL Modification ###
 def edit_url(city, state, lat, long):
@@ -161,80 +128,68 @@ def collect_scores(all_scores):
 
 ### Loads The Page ###
 def load_page(driver, url):
-    driver.get(url)
-    time.sleep(1)
+    logger.info(f"Loading page: {url}")
+    try:
+        driver.get(url)
+        time.sleep(2)  # Increased from 1 for more reliable loading
+        logger.info(f"Page loaded successfully: {url[:60]}...")
+        return True
+    except Exception as e:
+        logger.error(f"Error loading page {url}: {str(e)}")
+        logger.error(traceback.format_exc())
+        return False
 ###
 
 ### Scrolls The Page ###
 def scroll_page(driver):
-    previous_height = driver.execute_script("return document.body.scrollHeight")
-    while True:
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(0.5)
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == previous_height:
-            break
-        previous_height = new_height
+    logger.info("Starting page scroll")
+    try:
+        previous_height = driver.execute_script("return document.body.scrollHeight")
+        scroll_count = 0
+        max_scrolls = 10  # Limit scrolls to prevent infinite loops
+        
+        while scroll_count < max_scrolls:
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(0.5)
+            new_height = driver.execute_script("return document.body.scrollHeight")
+            
+            if new_height == previous_height:
+                logger.info(f"Scrolling complete after {scroll_count+1} scrolls")
+                break
+                
+            previous_height = new_height
+            scroll_count += 1
+            
+        if scroll_count >= max_scrolls:
+            logger.warning("Reached maximum scroll limit - page may not be fully loaded")
+    except Exception as e:
+        logger.error(f"Error during page scrolling: {str(e)}")
+        logger.error(traceback.format_exc())
 ###
 
 ### Get UTR Rating ###
 def scrape_player_matches(profile_ids, utr_history, matches, email, password, offset=0, stop=1, writer=None):
-    # Create a unique temp directory for Chrome user data
-    import time
-    import tempfile
-    unique_id = str(int(time.time()))
-    temp_dir = tempfile.mkdtemp(prefix=f"chrome_temp_{unique_id}_")
-    print(f"Created temporary user data directory: {temp_dir}")
+    # Initialize the Selenium WebDriver with headless options for Docker
+    logger.info("Initializing Chrome driver for player matches scraping")
+    chrome_options = get_chrome_options()
     
-    # Initialize the Selenium WebDriver with proper Docker container settings
-    print("Setting up Chrome options...")
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage')
-    chrome_options.add_argument('--disable-gpu')
-    chrome_options.add_argument('--window-size=1920,1080')
-    
-    # Use the unique temp directory for user data
-    chrome_options.add_argument(f'--user-data-dir={temp_dir}')
-    chrome_options.add_argument('--disable-extensions')
-    chrome_options.add_argument('--disable-setuid-sandbox')
-    
-    # Add these for Docker environment
-    chrome_options.add_argument('--single-process')
-    chrome_options.add_argument('--disable-browser-side-navigation')
-    chrome_options.add_argument('--ignore-certificate-errors')
-    
-    # Set binary location explicitly based on Docker environment
-    chrome_binary = os.environ.get('CHROME_BIN', '/usr/bin/google-chrome-stable')
-    print(f"Setting Chrome binary location to: {chrome_binary}")
-    chrome_options.binary_location = chrome_binary
-    
-    # Create a service object
-    chrome_driver_path = os.environ.get('CHROME_DRIVER', '/usr/local/bin/chromedriver')
-    print(f"Setting ChromeDriver path to: {chrome_driver_path}")
-    chrome_service = ChromeService(executable_path=chrome_driver_path)
-    
-    # Initialize driver with service and options
-    print("Initializing Chrome driver for player matches...")
     try:
-        driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
-        print("Chrome driver initialized successfully!")
+        driver = webdriver.Chrome(options=chrome_options)
+        logger.info("Chrome driver initialized successfully")
     except Exception as e:
-        print(f"ERROR initializing Chrome driver: {str(e)}")
-        # Clean up temp directory
-        try:
-            import shutil
-            if os.path.exists(temp_dir):
-                shutil.rmtree(temp_dir, ignore_errors=True)
-        except:
-            pass
-        raise
+        logger.error(f"Failed to initialize Chrome driver: {str(e)}")
+        logger.error(traceback.format_exc())
+        return None
         
     url = 'https://app.utrsports.net/'
     today = date.today()
 
-    sign_in(driver, url, email, password)
+    try:
+        sign_in(driver, url, email, password)
+    except Exception as e:
+        logger.error(f"Sign in failed, aborting scraping: {str(e)}")
+        driver.quit()
+        return None
 
     y = 1
     for i in range(len(profile_ids)):
@@ -246,16 +201,22 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
 
         try:
             search_url = f"https://app.utrsports.net/profiles/{round(profile_ids['p_id'][i+offset])}"
-        except:
+            logger.info(f"Processing profile {i+1}/{len(profile_ids)}: ID {profile_ids['p_id'][i+offset]}")
+        except Exception as e:
+            logger.error(f"Error accessing profile ID at index {i+offset}: {str(e)}")
             continue
 
-        load_page(driver, search_url)
+        if not load_page(driver, search_url):
+            logger.warning(f"Skipping profile {profile_ids['p_id'][i+offset]} due to page load failure")
+            continue
             
         scroll_page(driver)
 
         # Now that the page is rendered, parse the page with BeautifulSoup
+        logger.info("Parsing page content with BeautifulSoup")
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         tournaments = soup.find_all("div", class_="eventItem__eventItem__2Xpsd")
+        logger.info(f"Found {len(tournaments)} tournaments for profile {profile_ids['p_id'][i+offset]}")
        
         '''
         For each tournament, grab the data specified from each match in the tournament.
@@ -265,6 +226,7 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
             try:
                 tourney_name = tourney.find("span", class_="").text
             except:
+                logger.warning("Could not find tournament name, skipping")
                 continue
           
             if ',' in tourney_name:
@@ -301,370 +263,307 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
                     tourney_name = tourney_name[1:]
 
             matches = tourney.find_all("div", class_="d-none d-md-block")
+            logger.info(f"Found {len(matches)} matches in tournament: {tourney_name}")
 
             for match in matches:
-                tround = match.find("div", class_="scorecard__header__2iDdF").text
-                r = ''
-                for j in range(len(tround)):
-                    if tround[-j-1] != '|':
-                        r = tround[-1*j-1] + r
+                try:
+                    tround = match.find("div", class_="scorecard__header__2iDdF").text
+                    r = ''
+                    for j in range(len(tround)):
+                        if tround[-j-1] != '|':
+                            r = tround[-1*j-1] + r
+                        else:
+                            r = r[1:]
+                            break
+                    
+                    start = -1
+                    end = -1
+                    for j in range(len(tround)):
+                        if tround[j] == '|' and start == -1:
+                            start = j
+                        elif tround[j] == '|' and start != -1:
+                            end = j
+                    if end == -1:
+                        match_date_str = tround[(start+2):j]
                     else:
-                        r = r[1:]
-                        break
-                
-                start = -1
-                end = -1
-                for j in range(len(tround)):
-                    if tround[j] == '|' and start == -1:
-                        start = j
-                    elif tround[j] == '|' and start != -1:
-                        end = j
-                if end == -1:
-                    match_date_str = tround[(start+2):j]
-                else:
-                    match_date_str = tround[(start+2):(end-1)]
+                        match_date_str = tround[(start+2):(end-1)]
 
-                match_date = datetime.strptime(match_date_str, "%b %d").replace(year=datetime.now().year).date()
-                if match_date > today:
-                    match_date = match_date - relativedelta(year=datetime.now().year-1)
+                    match_date = datetime.strptime(match_date_str, "%b %d").replace(year=datetime.now().year).date()
+                    if match_date > today:
+                        match_date = match_date - relativedelta(year=datetime.now().year-1)
 
-                data_row = [tourney_name, match_date, slam, 'Outdoor', surface, r]
-                is_tie = False
+                    data_row = [tourney_name, match_date, slam, 'Outdoor', surface, r]
+                    is_tie = False
 
-                try:
-                    winner_name = match.find("a", class_="flex-column player-name winner").text # throws error when TIE (COLLEGE MATCHES)
-                    loser_name = match.find("a", class_="flex-column player-name").text
-                except:
-                    tie = match.find_all("a", class_="flex-column player-name")
-                    winner_name, loser_name = tie[0].text, tie[1].text
-                    is_tie = True
-
-                try:
-                    temp = False
-                    for utrdata in utr_history[winner_name]:
-                        if datetime.strptime(utrdata[1], '%Y-%m-%d').date() <= match_date:
-                            w_utr = utrdata[0]
-                            temp = True
-                            break
-                    if not temp:
-                        w_utr = utr_history[winner_name][len(utr_history[winner_name])-1][0]
-                    temp = False
-                    for utrdata in utr_history[loser_name]:
-                        if datetime.strptime(utrdata[1], '%Y-%m-%d').date() <= match_date:
-                            l_utr = utrdata[0]
-                            temp = True
-                            break
-                    if not temp:
-                        l_utr = utr_history[loser_name][len(utr_history[loser_name])-1][0]
-                except:
-                    continue
-
-                all_scores = match.find_all("div", "score-item")
-                score, p1_games, p2_games = collect_scores(all_scores)
-                score = score if score else 'W'
-                if score == 'W':
-                    continue
-
-                sets = 0
-                num_sets = 0
-                for j in range(len(score)):
-                    if j % 4 == 0:
-                        num_sets += 1
-                        try:
-                            if int(score[j]) > int(score[j+2]):
-                                sets += 1
-                            else:
-                                sets -= 1
-                        except:
+                    try:
+                        winner_name = match.find("a", class_="flex-column player-name winner").text # throws error when TIE (COLLEGE MATCHES)
+                        loser_name = match.find("a", class_="flex-column player-name").text
+                    except:
+                        tie = match.find_all("a", class_="flex-column player-name")
+                        if len(tie) >= 2:
+                            winner_name, loser_name = tie[0].text, tie[1].text
+                            is_tie = True
+                        else:
+                            logger.warning("Could not find player names in match, skipping")
                             continue
-                if num_sets < 3:
-                    best_of = 3
-                elif num_sets == 3 and abs(sets) == 1:
-                    best_of = 3
-                else:
-                    best_of = 5
 
-                data_row += [best_of]
+                    try:
+                        temp = False
+                        for utrdata in utr_history[winner_name]:
+                            if datetime.strptime(utrdata[1], '%Y-%m-%d').date() <= match_date:
+                                w_utr = utrdata[0]
+                                temp = True
+                                break
+                        if not temp:
+                            w_utr = utr_history[winner_name][len(utr_history[winner_name])-1][0]
+                        temp = False
+                        for utrdata in utr_history[loser_name]:
+                            if datetime.strptime(utrdata[1], '%Y-%m-%d').date() <= match_date:
+                                l_utr = utrdata[0]
+                                temp = True
+                                break
+                        if not temp:
+                            l_utr = utr_history[loser_name][len(utr_history[loser_name])-1][0]
+                    except Exception as e:
+                        logger.error(f"Error getting UTR data: {str(e)}")
+                        continue
 
-                winner_name1 = ''
-                a = False
-                for ch in winner_name:
-                    if ch == ' ':
-                        a = True
-                    elif a:
-                        winner_name1 = winner_name1 + ch
-                winner_name1 = winner_name1 + ' ' + winner_name[0] + '.'
+                    all_scores = match.find_all("div", "score-item")
+                    score, p1_games, p2_games = collect_scores(all_scores)
+                    score = score if score else 'W'
+                    if score == 'W':
+                        continue
 
-                loser_name1 = ''
-                a = False
-                for ch in loser_name:
-                    if ch == ' ':
-                        a = True
-                    elif a:
-                        loser_name1 = loser_name1 + ch
-                loser_name1 = loser_name1 + ' ' + loser_name[0] + '.'
+                    sets = 0
+                    num_sets = 0
+                    for j in range(len(score)):
+                        if j % 4 == 0:
+                            num_sets += 1
+                            try:
+                                if int(score[j]) > int(score[j+2]):
+                                    sets += 1
+                                else:
+                                    sets -= 1
+                            except:
+                                continue
+                    if num_sets < 3:
+                        best_of = 3
+                    elif num_sets == 3 and abs(sets) == 1:
+                        best_of = 3
+                    else:
+                        best_of = 5
 
-                ri = random.randint(0,1)
-                if ri == 0:
-                    data_row += [winner_name1, w_utr, loser_name1, l_utr, winner_name1, p1_games, p2_games, score, 0]
-                else:
-                    data_row += [loser_name1, l_utr, winner_name1, w_utr, winner_name1, p1_games, p2_games, score, 1]
+                    data_row += [best_of]
 
-                if is_tie:
-                    data_row[-1] = 0.5  # Mark ties properly
+                    winner_name1 = ''
+                    a = False
+                    for ch in winner_name:
+                        if ch == ' ':
+                            a = True
+                        elif a:
+                            winner_name1 = winner_name1 + ch
+                    winner_name1 = winner_name1 + ' ' + winner_name[0] + '.'
 
-                writer.writerow(data_row)
+                    loser_name1 = ''
+                    a = False
+                    for ch in loser_name:
+                        if ch == ' ':
+                            a = True
+                        elif a:
+                            loser_name1 = loser_name1 + ch
+                    loser_name1 = loser_name1 + ' ' + loser_name[0] + '.'
 
-    # Close the driver and clean up temp directories
+                    ri = random.randint(0,1)
+                    if ri == 0:
+                        data_row += [winner_name1, w_utr, loser_name1, l_utr, winner_name1, p1_games, p2_games, score, 0]
+                    else:
+                        data_row += [loser_name1, l_utr, winner_name1, w_utr, winner_name1, p1_games, p2_games, score, 1]
+
+                    if is_tie:
+                        data_row[-1] = 0.5  # Mark ties properly
+
+                    writer.writerow(data_row)
+                    logger.info(f"Processed match: {winner_name} vs {loser_name}")
+                except Exception as e:
+                    logger.error(f"Error processing match: {str(e)}")
+                    logger.error(traceback.format_exc())
+                    continue
+
+    # Close the driver
+    logger.info("Closing Chrome driver after scraping player matches")
     driver.quit()
-    # Clean up temp directories
-    try:
-        import shutil
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir, ignore_errors=True)
-        print("Cleaned up temporary directories")
-    except Exception as e:
-        print(f"Warning: Could not clean up temp directories: {str(e)}")
 ###
 
 ### Get UTR History ###
 def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
-    # Print current environment settings
-    print("=== Chrome Environment Settings ===")
-    print(f"CHROME_BIN: {os.environ.get('CHROME_BIN', 'Not set')}")
-    print(f"CHROME_DRIVER: {os.environ.get('CHROME_DRIVER', 'Not set')}")
-    print(f"Chrome path exists: {os.path.exists('/usr/local/bin/chrome')}")
-    print(f"Chrome binary exists: {os.path.exists('/usr/local/bin/chrome/chrome')}")
-    print(f"ChromeDriver exists: {os.path.exists('/usr/local/bin/chromedriver')}")
+    # Initialize the Selenium WebDriver with headless options for Docker
+    logger.info("Initializing Chrome driver for UTR history scraping")
+    chrome_options = get_chrome_options()
     
-    # Create a unique temp directory for Chrome user data
-    unique_id = str(int(time.time()))
-    temp_dir = tempfile.mkdtemp(prefix=f"chrome_temp_{unique_id}_")
-    print(f"Created temporary user data directory: {temp_dir}")
-    
-    # Initialize the Selenium WebDriver with proper Docker container settings
-    print("Setting up Chrome options...")
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage')
-    chrome_options.add_argument('--disable-gpu')
-    chrome_options.add_argument('--window-size=1920,1080')
-    
-    # Use the unique temp directory for user data
-    chrome_options.add_argument(f'--user-data-dir={temp_dir}')
-    chrome_options.add_argument('--disable-extensions')
-    chrome_options.add_argument('--disable-setuid-sandbox')
-    
-    # Add these for Docker environment
-    chrome_options.add_argument('--single-process')
-    chrome_options.add_argument('--disable-browser-side-navigation')
-    chrome_options.add_argument('--ignore-certificate-errors')
-    
-    # Remove remote-debugging-port to avoid conflicts
-    # chrome_options.add_argument('--remote-debugging-port=9222')
-    
-    # Set binary location explicitly based on Docker environment
-    chrome_binary = os.environ.get('CHROME_BIN', '/usr/bin/google-chrome-stable')
-    print(f"Setting Chrome binary location to: {chrome_binary}")
-    chrome_options.binary_location = chrome_binary
-    
-    # Create a service object
-    chrome_driver_path = os.environ.get('CHROME_DRIVER', '/usr/local/bin/chromedriver')
-    print(f"Setting ChromeDriver path to: {chrome_driver_path}")
-    chrome_service = ChromeService(executable_path=chrome_driver_path)
-    
-    # Initialize driver with service and options
-    print("Initializing Chrome driver...")
     try:
-        driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
-        print("Chrome driver initialized successfully!")
+        driver = webdriver.Chrome(options=chrome_options)
+        logger.info("Chrome driver initialized successfully")
     except Exception as e:
-        print(f"ERROR initializing Chrome driver: {str(e)}")
-        # Try a different approach if that fails
-        try:
-            print("Trying alternative initialization approach...")
-            # Create a new unique temp directory
-            temp_dir_alt = tempfile.mkdtemp(prefix=f"chrome_temp_alt_{unique_id}_")
-            print(f"Created alternative temporary directory: {temp_dir_alt}")
-            
-            # Update the user-data-dir
-            chrome_options = webdriver.ChromeOptions()
-            chrome_options.add_argument('--headless')
-            chrome_options.add_argument('--no-sandbox')
-            chrome_options.add_argument('--disable-dev-shm-usage')
-            chrome_options.add_argument(f'--user-data-dir={temp_dir_alt}')
-            chrome_options.add_argument('--disable-gpu')
-            chrome_options.binary_location = chrome_binary
-            
-            from selenium.webdriver.chrome.service import Service
-            service = Service(executable_path=chrome_driver_path)
-            driver = webdriver.Chrome(service=service, options=chrome_options)
-            print("Alternative initialization successful!")
-        except Exception as e2:
-            print(f"Alternative initialization also failed: {str(e2)}")
-            # Clean up temp directories
-            try:
-                import shutil
-                if os.path.exists(temp_dir):
-                    shutil.rmtree(temp_dir, ignore_errors=True)
-                if os.path.exists(temp_dir_alt):
-                    shutil.rmtree(temp_dir_alt, ignore_errors=True)
-            except:
-                pass
-            raise
+        logger.error(f"Failed to initialize Chrome driver: {str(e)}")
+        logger.error(traceback.format_exc())
+        return pd.DataFrame(columns=['first_name', 'last_name', 'date', 'utr'])
     
+    # Create a list to store data rows
+    data_rows = []
     url = 'https://app.utrsports.net/'
     
-    # Create a list to store the data rows
-    data_rows = []
+    try:
+        sign_in(driver, url, email, password)
+    except Exception as e:
+        logger.error(f"Sign in failed, aborting scraping: {str(e)}")
+        driver.quit()
+        return pd.DataFrame(columns=['first_name', 'last_name', 'date', 'utr'])
+
+    # Determine the actual number of profiles to process
+    if stop == -1:
+        end_idx = len(df)
+    else:
+        end_idx = min(stop, len(df))
     
-    print(f"Starting scrape_utr_history with {len(df)} profiles, stop at {stop}")
+    logger.info(f"Starting UTR history scrape for {end_idx - offset} profiles")
+    
+    # Track progress
+    processed_count = 0
+    success_count = 0
 
-    sign_in(driver, url, email, password)
-
-    for i in range(len(df)):
-        if i == stop:
-            break
-        
-        print(f"Processing profile {i+1}/{min(stop, len(df))}")
-        
+    for i in range(offset, end_idx):
         try:
-            search_url = f"https://app.utrsports.net/profiles/{round(df['p_id'][i+offset])}?t=6"
-            print(f"Profile URL: {search_url}")
+            logger.info(f"Processing profile {i-offset+1}/{end_idx-offset}: {df['f_name'][i]} {df['l_name'][i]}")
+            
+            # Check if profile ID is valid
+            if pd.isna(df['p_id'][i]) or df['p_id'][i] == '':
+                logger.warning(f"Skipping profile with missing ID: {df['f_name'][i]} {df['l_name'][i]}")
+                continue
+                
+            search_url = f"https://app.utrsports.net/profiles/{int(df['p_id'][i])}?t=6"
         except Exception as e:
-            print(f"Error creating search URL: {e}")
+            logger.error(f"Error preparing URL for profile at index {i}: {str(e)}")
             continue
 
-        load_page(driver, search_url)
+        if not load_page(driver, search_url):
+            logger.warning(f"Skipping profile {df['f_name'][i]} {df['l_name'][i]} due to page load failure")
+            processed_count += 1
+            continue
 
-        # Wait longer for the page to load
-        time.sleep(2)
-
+        time.sleep(0.5)  # Increased from 0.25
         scroll_page(driver)
 
-        # Try multiple approaches to click "Show all"
-        show_all_clicked = False
-        
-        # Try finding the element by class and text content instead of link text
+        # Take a screenshot for debugging if needed
         try:
-            time.sleep(1)
-            # Try JavaScript executor to click the element
-            show_all_elements = driver.find_elements(By.XPATH, "//a[contains(@class, 'underline') and contains(text(), 'Show all')]")
-            if show_all_elements:
-                driver.execute_script("arguments[0].scrollIntoView(true);", show_all_elements[0])
-                time.sleep(0.5)
-                driver.execute_script("arguments[0].click();", show_all_elements[0])
-                print("Clicked 'Show all' button using JavaScript")
-                show_all_clicked = True
+            screenshot_path = f"debug_screenshot_{df['f_name'][i]}_{df['l_name'][i]}.png"
+            driver.save_screenshot(screenshot_path)
+            logger.info(f"Saved screenshot to {screenshot_path}")
         except Exception as e:
-            print(f"First attempt to click 'Show all' with JavaScript failed: {e}")
-        
-        # If JavaScript click failed, try direct click
-        if not show_all_clicked:
+            logger.warning(f"Could not save screenshot: {str(e)}")
+
+        # Look for "Show all" button
+        show_all_found = False
+        try:
+            logger.info("Looking for 'Show all' button")
+            time.sleep(1)
+            show_all = driver.find_element(By.LINK_TEXT, 'Show all')
+            show_all.click()
+            logger.info("Clicked 'Show all' button")
+            show_all_found = True
+        except Exception as e:
+            logger.warning(f"First attempt to find 'Show all' button failed: {str(e)}")
+            
             try:
-                time.sleep(1)
+                # Try again with a longer wait
+                logger.info("Making second attempt to find 'Show all' button")
+                time.sleep(3)
                 show_all = driver.find_element(By.LINK_TEXT, 'Show all')
                 show_all.click()
-                print("Clicked 'Show all' button directly")
-                show_all_clicked = True
-            except Exception as e:
-                print(f"Second attempt to click 'Show all' directly failed: {e}")
+                logger.info("Clicked 'Show all' button on second attempt")
+                show_all_found = True
+            except Exception as e2:
+                logger.error(f"Could not find 'Show all' button: {str(e2)}")
+                logger.error(f"Debug info - Current URL: {driver.current_url}")
+                logger.error(f"Page title: {driver.title}")
+                
+                # Check if we're still logged in
+                if "Sign In" in driver.page_source or "Log In" in driver.page_source:
+                    logger.error("Session appears to have expired, attempting to log in again")
+                    try:
+                        sign_in(driver, url, email, password)
+                        # Try loading the profile again
+                        load_page(driver, search_url)
+                    except:
+                        logger.error("Re-login attempt failed")
+                
+                processed_count += 1
+                continue
         
-        # If element not found or not clickable, try to extract whatever UTR history is already visible
-        if not show_all_clicked:
-            print("Could not click 'Show all' button, attempting to extract visible history data...")
-        
-        time.sleep(1.5)
-        scroll_page(driver)
+        if show_all_found:
+            time.sleep(1.5)  # Increased wait time after clicking "Show all"
+            scroll_page(driver)
 
         # Now that the page is rendered, parse the page with BeautifulSoup
+        logger.info("Parsing page content with BeautifulSoup")
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
-        # Try different container class patterns in case the website HTML structure has changed
+        # Debug page content
+        if "UTR History" not in driver.page_source:
+            logger.warning("UTR History section might be missing from the page")
+        
+        # Find the UTR history container
         container = soup.find("div", class_="newStatsTabContent__section__1TQzL p0 bg-transparent")
         
-        if container is None:
-            print("Trying alternative container selectors...")
-            # Try alternative selectors
-            container = soup.find("div", class_=lambda c: c and "newStatsTabContent__section" in c)
+        if not container:
+            logger.warning(f"UTR history container not found for {df['f_name'][i]} {df['l_name'][i]}")
+            processed_count += 1
+            continue
             
-            if container is None:
-                # Try a more generic approach to find history items
-                container = soup.find("div", class_=lambda c: c and "historyItem" in c)
-                
-                if container is None:
-                    print("Warning: Could not find container element on the page")
-                    # Try to get the page source to debug
-                    print("Page HTML structure:")
-                    page_source = driver.page_source
-                    print(page_source[:500] + "..." if len(page_source) > 500 else page_source)
-                    continue
+        utrs = container.find_all("div", class_="row")
+        logger.info(f"Found {len(utrs)} UTR history entries")
         
-        # Try to find UTR history entries with flexible class matching
-        utrs = container.find_all("div", class_=lambda c: c and "row" in c)
-        if not utrs:
-            # Try alternative approaches
-            utrs = container.find_all("div")
+        # Count how many records we're actually collecting
+        record_count = 0
         
-        print(f"Found {len(utrs)} potential UTR history entries")
-        
-        utr_count = 0
         for j in range(len(utrs)):
             if j == 0:
                 continue
                 
             try:
-                # Try multiple possible class names for ratings and dates
-                utr_elem = utrs[j].find("div", class_=lambda c: c and "historyItemRating" in c) or \
-                           utrs[j].find("div", class_=lambda c: c and "Rating" in c)
-                           
-                date_elem = utrs[j].find("div", class_=lambda c: c and "historyItemDate" in c) or \
-                           utrs[j].find("div", class_=lambda c: c and "Date" in c)
+                utr = utrs[j].find("div", class_="newStatsTabContent__historyItemRating__GQUXw").text
+                utr_date = utrs[j].find("div", class_="newStatsTabContent__historyItemDate__jFJyD").text
                 
-                if utr_elem and date_elem:
-                    utr = utr_elem.text
-                    utr_date = date_elem.text
-                    
-                    data_row = [df['f_name'][i+offset], df['l_name'][i+offset], utr_date, utr]
-                    print(f"  UTR entry: {data_row}")
-                    
-                    # Append to data_rows list instead of writing to CSV
-                    data_rows.append(data_row)
-                    utr_count += 1
-                    
-                    # If writer is provided, still write to CSV for backward compatibility
-                    if writer:
-                        writer.writerow(data_row)
+                logger.info(f"Found UTR: {utr} from date: {utr_date}")
+                
+                # Create data row with first_name, last_name (for compatibility with both column naming schemes)
+                data_row = [df['f_name'][i], df['l_name'][i], utr_date, utr]
+                
+                # Add to data rows list
+                data_rows.append(data_row)
+                record_count += 1
+                
+                # If writer is provided, still write to CSV for backward compatibility
+                if writer:
+                    writer.writerow(data_row)
             except Exception as e:
-                print(f"  Error processing UTR entry {j}: {e}")
-        
-        print(f"Added {utr_count} UTR entries for this profile")
+                logger.error(f"Error extracting UTR data from row {j}: {str(e)}")
+                continue
+                
+        logger.info(f"Extracted {record_count} UTR records for {df['f_name'][i]} {df['l_name'][i]}")
+        processed_count += 1
+        if record_count > 0:
+            success_count += 1
 
-    print(f"Total data rows collected: {len(data_rows)}")
-    
-    # Close the driver and clean up temp directories
+    # Close the driver
+    logger.info(f"Closing Chrome driver after scraping UTR history. Processed {processed_count} profiles with {success_count} successful extractions.")
     driver.quit()
-    # Clean up temp directories
-    try:
-        import shutil
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir, ignore_errors=True)
-        if 'temp_dir_alt' in locals() and os.path.exists(temp_dir_alt):
-            shutil.rmtree(temp_dir_alt, ignore_errors=True)
-        print("Cleaned up temporary directories")
-    except Exception as e:
-        print(f"Warning: Could not clean up temp directories: {str(e)}")
     
-    # Create and return DataFrame
-    df_result = pd.DataFrame(data_rows, columns=['first_name', 'last_name', 'date', 'utr'])
-    print(f"DataFrame created with shape: {df_result.shape}")
-    
-    if df_result.empty:
-        print("Warning: DataFrame is empty!")
-    else:
-        print("DataFrame sample:")
-        print(df_result.head())
+    # Create DataFrame from collected data
+    if not data_rows:
+        logger.warning("No UTR history data was collected!")
+        return pd.DataFrame(columns=['first_name', 'last_name', 'date', 'utr'])
         
+    df_result = pd.DataFrame(data_rows, columns=['first_name', 'last_name', 'date', 'utr'])
+    logger.info(f"Created DataFrame with {len(df_result)} total UTR records")
     return df_result
 ###

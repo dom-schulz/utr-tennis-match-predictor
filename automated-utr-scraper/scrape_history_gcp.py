@@ -9,9 +9,10 @@ import logging
 import time
 from google.cloud import compute_v1
 from datetime import datetime
+import traceback
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Set bucket name from environment variable
@@ -37,13 +38,39 @@ writer.writerow(['f_name', 'l_name', 'date', 'utr']) # write headers to csv
 def upload_to_gcs(source_file_name, destination_blob_name):
     """Uploads a file to the bucket."""
     try:
+        # First verify the file exists and has content
+        if not os.path.exists(source_file_name):
+            logger.error(f"File {source_file_name} does not exist")
+            save_logs_to_gcs(f"Error: File {source_file_name} does not exist")
+            return False
+            
+        file_size = os.path.getsize(source_file_name)
+        if file_size == 0:
+            logger.error(f"File {source_file_name} is empty (0 bytes)")
+            save_logs_to_gcs(f"Error: File {source_file_name} is empty (0 bytes)")
+            return False
+            
+        logger.info(f"Starting upload of {source_file_name} ({file_size} bytes) to {BUCKET_NAME}")
+        
+        # Log file content for debugging
+        try:
+            with open(source_file_name, 'r') as f:
+                content_sample = f.read(1000)  # Read first 1000 chars
+                lines = content_sample.count('\n') + 1
+                logger.info(f"File content sample (first {lines} lines): {content_sample[:200]}...")
+                save_logs_to_gcs(f"File content sample: {lines} lines, starts with: {content_sample[:100]}...")
+        except Exception as e:
+            logger.warning(f"Could not read file content: {str(e)}")
+            
         blob = bucket.blob(destination_blob_name)
-        logger.info(f"Starting upload of {source_file_name} to {BUCKET_NAME}")
         blob.upload_from_filename(source_file_name)
-        logger.info(f"Successfully uploaded {source_file_name} to {BUCKET_NAME}")
+        logger.info(f"Successfully uploaded {source_file_name} to {BUCKET_NAME}/{destination_blob_name}")
+        return True
     except Exception as e:
         logger.error(f"Error uploading file: {str(e)}")
+        logger.error(traceback.format_exc())
         save_logs_to_gcs(f"Error uploading file: {str(e)}")
+        return False
 
 def save_logs_to_gcs(log_message):
     """Saves log messages to a file in GCS."""
@@ -66,22 +93,37 @@ def save_logs_to_gcs(log_message):
         logger.info(f"Log saved to GCS: {log_message}")
     except Exception as e:
         logger.error(f"Error saving log to GCS: {str(e)}")
+        logger.error(traceback.format_exc())
 
-# Function kept for compatibility but now it just logs instead of stopping VM
-def stop_instance():
-    """Previously stopped the VM, now just logs for debugging."""
+def debug_profile_ids(profile_data):
+    """Debug helper to check profile data"""
     try:
-        logger.info("VM stopping functionality disabled for debugging")
-        save_logs_to_gcs("VM stopping functionality disabled for debugging")
+        logger.info(f"Profile data columns: {profile_data.columns.tolist()}")
+        logger.info(f"Profile data types: {profile_data.dtypes}")
+        logger.info(f"First few profiles: {profile_data.head(3).to_dict('records')}")
+        
+        # Check for missing values
+        missing_pids = profile_data['p_id'].isna().sum()
+        if missing_pids > 0:
+            logger.warning(f"{missing_pids} profiles have missing p_id values")
+            
+        # Check for data quality
+        logger.info(f"p_id range: {profile_data['p_id'].min()} to {profile_data['p_id'].max()}")
+        return True
     except Exception as e:
-        logger.error(f"Error in stop_instance placeholder: {str(e)}")
-        save_logs_to_gcs(f"Error in stop_instance placeholder: {str(e)}")
+        logger.error(f"Error analyzing profile data: {str(e)}")
+        logger.error(traceback.format_exc())
+        return False
 
 # Start execution
 start_time = time.time()
 logger.info("Starting UTR scraper...")
-logger.info("Script version: 1.0.2 - GCP Debug Execution (VM stop disabled)")
-save_logs_to_gcs("Starting UTR scraper on GCP... (VM stop disabled)")
+logger.info("Script version: 1.0.3 - Enhanced Debugging")
+save_logs_to_gcs("Starting UTR scraper on GCP with enhanced debugging...")
+
+# Save environment variables to log for debugging
+env_vars = {k: v for k, v in os.environ.items() if 'UTR' in k or 'GCS' in k}
+logger.info(f"Environment variables: {env_vars}")
 
 # Get credentials from environment variables
 email = os.environ.get('UTR_EMAIL')
@@ -102,18 +144,46 @@ try:
         logger.error(f"Profile file {LOCAL_PROFILE_FILE} not found in Docker image")
         save_logs_to_gcs(f"Profile file {LOCAL_PROFILE_FILE} not found in Docker image")
         exit(1)
+    
+    logger.info(f"Found profile file: {LOCAL_PROFILE_FILE}")
+    file_size = os.path.getsize(LOCAL_PROFILE_FILE)
+    logger.info(f"Profile file size: {file_size} bytes")
+    
+    # Log file content for debugging
+    with open(LOCAL_PROFILE_FILE, 'r') as f:
+        content = f.read()
+        logger.info(f"Profile file content:\n{content}")
+        save_logs_to_gcs(f"Profile file contains {content.count(chr(10))+1} lines")
         
     # Read the CSV file
     profile_ids = pd.read_csv(LOCAL_PROFILE_FILE)
     
+    # Debug profile data
+    debug_profile_ids(profile_ids)
+    
     # Convert p_id column to integer, handling NaN values
     if 'p_id' in profile_ids.columns:
         # First remove any rows with NaN or empty values in p_id
+        before_count = len(profile_ids)
         profile_ids = profile_ids.dropna(subset=['p_id'])
+        dropped_count = before_count - len(profile_ids)
+        if dropped_count > 0:
+            logger.warning(f"Dropped {dropped_count} rows with missing p_id values")
+            save_logs_to_gcs(f"Dropped {dropped_count} rows with missing p_id values")
+            
         # Then convert to integer
-        profile_ids['p_id'] = profile_ids['p_id'].astype(int)
-        logger.info(f"Converted p_id column to integer type")
-        save_logs_to_gcs(f"Converted p_id column to integer type")
+        try:
+            profile_ids['p_id'] = profile_ids['p_id'].astype(int)
+            logger.info(f"Converted p_id column to integer type")
+            save_logs_to_gcs(f"Converted p_id column to integer type")
+        except Exception as e:
+            logger.error(f"Error converting p_id to integer: {str(e)}")
+            logger.error(profile_ids['p_id'].to_list())
+            save_logs_to_gcs(f"Error converting p_id to integer: {str(e)}")
+    else:
+        logger.error("p_id column not found in profile file")
+        save_logs_to_gcs("p_id column not found in profile file")
+        exit(1)
     
     logger.info(f"Successfully read {len(profile_ids)} profiles from local file")
     save_logs_to_gcs(f"Successfully read {len(profile_ids)} profiles from local file")
@@ -139,6 +209,7 @@ try:
     
 except Exception as e:
     logger.error(f"Error reading profile CSV file: {str(e)}")
+    logger.error(traceback.format_exc())
     save_logs_to_gcs(f"Error reading profile CSV file: {str(e)}")
     exit(1)
 
@@ -149,10 +220,25 @@ output_file = 'utr_history.csv'
 logger.info(f"Processing {len(profile_ids)} profiles")
 save_logs_to_gcs(f"Processing {len(profile_ids)} profiles")
 
-results_df = scrape_utr_history(profile_ids, email, password, 
-                      offset=0, stop=-1, writer=None)
-
 try:
+    # Set stop=-1 to process all profiles (no limit)
+    results_df = scrape_utr_history(profile_ids, email, password, offset=0, stop=-1, writer=None)
+    
+    if results_df is None or len(results_df) == 0:
+        logger.error("Scraping returned empty results")
+        save_logs_to_gcs("Error: Scraping returned empty results")
+        
+        # Create a dummy record for debugging
+        logger.info("Creating dummy record for debugging")
+        dummy_data = {
+            'first_name': ['DEBUG'], 
+            'last_name': ['RECORD'],
+            'date': [datetime.now().strftime('%Y-%m-%d')],
+            'utr': ['0.0']
+        }
+        results_df = pd.DataFrame(dummy_data)
+        save_logs_to_gcs("Created dummy record for debugging purposes")
+    
     # Log the number of records found
     logger.info(f"Scraping completed. Found {len(results_df)} UTR records")
     save_logs_to_gcs(f"Scraping completed. Found {len(results_df)} UTR records")
@@ -161,14 +247,33 @@ try:
     results_df.to_csv(output_file, index=False)
     logger.info(f"Saved {len(results_df)} records to local file {output_file}")
     
+    # Verify the file was created and has content
+    if os.path.exists(output_file):
+        file_size = os.path.getsize(output_file)
+        logger.info(f"Output file size: {file_size} bytes")
+        
+        if file_size == 0:
+            logger.error("Output file is empty (0 bytes)")
+            save_logs_to_gcs("Error: Output file is empty (0 bytes)")
+    else:
+        logger.error(f"Output file {output_file} was not created")
+        save_logs_to_gcs(f"Error: Output file {output_file} was not created")
+    
     # Upload the CSV file to GCS bucket
-    upload_to_gcs(output_file, UPLOAD_FILE_NAME)
-    logger.info(f"Successfully uploaded {output_file} to {BUCKET_NAME}/{UPLOAD_FILE_NAME}")
-    save_logs_to_gcs(f"Successfully uploaded {len(results_df)} records to {BUCKET_NAME}/{UPLOAD_FILE_NAME}")
+    upload_success = upload_to_gcs(output_file, UPLOAD_FILE_NAME)
+    if upload_success:
+        logger.info(f"Successfully uploaded {output_file} to {BUCKET_NAME}/{UPLOAD_FILE_NAME}")
+        save_logs_to_gcs(f"Successfully uploaded {len(results_df)} records to {BUCKET_NAME}/{UPLOAD_FILE_NAME}")
+    else:
+        logger.error("Failed to upload results to GCS")
+        save_logs_to_gcs("Failed to upload results to GCS")
     
 except Exception as e:
-    logger.error(f"Error saving or uploading results: {str(e)}")
-    save_logs_to_gcs(f"Error saving or uploading results: {str(e)}")
+    logger.error(f"Error in scraping or upload process: {str(e)}")
+    logger.error(traceback.format_exc())
+    save_logs_to_gcs(f"Error in scraping or upload process: {str(e)}")
     
-logger.info("Script execution complete, VM will continue running for debugging")
-save_logs_to_gcs("Script execution complete, VM will continue running for debugging") 
+# Calculate execution time
+execution_time = time.time() - start_time
+logger.info(f"Script execution complete. Total time: {execution_time:.2f} seconds")
+save_logs_to_gcs(f"Script execution complete. Total time: {execution_time:.2f} seconds") 
