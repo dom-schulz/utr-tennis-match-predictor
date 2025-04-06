@@ -29,10 +29,6 @@ sudo docker pull us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo
 sudo docker stop $(sudo docker ps -a -q --filter "name=utr-scraper" 2>/dev/null) 2>/dev/null || true
 sudo docker rm $(sudo docker ps -a -q --filter "name=utr-scraper" 2>/dev/null) 2>/dev/null || true
 
-# Remove any previous shutdown signal if it exists
-gsutil rm -f gs://utr_scraper_bucket/shutdown_signal.txt 2>/dev/null || true
-echo "Removed any previous shutdown signals"
-
 # Starting container with image
 echo "Starting container with image: us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo/utr-scraper-image:latest"
 sudo docker run -d --name utr-scraper \
@@ -45,54 +41,92 @@ sudo docker run -d --name utr-scraper \
 # Output container logs
 echo "Container started. To view logs, run: sudo docker logs utr-scraper"
 
-# Start monitoring loop to check for shutdown signal
-echo "Starting shutdown signal monitor"
+# Create a monitoring script and write it to a file
+cat > /tmp/monitor_container.sh << 'EOF'
+#!/bin/bash
 
-# Create a background job that checks for the shutdown signal
-(
-    # Loop until shutdown signal is found or 8 hours pass (as a safety measure)
-    START_TIME=$(date +%s)
-    MAX_RUNTIME=$((8 * 60 * 60))  # 8 hours in seconds
+# Function to log messages
+log_message() {
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> /tmp/monitor.log
+}
+
+# Get instance information
+INSTANCE_NAME=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/name" -H "Metadata-Flavor: Google")
+ZONE=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/zone" -H "Metadata-Flavor: Google" | cut -d/ -f4)
+PROJECT_ID=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/project-id" -H "Metadata-Flavor: Google")
+
+log_message "Starting monitor for container utr-scraper on instance $INSTANCE_NAME in zone $ZONE"
+
+# Default sleep time in seconds
+SLEEP_TIME=60
+CONTAINER_NAME="utr-scraper"
+MAX_RUNTIME_HOURS=4  # Safety measure: max runtime 4 hours
+
+# Get start time in seconds
+START_TIME=$(date +%s)
+MAX_RUNTIME_SECONDS=$((MAX_RUNTIME_HOURS * 3600))
+
+# Monitor the container
+while true; do
+  # Check if container is still running
+  CONTAINER_STATUS=$(sudo docker inspect -f '{{.State.Status}}' $CONTAINER_NAME 2>/dev/null || echo "not found")
+  CONTAINER_RUNNING=$(sudo docker inspect -f '{{.State.Running}}' $CONTAINER_NAME 2>/dev/null || echo "false")
+  
+  # Log current status
+  log_message "Container status: $CONTAINER_STATUS, Running: $CONTAINER_RUNNING"
+  
+  # Calculate elapsed time
+  CURRENT_TIME=$(date +%s)
+  ELAPSED_SECONDS=$((CURRENT_TIME - START_TIME))
+  ELAPSED_HOURS=$((ELAPSED_SECONDS / 3600))
+  ELAPSED_MINUTES=$(((ELAPSED_SECONDS % 3600) / 60))
+  
+  log_message "Elapsed time: ${ELAPSED_HOURS}h ${ELAPSED_MINUTES}m"
+  
+  # Check if container has exited
+  if [ "$CONTAINER_STATUS" = "exited" ] || [ "$CONTAINER_STATUS" = "not found" ]; then
+    log_message "Container has exited or not found, checking exit code..."
     
-    while true; do
-        # Check if the signal file exists
-        if gsutil -q stat gs://utr_scraper_bucket/shutdown_signal.txt; then
-            echo "Shutdown signal detected. Shutting down VM..."
-            
-            # Download the signal file to log its contents
-            gsutil cp gs://utr_scraper_bucket/shutdown_signal.txt /tmp/shutdown_signal.txt
-            echo "Signal file contents:"
-            cat /tmp/shutdown_signal.txt
-            
-            # Delete the signal file so it doesn't affect future runs
-            echo "Deleting shutdown signal file..."
-            gsutil rm gs://utr_scraper_bucket/shutdown_signal.txt
-            
-            # Stop the container gracefully
-            echo "Stopping Docker container..."
-            sudo docker stop utr-scraper
-            
-            # Shutdown the VM
-            echo "Shutting down VM in 30 seconds..."
-            sudo shutdown -h +1
-            
-            # Exit the loop
-            break
-        fi
-        
-        # Check if max runtime exceeded
-        CURRENT_TIME=$(date +%s)
-        ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
-        if [ $ELAPSED_TIME -gt $MAX_RUNTIME ]; then
-            echo "Maximum runtime of 8 hours exceeded. Shutting down VM..."
-            sudo shutdown -h +1
-            break
-        fi
-        
-        # Wait for 2 minutes before checking again
-        sleep 120
-    done
-) &
+    # Get exit code if container exists
+    if [ "$CONTAINER_STATUS" != "not found" ]; then
+      EXIT_CODE=$(sudo docker inspect -f '{{.State.ExitCode}}' $CONTAINER_NAME)
+      log_message "Container exited with code: $EXIT_CODE"
+      
+      # If container exited with success (code 0)
+      if [ "$EXIT_CODE" = "0" ]; then
+        log_message "Container completed successfully. Shutting down VM..."
+        sudo gsutil cp /tmp/monitor.log gs://utr_scraper_bucket/logs/monitor.log
+        sudo gcloud compute instances stop $INSTANCE_NAME --zone=$ZONE --project=$PROJECT_ID
+        exit 0
+      else
+        log_message "Container exited with error. Not shutting down VM to allow debugging."
+        exit 1
+      fi
+    else
+      log_message "Container not found. Shutting down VM..."
+      sudo gsutil cp /tmp/monitor.log gs://utr_scraper_bucket/logs/monitor.log
+      sudo gcloud compute instances stop $INSTANCE_NAME --zone=$ZONE --project=$PROJECT_ID
+      exit 0
+    fi
+  fi
+  
+  # Check if we've exceeded max runtime (safety measure)
+  if [ $ELAPSED_SECONDS -gt $MAX_RUNTIME_SECONDS ]; then
+    log_message "Exceeded maximum runtime of $MAX_RUNTIME_HOURS hours. Shutting down VM..."
+    sudo docker stop $CONTAINER_NAME
+    sudo gsutil cp /tmp/monitor.log gs://utr_scraper_bucket/logs/monitor.log
+    sudo gcloud compute instances stop $INSTANCE_NAME --zone=$ZONE --project=$PROJECT_ID
+    exit 0
+  fi
+  
+  # Wait before checking again
+  sleep $SLEEP_TIME
+done
+EOF
 
-# Log that monitoring has started
-echo "Shutdown signal monitor started in background" 
+# Make the script executable
+chmod +x /tmp/monitor_container.sh
+
+# Start the monitoring script in the background
+nohup /tmp/monitor_container.sh > /tmp/monitor_output.log 2>&1 &
+echo "Started container monitoring script (PID: $!)" 

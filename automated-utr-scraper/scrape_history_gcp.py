@@ -177,27 +177,69 @@ def debug_profile_ids(profile_data):
         logger.error(traceback.format_exc())
         return False
 
-def create_shutdown_signal():
-    """Create a signal file in GCS to indicate the job is complete and VM should shut down."""
+def shutdown_vm():
+    """Shut down the VM instance after the job completes."""
     try:
-        logger.info("Creating shutdown signal in GCS...")
-        save_logs_to_gcs("Creating shutdown signal in GCS...")
+        # First try to get instance name from metadata server
+        logger.info("Attempting to shut down VM...")
+        save_logs_to_gcs("Attempting to shut down VM...")
         
-        # Create a simple text file with timestamp as signal
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        signal_message = f"Job completed at {timestamp}. VM can be shut down."
-        
-        # Upload the signal to a known location in the bucket
-        signal_blob = bucket.blob('shutdown_signal.txt')
-        signal_blob.upload_from_string(signal_message)
-        
-        logger.info("Shutdown signal created successfully in GCS")
-        save_logs_to_gcs("Shutdown signal created successfully in GCS")
-        return True
+        try:
+            # Get instance information from metadata server
+            metadata_url = "http://metadata.google.internal/computeMetadata/v1/instance/"
+            headers = {"Metadata-Flavor": "Google"}
+            
+            # Get instance name and zone
+            instance_name = requests.get(metadata_url + "name", headers=headers).text
+            zone_url = metadata_url + "zone"
+            zone_path = requests.get(zone_url, headers=headers).text
+            project_id = requests.get(metadata_url + "project/project-id", headers=headers).text
+            
+            # Extract just the zone name from the path
+            zone = zone_path.split('/')[-1]
+            
+            logger.info(f"Shutting down VM: {instance_name} in zone {zone}, project {project_id}")
+            save_logs_to_gcs(f"Shutting down VM: {instance_name} in zone {zone}, project {project_id}")
+            
+            # Initialize the Compute Engine API client
+            instances_client = compute_v1.InstancesClient()
+            
+            # Create the stop request
+            operation = instances_client.stop(
+                project=project_id,
+                zone=zone,
+                instance=instance_name
+            )
+            
+            logger.info(f"Stop operation initiated: {operation.name}")
+            save_logs_to_gcs(f"Stop operation initiated: {operation.name}")
+            
+            return True
+        except Exception as e:
+            logger.error(f"Error using metadata server approach: {str(e)}")
+            logger.error(traceback.format_exc())
+            
+            # Fallback to using gcloud command if API fails
+            try:
+                logger.info("Attempting fallback using OS command...")
+                # Try to shutdown using gcloud or equivalent
+                hostname = socket.gethostname()
+                logger.info(f"Hostname: {hostname}")
+                
+                # Use the shutdown command directly
+                os.system("sudo shutdown -h now")
+                logger.info("Shutdown command issued")
+                save_logs_to_gcs("Shutdown command issued via OS command")
+                return True
+            except Exception as e2:
+                logger.error(f"Error in fallback shutdown method: {str(e2)}")
+                logger.error(traceback.format_exc())
+                save_logs_to_gcs(f"Failed to shut down VM: {str(e2)}")
+                return False
     except Exception as e:
-        logger.error(f"Error creating shutdown signal: {str(e)}")
+        logger.error(f"Error in shutdown_vm: {str(e)}")
         logger.error(traceback.format_exc())
-        save_logs_to_gcs(f"Error creating shutdown signal: {str(e)}")
+        save_logs_to_gcs(f"Error in shutdown_vm: {str(e)}")
         return False
 
 # Start execution
@@ -369,13 +411,13 @@ execution_time = time.time() - start_time
 logger.info(f"Script execution complete. Total time: {execution_time:.2f} seconds")
 save_logs_to_gcs(f"Script execution complete. Total time: {execution_time:.2f} seconds")
 
-# Create shutdown signal in GCS
-logger.info("Job complete, creating shutdown signal in GCS...")
-save_logs_to_gcs("Job complete, creating shutdown signal in GCS...")
-shutdown_success = create_shutdown_signal()
+# Shut down the VM
+logger.info("Job complete, shutting down VM...")
+save_logs_to_gcs("Job complete, shutting down VM...")
+shutdown_success = shutdown_vm()
 if shutdown_success:
-    logger.info("Shutdown signal created successfully")
-    save_logs_to_gcs("Shutdown signal created successfully - VM should shut down soon")
+    logger.info("VM shutdown initiated successfully")
+    save_logs_to_gcs("VM shutdown initiated successfully")
 else:
-    logger.error("Failed to create shutdown signal")
-    save_logs_to_gcs("Failed to create shutdown signal - VM may not shut down automatically") 
+    logger.error("Failed to shut down VM")
+    save_logs_to_gcs("Failed to shut down VM") 
