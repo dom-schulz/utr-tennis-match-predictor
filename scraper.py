@@ -312,7 +312,16 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
 
 ### Get UTR History ###
 def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
+    # Print current environment settings
+    print("=== Chrome Environment Settings ===")
+    print(f"CHROME_BIN: {os.environ.get('CHROME_BIN', 'Not set')}")
+    print(f"CHROME_DRIVER: {os.environ.get('CHROME_DRIVER', 'Not set')}")
+    print(f"Chrome path exists: {os.path.exists('/usr/local/bin/chrome')}")
+    print(f"Chrome binary exists: {os.path.exists('/usr/local/bin/chrome/chrome')}")
+    print(f"ChromeDriver exists: {os.path.exists('/usr/local/bin/chromedriver')}")
+    
     # Initialize the Selenium WebDriver with proper Docker container settings
+    print("Setting up Chrome options...")
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
@@ -330,14 +339,31 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
     
     # Set binary location explicitly based on Docker environment
     chrome_binary = os.environ.get('CHROME_BIN', '/usr/local/bin/chrome/chrome')
+    print(f"Setting Chrome binary location to: {chrome_binary}")
     chrome_options.binary_location = chrome_binary
     
     # Create a service object
     chrome_driver_path = os.environ.get('CHROME_DRIVER', '/usr/local/bin/chromedriver')
+    print(f"Setting ChromeDriver path to: {chrome_driver_path}")
     chrome_service = ChromeService(executable_path=chrome_driver_path)
     
     # Initialize driver with service and options
-    driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+    print("Initializing Chrome driver...")
+    try:
+        driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+        print("Chrome driver initialized successfully!")
+    except Exception as e:
+        print(f"ERROR initializing Chrome driver: {str(e)}")
+        # Try a different approach if that fails
+        try:
+            print("Trying alternative initialization approach...")
+            from selenium.webdriver.chrome.service import Service
+            service = Service(executable_path=chrome_driver_path)
+            driver = webdriver.Chrome(service=service, options=chrome_options)
+            print("Alternative initialization successful!")
+        except Exception as e2:
+            print(f"Alternative initialization also failed: {str(e2)}")
+            raise
     
     url = 'https://app.utrsports.net/'
     

@@ -26,19 +26,19 @@ RUN apt-get update && apt-get install -y \
     xdg-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Chrome for Testing
-RUN wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/120.0.6099.109/linux64/chrome-linux64.zip" \
-    && unzip chrome-linux64.zip \
-    && mv chrome-linux64 /usr/local/bin/chrome \
-    && rm chrome-linux64.zip \
-    && chmod -R 755 /usr/local/bin/chrome
+# Install Chrome
+RUN apt-get update && apt-get install -y wget gnupg2 apt-transport-https ca-certificates
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+RUN echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
+RUN apt-get update && apt-get install -y google-chrome-stable
 
 # Install ChromeDriver
-RUN wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/120.0.6099.109/linux64/chromedriver-linux64.zip" \
-    && unzip chromedriver-linux64.zip \
-    && mv chromedriver-linux64/chromedriver /usr/local/bin/ \
-    && rm -rf chromedriver-linux64.zip chromedriver-linux64 \
-    && chmod +x /usr/local/bin/chromedriver
+RUN CHROMEDRIVER_VERSION=$(google-chrome --version | awk '{print $3}' | awk -F'.' '{print $1"."$2"."$3}') \
+    && wget -q "https://chromedriver.storage.googleapis.com/$(wget -q -O - https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROMEDRIVER_VERSION)/chromedriver_linux64.zip" \
+    && unzip chromedriver_linux64.zip \
+    && mv chromedriver /usr/local/bin/ \
+    && chmod +x /usr/local/bin/chromedriver \
+    && rm chromedriver_linux64.zip
 
 # Set up the working directory
 WORKDIR /app
@@ -52,20 +52,30 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code into the container
 COPY *.py *.csv ./
 
+# Verify Chrome installation
+RUN which google-chrome-stable
+RUN google-chrome-stable --version
+RUN which chromedriver
+RUN chromedriver --version
+
 # Set environment variables
 ENV DISPLAY=:99
 ENV GCS_BUCKET_NAME=utr_scraper_bucket
 ENV PORT=8080
-ENV PATH="/usr/local/bin/chrome:${PATH}"
-ENV CHROME_BIN="/usr/local/bin/chrome/chrome"
+ENV CHROME_BIN="/usr/bin/google-chrome-stable"
 ENV CHROME_DRIVER="/usr/local/bin/chromedriver"
+ENV PYTHONUNBUFFERED=1
 
 # Create necessary directories and set permissions
 RUN mkdir -p /tmp/chrome-profile /tmp/.X11-unix \
     && chmod -R 777 /tmp \
-    && chmod 1777 /tmp/.X11-unix \
-    && chown -R root:root /usr/local/bin/chrome \
-    && chown -R root:root /usr/local/bin/chromedriver
+    && chmod 1777 /tmp/.X11-unix
+
+# Add debug print for Chrome paths
+RUN echo "Chrome binary: ${CHROME_BIN}" && \
+    echo "ChromeDriver: ${CHROME_DRIVER}" && \
+    echo "Chrome executable exists: $([ -f ${CHROME_BIN} ] && echo 'yes' || echo 'no')" && \
+    echo "ChromeDriver exists: $([ -f ${CHROME_DRIVER} ] && echo 'yes' || echo 'no')"
 
 # Run the scraper script
 CMD ["python", "scrape_history_gcp.py"]
