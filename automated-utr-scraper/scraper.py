@@ -455,11 +455,16 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
 
         # Take a screenshot for debugging if needed
         try:
-            screenshot_path = f"debug_screenshot_{df['f_name'][i]}_{df['l_name'][i]}.png"
-            driver.save_screenshot(screenshot_path)
-            logger.info(f"Saved screenshot to {screenshot_path}")
+            # Only attempt screenshots in debug mode and if directory exists
+            screenshot_dir = os.getenv("SCREENSHOT_DIR", None)
+            if screenshot_dir:
+                os.makedirs(screenshot_dir, exist_ok=True)
+                screenshot_path = os.path.join(screenshot_dir, f"debug_screenshot_{df['f_name'][i]}_{df['l_name'][i]}.png")
+                driver.save_screenshot(screenshot_path)
+                logger.info(f"Saved screenshot to {screenshot_path}")
         except Exception as e:
             logger.warning(f"Could not save screenshot: {str(e)}")
+            # Screenshot failure is non-critical, continue processing
 
         # Look for "Show all" button
         show_all_found = False

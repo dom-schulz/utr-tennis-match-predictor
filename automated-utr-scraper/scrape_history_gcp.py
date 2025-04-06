@@ -10,6 +10,11 @@ import time
 from google.cloud import compute_v1
 from datetime import datetime
 import traceback
+from collections import deque
+import threading
+import subprocess
+import socket
+import requests
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -34,6 +39,12 @@ upload_blob = bucket.blob(UPLOAD_FILE_NAME)
 csv_buffer = io.StringIO()
 writer = csv.writer(csv_buffer) # take file like object (csv_buffer) and prepares it for writing
 writer.writerow(['f_name', 'l_name', 'date', 'utr']) # write headers to csv
+
+# Log buffer and lock for thread safety
+log_buffer = deque(maxlen=100)  # Store up to 100 log messages
+log_buffer_lock = threading.Lock()
+last_log_upload_time = time.time()
+LOG_UPLOAD_INTERVAL = 5  # Upload logs every 5 seconds
 
 def upload_to_gcs(source_file_name, destination_blob_name):
     """Uploads a file to the bucket."""
@@ -73,27 +84,181 @@ def upload_to_gcs(source_file_name, destination_blob_name):
         return False
 
 def save_logs_to_gcs(log_message):
-    """Saves log messages to a file in GCS."""
-    try:
-        # Get the current log file or create a new one
-        log_blob = bucket.blob('logs/scraper_log.txt')
+    """Buffers log messages and periodically writes them to GCS to avoid rate limits."""
+    global last_log_upload_time
+    
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    formatted_message = f"[{timestamp}] {log_message}"
+    
+    with log_buffer_lock:
+        # Add the message to our buffer
+        log_buffer.append(formatted_message)
         
-        # Try to download existing log content
+        # Only upload logs if enough time has passed since the last upload
+        current_time = time.time()
+        if current_time - last_log_upload_time >= LOG_UPLOAD_INTERVAL:
+            try:
+                # Get the log file or create a new one
+                log_blob = bucket.blob('logs/scraper_log.txt')
+                
+                try:
+                    # Try to download existing log content
+                    current_log = log_blob.download_as_text()
+                except Exception:
+                    current_log = ""
+                
+                # Add all buffered logs
+                buffered_logs = "\n".join(log_buffer)
+                updated_log = f"{current_log}\n{buffered_logs}" if current_log else buffered_logs
+                
+                # Upload updated log
+                log_blob.upload_from_string(updated_log)
+                logger.info(f"Uploaded {len(log_buffer)} log messages to GCS")
+                
+                # Clear the buffer after successful upload
+                log_buffer.clear()
+                
+                # Update the last upload time
+                last_log_upload_time = current_time
+            except Exception as e:
+                logger.error(f"Error saving logs to GCS: {str(e)}")
+                # Don't clear buffer on error - we'll try again later
+
+def flush_logs():
+    """Force all buffered logs to be written to GCS."""
+    global last_log_upload_time
+    
+    with log_buffer_lock:
+        if not log_buffer:
+            return  # Nothing to flush
+            
         try:
-            current_log = log_blob.download_as_text()
-        except Exception:
-            current_log = ""
+            # Get the log file or create a new one
+            log_blob = bucket.blob('logs/scraper_log.txt')
+            
+            try:
+                # Try to download existing log content
+                current_log = log_blob.download_as_text()
+            except Exception:
+                current_log = ""
+            
+            # Add all buffered logs
+            buffered_logs = "\n".join(log_buffer)
+            updated_log = f"{current_log}\n{buffered_logs}" if current_log else buffered_logs
+            
+            # Upload updated log
+            log_blob.upload_from_string(updated_log)
+            logger.info(f"Flushed {len(log_buffer)} log messages to GCS")
+            
+            # Clear the buffer after successful upload
+            log_buffer.clear()
+            
+            # Update the last upload time
+            last_log_upload_time = time.time()
+        except Exception as e:
+            logger.error(f"Error flushing logs to GCS: {str(e)}")
+
+def get_instance_name():
+    """Get the name of the current VM instance"""
+    try:
+        # Try the metadata server first (most reliable on GCP)
+        response = requests.get(
+            'http://metadata.google.internal/computeMetadata/v1/instance/name',
+            headers={'Metadata-Flavor': 'Google'},
+            timeout=2
+        )
+        if response.status_code == 200:
+            return response.text
+    except:
+        pass
+    
+    # Alternative: get hostname
+    try:
+        return socket.gethostname()
+    except:
+        logger.error("Could not determine instance name")
+        return None
+
+def get_instance_zone():
+    """Get the zone of the current VM instance"""
+    try:
+        # Try the metadata server
+        response = requests.get(
+            'http://metadata.google.internal/computeMetadata/v1/instance/zone',
+            headers={'Metadata-Flavor': 'Google'},
+            timeout=2
+        )
+        if response.status_code == 200:
+            # The zone is returned as 'projects/PROJECT_ID/zones/ZONE_NAME'
+            # We need to extract just the zone name
+            zone_path = response.text
+            return zone_path.split('/')[-1]
+    except:
+        pass
+    
+    logger.error("Could not determine instance zone")
+    return None
+
+def shutdown_vm():
+    """Shutdown the VM instance"""
+    instance_name = get_instance_name()
+    zone = get_instance_zone()
+    
+    if not instance_name or not zone:
+        logger.error("Cannot shutdown VM: missing instance name or zone")
+        save_logs_to_gcs("Cannot shutdown VM: missing instance name or zone")
+        return False
+    
+    try:
+        logger.info(f"Attempting to shutdown VM instance: {instance_name} in zone: {zone}")
+        save_logs_to_gcs(f"Shutting down VM instance: {instance_name} in zone: {zone}")
         
-        # Append new log entry with timestamp
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        updated_log = f"{current_log}\n[{timestamp}] {log_message}"
+        # Method 1: Try using compute client
+        try:
+            # Initialize the Compute Engine client
+            compute_client = compute_v1.InstancesClient()
+            
+            # Prepare the request to stop the instance
+            request = compute_v1.StopInstanceRequest(
+                instance=instance_name,
+                zone=zone
+            )
+            
+            # Make the request
+            compute_client.stop(request)
+            logger.info(f"VM shutdown command sent successfully via compute client")
+            return True
+        except Exception as e:
+            logger.warning(f"Could not shutdown VM using compute client: {str(e)}")
         
-        # Upload updated log
-        log_blob.upload_from_string(updated_log)
-        logger.info(f"Log saved to GCS: {log_message}")
+        # Method 2: Try using gcloud command
+        try:
+            cmd = f"gcloud compute instances stop {instance_name} --zone={zone} --quiet"
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            
+            if result.returncode == 0:
+                logger.info(f"VM shutdown command sent successfully via gcloud")
+                return True
+            else:
+                logger.warning(f"gcloud command failed: {result.stderr}")
+        except Exception as e:
+            logger.warning(f"Could not shutdown VM using gcloud: {str(e)}")
+        
+        # Method 3: Try using shutdown command
+        try:
+            subprocess.run("sudo shutdown -h now", shell=True)
+            logger.info("VM shutdown command sent via system shutdown")
+            return True
+        except Exception as e:
+            logger.error(f"All VM shutdown methods failed: {str(e)}")
+            save_logs_to_gcs(f"All VM shutdown methods failed: {str(e)}")
+            return False
+            
     except Exception as e:
-        logger.error(f"Error saving log to GCS: {str(e)}")
+        logger.error(f"Error shutting down VM: {str(e)}")
         logger.error(traceback.format_exc())
+        save_logs_to_gcs(f"Error shutting down VM: {str(e)}")
+        return False
 
 def debug_profile_ids(profile_data):
     """Debug helper to check profile data"""
@@ -118,16 +283,21 @@ def debug_profile_ids(profile_data):
 # Start execution
 start_time = time.time()
 logger.info("Starting UTR scraper...")
-logger.info("Script version: 1.0.3 - Enhanced Debugging")
-save_logs_to_gcs("Starting UTR scraper on GCP with enhanced debugging...")
+logger.info("Script version: 1.0.4 - With VM Shutdown")
+save_logs_to_gcs("Starting UTR scraper on GCP with VM shutdown capability...")
 
 # Save environment variables to log for debugging
 env_vars = {k: v for k, v in os.environ.items() if 'UTR' in k or 'GCS' in k}
 logger.info(f"Environment variables: {env_vars}")
 
-# Get credentials from environment variables
-email = os.environ.get('UTR_EMAIL')
-password = os.environ.get('UTR_PASSWORD')
+# Strip quotes from credentials if present
+if email and email.startswith("'") and email.endswith("'"):
+    email = email[1:-1]
+    logger.info("Removed extra quotes from email")
+    
+if password and password.startswith("'") and password.endswith("'"):
+    password = password[1:-1]
+    logger.info("Removed extra quotes from password")
 
 logger.info(f"Environment variables - Email set: {email is not None}, Password set: {password is not None}")
 save_logs_to_gcs(f"Environment variables - Email set: {email is not None}, Password set: {password is not None}")
@@ -222,7 +392,8 @@ save_logs_to_gcs(f"Processing {len(profile_ids)} profiles")
 
 try:
     # Set stop=-1 to process all profiles (no limit)
-    results_df = scrape_utr_history(profile_ids, email, password, offset=0, stop=-1, writer=None)
+    results_df = scrape_utr_history(profile_ids, email, password, 
+                      offset=0, stop=-1, writer=None)
     
     if results_df is None or len(results_df) == 0:
         logger.error("Scraping returned empty results")
@@ -276,4 +447,16 @@ except Exception as e:
 # Calculate execution time
 execution_time = time.time() - start_time
 logger.info(f"Script execution complete. Total time: {execution_time:.2f} seconds")
-save_logs_to_gcs(f"Script execution complete. Total time: {execution_time:.2f} seconds") 
+save_logs_to_gcs(f"Script execution complete. Total time: {execution_time:.2f} seconds")
+
+# Try to shutdown the VM instance
+logger.info("Attempting to shutdown VM...")
+save_logs_to_gcs("Attempting to shutdown VM...")
+shutdown_success = shutdown_vm()
+
+if shutdown_success:
+    logger.info("VM shutdown initiated successfully")
+    save_logs_to_gcs("VM shutdown initiated successfully. Goodbye!")
+else:
+    logger.error("Failed to initiate VM shutdown")
+    save_logs_to_gcs("Failed to initiate VM shutdown") 
