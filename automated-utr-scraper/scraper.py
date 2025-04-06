@@ -35,18 +35,101 @@ NOTES:
 def sign_in(driver, log_in_url, email, password):
     driver.get(log_in_url)
 
-    time.sleep(1)
+    time.sleep(2)  # Wait longer for the page to load completely
+    
+    # First try to handle OneTrust cookie banner if it exists
+    try:
+        print("Looking for cookie consent banner...")
+        # Try to find the cookie accept button by various possible selectors
+        cookie_buttons = [
+            (By.ID, "onetrust-accept-btn-handler"),
+            (By.XPATH, "//button[contains(@id, 'onetrust-accept')]"),
+            (By.XPATH, "//button[contains(text(), 'Accept')]"),
+            (By.XPATH, "//button[contains(text(), 'I agree')]"),
+            (By.XPATH, "//button[contains(@class, 'onetrust-close-btn-handler')]"),
+            (By.XPATH, "//div[@id='onetrust-button-group']//button"),
+            (By.CSS_SELECTOR, "#onetrust-banner-sdk .ot-sdk-container button")
+        ]
+        
+        for selector_type, selector in cookie_buttons:
+            try:
+                cookie_button = driver.find_element(selector_type, selector)
+                print(f"Found cookie button with selector: {selector_type}={selector}")
+                # Try to click using JavaScript which is more reliable
+                driver.execute_script("arguments[0].click();", cookie_button)
+                print("Clicked cookie consent button")
+                time.sleep(1)
+                break
+            except Exception as e:
+                print(f"Cookie button not found with {selector_type}={selector}")
+                continue
+        
+        # If we can't find specific buttons, try to close the banner with JavaScript
+        try:
+            driver.execute_script("""
+                // Try to close OneTrust banner using its JavaScript API if available
+                if (typeof OneTrust !== 'undefined') {
+                    OneTrust.Close();
+                }
+                // Try to remove the banner elements directly
+                const banners = [
+                    document.getElementById('onetrust-banner-sdk'),
+                    document.getElementById('onetrust-consent-sdk')
+                ];
+                banners.forEach(banner => {
+                    if (banner) banner.remove();
+                });
+            """)
+            print("Attempted to close cookie banner with JavaScript")
+            time.sleep(1)
+        except Exception as e:
+            print(f"JavaScript banner removal failed: {e}")
+    
+    except Exception as e:
+        print(f"Error handling cookie banner: {e}")
 
-    email_box = driver.find_element(By.ID, 'emailInput')
-    password_box = driver.find_element(By.ID, 'passwordInput')
-    login_button = driver.find_element(By.CSS_SELECTOR, 'button.btn.btn-primary.btn-xl.btn-block')
+    # Now try to log in
+    try:
+        print("Finding login elements...")
+        email_box = driver.find_element(By.ID, 'emailInput')
+        password_box = driver.find_element(By.ID, 'passwordInput')
+        login_button = driver.find_element(By.CSS_SELECTOR, 'button.btn.btn-primary.btn-xl.btn-block')
 
-    email_box.send_keys(email) # enter email here
-    password_box.send_keys(password) # enter password here
-    time.sleep(0.5)
-    login_button.click() # clicks button
-
-    time.sleep(2.5) # if getting signed out increase sleep timer
+        print("Entering credentials...")
+        email_box.send_keys(email)
+        password_box.send_keys(password)
+        time.sleep(1)
+        
+        # Try to use JavaScript to click the button as it's more reliable
+        print("Clicking login button with JavaScript...")
+        driver.execute_script("arguments[0].click();", login_button)
+        
+        # If JavaScript click fails, try a direct click as fallback
+        try:
+            time.sleep(0.5)
+            # Check if we're still on the login page
+            if "login" in driver.current_url.lower():
+                print("JavaScript click may have failed, trying direct click...")
+                login_button.click()
+        except Exception as e:
+            print(f"Direct click fallback failed: {e}")
+            
+        print("Login attempted")
+        time.sleep(3.5)  # Wait longer to ensure login completes
+    
+    except Exception as e:
+        print(f"Error during login process: {e}")
+        print("Page source:")
+        print(driver.page_source[:1000] + "..." if len(driver.page_source) > 1000 else driver.page_source)
+        
+    # Verify login was successful
+    try:
+        if "login" in driver.current_url.lower():
+            print("WARNING: Still on login page, login may have failed")
+        else:
+            print("Successfully navigated away from login page")
+    except:
+        pass
 
 ### URL Modification ###
 def edit_url(city, state, lat, long):
