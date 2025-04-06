@@ -16,6 +16,7 @@ from datetime import datetime
 import random
 from dateutil.relativedelta import relativedelta
 import pandas as pd
+import os
 
 '''
 NOTES:
@@ -94,13 +95,33 @@ def scroll_page(driver):
 
 ### Get UTR Rating ###
 def scrape_player_matches(profile_ids, utr_history, matches, email, password, offset=0, stop=1, writer=None):
-    # Initialize the Selenium WebDriver with headless mode for cloud deployment
+    # Initialize the Selenium WebDriver with proper Docker container settings
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument('--disable-gpu')
-    driver = webdriver.Chrome(options=chrome_options)
+    chrome_options.add_argument('--window-size=1920,1080')
+    chrome_options.add_argument('--remote-debugging-port=9222')
+    chrome_options.add_argument('--disable-extensions')
+    chrome_options.add_argument('--disable-setuid-sandbox')
+    
+    # Add these for Docker environment
+    chrome_options.add_argument('--single-process')
+    chrome_options.add_argument('--disable-browser-side-navigation')
+    chrome_options.add_argument('--ignore-certificate-errors')
+    
+    # Set binary location explicitly based on Docker environment
+    chrome_binary = os.environ.get('CHROME_BIN', '/usr/local/bin/chrome/chrome')
+    chrome_options.binary_location = chrome_binary
+    
+    # Create a service object
+    chrome_driver_path = os.environ.get('CHROME_DRIVER', '/usr/local/bin/chromedriver')
+    chrome_service = ChromeService(executable_path=chrome_driver_path)
+    
+    # Initialize driver with service and options
+    driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+    
     url = 'https://app.utrsports.net/'
     today = date.today()
 
@@ -291,13 +312,33 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
 
 ### Get UTR History ###
 def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
-    # Initialize the Selenium WebDriver with headless mode for cloud deployment
+    # Initialize the Selenium WebDriver with proper Docker container settings
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument('--disable-gpu')
-    driver = webdriver.Chrome(options=chrome_options)
+    chrome_options.add_argument('--window-size=1920,1080')
+    chrome_options.add_argument('--remote-debugging-port=9222')
+    chrome_options.add_argument('--disable-extensions')
+    chrome_options.add_argument('--disable-setuid-sandbox')
+    
+    # Add these for Docker environment
+    chrome_options.add_argument('--single-process')
+    chrome_options.add_argument('--disable-browser-side-navigation')
+    chrome_options.add_argument('--ignore-certificate-errors')
+    
+    # Set binary location explicitly based on Docker environment
+    chrome_binary = os.environ.get('CHROME_BIN', '/usr/local/bin/chrome/chrome')
+    chrome_options.binary_location = chrome_binary
+    
+    # Create a service object
+    chrome_driver_path = os.environ.get('CHROME_DRIVER', '/usr/local/bin/chromedriver')
+    chrome_service = ChromeService(executable_path=chrome_driver_path)
+    
+    # Initialize driver with service and options
+    driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+    
     url = 'https://app.utrsports.net/'
     
     # Create a list to store the data rows
