@@ -12,9 +12,8 @@ from datetime import datetime
 import traceback
 from collections import deque
 import threading
-import subprocess
-import socket
 import requests
+import socket
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -158,108 +157,6 @@ def flush_logs():
         except Exception as e:
             logger.error(f"Error flushing logs to GCS: {str(e)}")
 
-def get_instance_name():
-    """Get the name of the current VM instance"""
-    try:
-        # Try the metadata server first (most reliable on GCP)
-        response = requests.get(
-            'http://metadata.google.internal/computeMetadata/v1/instance/name',
-            headers={'Metadata-Flavor': 'Google'},
-            timeout=2
-        )
-        if response.status_code == 200:
-            return response.text
-    except:
-        pass
-    
-    # Alternative: get hostname
-    try:
-        return socket.gethostname()
-    except:
-        logger.error("Could not determine instance name")
-        return None
-
-def get_instance_zone():
-    """Get the zone of the current VM instance"""
-    try:
-        # Try the metadata server
-        response = requests.get(
-            'http://metadata.google.internal/computeMetadata/v1/instance/zone',
-            headers={'Metadata-Flavor': 'Google'},
-            timeout=2
-        )
-        if response.status_code == 200:
-            # The zone is returned as 'projects/PROJECT_ID/zones/ZONE_NAME'
-            # We need to extract just the zone name
-            zone_path = response.text
-            return zone_path.split('/')[-1]
-    except:
-        pass
-    
-    logger.error("Could not determine instance zone")
-    return None
-
-def shutdown_vm():
-    """Shutdown the VM instance"""
-    instance_name = get_instance_name()
-    zone = get_instance_zone()
-    
-    if not instance_name or not zone:
-        logger.error("Cannot shutdown VM: missing instance name or zone")
-        save_logs_to_gcs("Cannot shutdown VM: missing instance name or zone")
-        return False
-    
-    try:
-        logger.info(f"Attempting to shutdown VM instance: {instance_name} in zone: {zone}")
-        save_logs_to_gcs(f"Shutting down VM instance: {instance_name} in zone: {zone}")
-        
-        # Method 1: Try using compute client
-        try:
-            # Initialize the Compute Engine client
-            compute_client = compute_v1.InstancesClient()
-            
-            # Prepare the request to stop the instance
-            request = compute_v1.StopInstanceRequest(
-                instance=instance_name,
-                zone=zone
-            )
-            
-            # Make the request
-            compute_client.stop(request)
-            logger.info(f"VM shutdown command sent successfully via compute client")
-            return True
-        except Exception as e:
-            logger.warning(f"Could not shutdown VM using compute client: {str(e)}")
-        
-        # Method 2: Try using gcloud command
-        try:
-            cmd = f"gcloud compute instances stop {instance_name} --zone={zone} --quiet"
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            
-            if result.returncode == 0:
-                logger.info(f"VM shutdown command sent successfully via gcloud")
-                return True
-            else:
-                logger.warning(f"gcloud command failed: {result.stderr}")
-        except Exception as e:
-            logger.warning(f"Could not shutdown VM using gcloud: {str(e)}")
-        
-        # Method 3: Try using shutdown command
-        try:
-            subprocess.run("sudo shutdown -h now", shell=True)
-            logger.info("VM shutdown command sent via system shutdown")
-            return True
-        except Exception as e:
-            logger.error(f"All VM shutdown methods failed: {str(e)}")
-            save_logs_to_gcs(f"All VM shutdown methods failed: {str(e)}")
-            return False
-            
-    except Exception as e:
-        logger.error(f"Error shutting down VM: {str(e)}")
-        logger.error(traceback.format_exc())
-        save_logs_to_gcs(f"Error shutting down VM: {str(e)}")
-        return False
-
 def debug_profile_ids(profile_data):
     """Debug helper to check profile data"""
     try:
@@ -280,24 +177,90 @@ def debug_profile_ids(profile_data):
         logger.error(traceback.format_exc())
         return False
 
+def shutdown_vm():
+    """Shut down the VM instance after the job completes."""
+    try:
+        # First try to get instance name from metadata server
+        logger.info("Attempting to shut down VM...")
+        save_logs_to_gcs("Attempting to shut down VM...")
+        
+        try:
+            # Get instance information from metadata server
+            metadata_url = "http://metadata.google.internal/computeMetadata/v1/instance/"
+            headers = {"Metadata-Flavor": "Google"}
+            
+            # Get instance name and zone
+            instance_name = requests.get(metadata_url + "name", headers=headers).text
+            zone_url = metadata_url + "zone"
+            zone_path = requests.get(zone_url, headers=headers).text
+            project_id = requests.get(metadata_url + "project/project-id", headers=headers).text
+            
+            # Extract just the zone name from the path
+            zone = zone_path.split('/')[-1]
+            
+            logger.info(f"Shutting down VM: {instance_name} in zone {zone}, project {project_id}")
+            save_logs_to_gcs(f"Shutting down VM: {instance_name} in zone {zone}, project {project_id}")
+            
+            # Initialize the Compute Engine API client
+            instances_client = compute_v1.InstancesClient()
+            
+            # Create the stop request
+            operation = instances_client.stop(
+                project=project_id,
+                zone=zone,
+                instance=instance_name
+            )
+            
+            logger.info(f"Stop operation initiated: {operation.name}")
+            save_logs_to_gcs(f"Stop operation initiated: {operation.name}")
+            
+            return True
+        except Exception as e:
+            logger.error(f"Error using metadata server approach: {str(e)}")
+            logger.error(traceback.format_exc())
+            
+            # Fallback to using gcloud command if API fails
+            try:
+                logger.info("Attempting fallback using OS command...")
+                # Try to shutdown using gcloud or equivalent
+                hostname = socket.gethostname()
+                logger.info(f"Hostname: {hostname}")
+                
+                # Use the shutdown command directly
+                os.system("sudo shutdown -h now")
+                logger.info("Shutdown command issued")
+                save_logs_to_gcs("Shutdown command issued via OS command")
+                return True
+            except Exception as e2:
+                logger.error(f"Error in fallback shutdown method: {str(e2)}")
+                logger.error(traceback.format_exc())
+                save_logs_to_gcs(f"Failed to shut down VM: {str(e2)}")
+                return False
+    except Exception as e:
+        logger.error(f"Error in shutdown_vm: {str(e)}")
+        logger.error(traceback.format_exc())
+        save_logs_to_gcs(f"Error in shutdown_vm: {str(e)}")
+        return False
+
 # Start execution
 start_time = time.time()
 logger.info("Starting UTR scraper...")
-logger.info("Script version: 1.0.4 - With VM Shutdown")
-save_logs_to_gcs("Starting UTR scraper on GCP with VM shutdown capability...")
+logger.info("Script version: 1.0.4 - Auto Shutdown VM")
+save_logs_to_gcs("Starting UTR scraper on GCP with auto shutdown capability...")
 
 # Save environment variables to log for debugging
 env_vars = {k: v for k, v in os.environ.items() if 'UTR' in k or 'GCS' in k}
 logger.info(f"Environment variables: {env_vars}")
 
-# Strip quotes from credentials if present
+# Get credentials from environment variables
+email = os.environ.get('UTR_EMAIL')
+password = os.environ.get('UTR_PASSWORD')
+
+# Remove any extra quotes that might be in the credentials
 if email and email.startswith("'") and email.endswith("'"):
     email = email[1:-1]
-    logger.info("Removed extra quotes from email")
-    
 if password and password.startswith("'") and password.endswith("'"):
     password = password[1:-1]
-    logger.info("Removed extra quotes from password")
 
 logger.info(f"Environment variables - Email set: {email is not None}, Password set: {password is not None}")
 save_logs_to_gcs(f"Environment variables - Email set: {email is not None}, Password set: {password is not None}")
@@ -392,8 +355,7 @@ save_logs_to_gcs(f"Processing {len(profile_ids)} profiles")
 
 try:
     # Set stop=-1 to process all profiles (no limit)
-    results_df = scrape_utr_history(profile_ids, email, password, 
-                      offset=0, stop=-1, writer=None)
+    results_df = scrape_utr_history(profile_ids, email, password, offset=0, stop=-1, writer=None)
     
     if results_df is None or len(results_df) == 0:
         logger.error("Scraping returned empty results")
@@ -449,14 +411,13 @@ execution_time = time.time() - start_time
 logger.info(f"Script execution complete. Total time: {execution_time:.2f} seconds")
 save_logs_to_gcs(f"Script execution complete. Total time: {execution_time:.2f} seconds")
 
-# Try to shutdown the VM instance
-logger.info("Attempting to shutdown VM...")
-save_logs_to_gcs("Attempting to shutdown VM...")
+# Shut down the VM
+logger.info("Job complete, shutting down VM...")
+save_logs_to_gcs("Job complete, shutting down VM...")
 shutdown_success = shutdown_vm()
-
 if shutdown_success:
     logger.info("VM shutdown initiated successfully")
-    save_logs_to_gcs("VM shutdown initiated successfully. Goodbye!")
+    save_logs_to_gcs("VM shutdown initiated successfully")
 else:
-    logger.error("Failed to initiate VM shutdown")
-    save_logs_to_gcs("Failed to initiate VM shutdown") 
+    logger.error("Failed to shut down VM")
+    save_logs_to_gcs("Failed to shut down VM") 
