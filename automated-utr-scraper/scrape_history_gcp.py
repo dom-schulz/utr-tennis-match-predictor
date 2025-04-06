@@ -103,7 +103,18 @@ try:
         save_logs_to_gcs(f"Profile file {LOCAL_PROFILE_FILE} not found in Docker image")
         exit(1)
         
+    # Read the CSV file
     profile_ids = pd.read_csv(LOCAL_PROFILE_FILE)
+    
+    # Convert p_id column to integer, handling NaN values
+    if 'p_id' in profile_ids.columns:
+        # First remove any rows with NaN or empty values in p_id
+        profile_ids = profile_ids.dropna(subset=['p_id'])
+        # Then convert to integer
+        profile_ids['p_id'] = profile_ids['p_id'].astype(int)
+        logger.info(f"Converted p_id column to integer type")
+        save_logs_to_gcs(f"Converted p_id column to integer type")
+    
     logger.info(f"Successfully read {len(profile_ids)} profiles from local file")
     save_logs_to_gcs(f"Successfully read {len(profile_ids)} profiles from local file")
     

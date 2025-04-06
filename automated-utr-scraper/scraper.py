@@ -15,7 +15,6 @@ import numpy as np
 from datetime import datetime
 import random
 from dateutil.relativedelta import relativedelta
-import os
 import pandas as pd
 
 '''
@@ -287,26 +286,14 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
 
 ### Get UTR History ###
 def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
-    # Set up Chrome options for headless operation in Docker
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage')
-    chrome_options.add_argument('--disable-gpu')
-    chrome_options.add_argument('--window-size=1920,1080')
-    chrome_options.add_argument('--disable-extensions')
-    chrome_options.add_argument('--disable-infobars')
-    
-    # Chrome binary location
-    if os.environ.get('CHROME_BIN'):
-        chrome_options.binary_location = os.environ.get('CHROME_BIN')
-    
-    # Initialize the Selenium WebDriver with options
-    driver = webdriver.Chrome(options=chrome_options)
+    # Initialize the Selenium WebDriver (make sure you have the appropriate driver installed)
+    driver = webdriver.Chrome()
     url = 'https://app.utrsports.net/'
-
-    # Initialize a list to store all scraped data
-    all_data = []
+    
+    # Create a list to store the data rows
+    data_rows = []
+    
+    print(f"Starting scrape_utr_history with {len(df)} profiles, stop at {stop}")
 
     sign_in(driver, url, email, password)
 
@@ -314,90 +301,134 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
         if i == stop:
             break
         
+        print(f"Processing profile {i+1}/{min(stop, len(df))}")
+        
         try:
-            # Try to use p_id first, fall back to profile_id if it exists
-            if 'p_id' in df.columns:
-                profile_id = df['p_id'][i+offset]
-            elif 'profile_id' in df.columns:
-                profile_id = df['profile_id'][i+offset]
-            else:
-                print("No profile ID column found")
-                continue
-                
-            search_url = f"https://app.utrsports.net/profiles/{round(profile_id)}?t=6"
+            search_url = f"https://app.utrsports.net/profiles/{round(df['p_id'][i+offset])}?t=6"
+            print(f"Profile URL: {search_url}")
         except Exception as e:
-            print(f"Error creating search URL: {str(e)}")
+            print(f"Error creating search URL: {e}")
             continue
 
         load_page(driver, search_url)
 
-        time.sleep(0.25)
+        # Wait longer for the page to load
+        time.sleep(2)
 
         scroll_page(driver)
 
+        # Try multiple approaches to click "Show all"
+        show_all_clicked = False
+        
+        # Try finding the element by class and text content instead of link text
         try:
             time.sleep(1)
-            show_all = driver.find_element(By.LINK_TEXT, 'Show all')
-            show_all.click()
-        except:
+            # Try JavaScript executor to click the element
+            show_all_elements = driver.find_elements(By.XPATH, "//a[contains(@class, 'underline') and contains(text(), 'Show all')]")
+            if show_all_elements:
+                driver.execute_script("arguments[0].scrollIntoView(true);", show_all_elements[0])
+                time.sleep(0.5)
+                driver.execute_script("arguments[0].click();", show_all_elements[0])
+                print("Clicked 'Show all' button using JavaScript")
+                show_all_clicked = True
+        except Exception as e:
+            print(f"First attempt to click 'Show all' with JavaScript failed: {e}")
+        
+        # If JavaScript click failed, try direct click
+        if not show_all_clicked:
             try:
-                time.sleep(2)
+                time.sleep(1)
                 show_all = driver.find_element(By.LINK_TEXT, 'Show all')
                 show_all.click()
-            except:
-                # Try to use appropriate column names
-                f_name = df['f_name'][i+offset] if 'f_name' in df.columns else df['first_name'][i+offset] if 'first_name' in df.columns else "Unknown"
-                l_name = df['l_name'][i+offset] if 'l_name' in df.columns else df['last_name'][i+offset] if 'last_name' in df.columns else "Unknown"
-                print(f"{f_name} | {l_name} | {profile_id}")
-                continue
-
-        time.sleep(1)
-
+                print("Clicked 'Show all' button directly")
+                show_all_clicked = True
+            except Exception as e:
+                print(f"Second attempt to click 'Show all' directly failed: {e}")
+        
+        # If element not found or not clickable, try to extract whatever UTR history is already visible
+        if not show_all_clicked:
+            print("Could not click 'Show all' button, attempting to extract visible history data...")
+        
+        time.sleep(1.5)
         scroll_page(driver)
 
         # Now that the page is rendered, parse the page with BeautifulSoup
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
+        # Try different container class patterns in case the website HTML structure has changed
         container = soup.find("div", class_="newStatsTabContent__section__1TQzL p0 bg-transparent")
         
-        if not container:
-            print(f"No container found for profile ID: {profile_id}")
-            continue
+        if container is None:
+            print("Trying alternative container selectors...")
+            # Try alternative selectors
+            container = soup.find("div", class_=lambda c: c and "newStatsTabContent__section" in c)
             
-        utrs = container.find_all("div", class_="row")
+            if container is None:
+                # Try a more generic approach to find history items
+                container = soup.find("div", class_=lambda c: c and "historyItem" in c)
+                
+                if container is None:
+                    print("Warning: Could not find container element on the page")
+                    # Try to get the page source to debug
+                    print("Page HTML structure:")
+                    page_source = driver.page_source
+                    print(page_source[:500] + "..." if len(page_source) > 500 else page_source)
+                    continue
         
+        # Try to find UTR history entries with flexible class matching
+        utrs = container.find_all("div", class_=lambda c: c and "row" in c)
+        if not utrs:
+            # Try alternative approaches
+            utrs = container.find_all("div")
+        
+        print(f"Found {len(utrs)} potential UTR history entries")
+        
+        utr_count = 0
         for j in range(len(utrs)):
             if j == 0:
                 continue
                 
             try:
-                utr_elem = utrs[j].find("div", class_="newStatsTabContent__historyItemRating__GQUXw")
-                date_elem = utrs[j].find("div", class_="newStatsTabContent__historyItemDate__jFJyD")
+                # Try multiple possible class names for ratings and dates
+                utr_elem = utrs[j].find("div", class_=lambda c: c and "historyItemRating" in c) or \
+                           utrs[j].find("div", class_=lambda c: c and "Rating" in c)
+                           
+                date_elem = utrs[j].find("div", class_=lambda c: c and "historyItemDate" in c) or \
+                           utrs[j].find("div", class_=lambda c: c and "Date" in c)
                 
-                if not utr_elem or not date_elem:
-                    continue
+                if utr_elem and date_elem:
+                    utr = utr_elem.text
+                    utr_date = date_elem.text
                     
-                utr = utr_elem.text
-                utr_date = date_elem.text
-
-                # Try to get first and last name using appropriate column names
-                f_name = df['f_name'][i+offset] if 'f_name' in df.columns else df['first_name'][i+offset] if 'first_name' in df.columns else "Unknown"
-                l_name = df['l_name'][i+offset] if 'l_name' in df.columns else df['last_name'][i+offset] if 'last_name' in df.columns else "Unknown"
-
-                # Add to our data list
-                all_data.append([f_name, l_name, utr_date, utr])
-
-                # Also write to CSV if a writer was provided
-                if writer:
-                    writer.writerow([f_name, l_name, utr_date, utr])
+                    data_row = [df['f_name'][i+offset], df['l_name'][i+offset], utr_date, utr]
+                    print(f"  UTR entry: {data_row}")
+                    
+                    # Append to data_rows list instead of writing to CSV
+                    data_rows.append(data_row)
+                    utr_count += 1
+                    
+                    # If writer is provided, still write to CSV for backward compatibility
+                    if writer:
+                        writer.writerow(data_row)
             except Exception as e:
-                print(f"Error processing UTR entry: {str(e)}")
-                continue
+                print(f"  Error processing UTR entry {j}: {e}")
+        
+        print(f"Added {utr_count} UTR entries for this profile")
 
+    print(f"Total data rows collected: {len(data_rows)}")
+    
     # Close the driver
     driver.quit()
     
     # Create and return DataFrame
-    result_df = pd.DataFrame(all_data, columns=['f_name', 'l_name', 'date', 'utr'])
-    return result_df
+    df_result = pd.DataFrame(data_rows, columns=['first_name', 'last_name', 'date', 'utr'])
+    print(f"DataFrame created with shape: {df_result.shape}")
+    
+    if df_result.empty:
+        print("Warning: DataFrame is empty!")
+    else:
+        print("DataFrame sample:")
+        print(df_result.head())
+        
+    return df_result
 ###
