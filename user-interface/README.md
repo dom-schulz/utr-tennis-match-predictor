@@ -6,11 +6,9 @@ This interface utilizes [Streamlit](https://streamlit.io/) to create an interact
 
 The app connects to Google Cloud Storage to access match history data and player information. Rather than using pre-trained models, the application trains a custom logistic regression model on-demand whenever a prediction is requested, ensuring predictions are based on the most up-to-date data available.
 
-![Tennis Predictor Interface](https://utr-tennis-match-predictor.streamlit.app/)
-
 ### Try it yourself
 
-You can access the app at: [Tennis Predictor App](https://your-app-url-here.streamlit.app)
+You can access the app at: [Tennis Predictor App](https://utr-tennis-match-predictor.streamlit.app/)
 
 If you want to test the app with sample inputs, try these player names:
 - Player 1: `Medvedev D.`
