@@ -1,9 +1,0 @@
-streamlit
-openai
-pydantic
-st-files-connection
-pandas
-numpy
-scikit-learn
-colorama
-gcsfs
