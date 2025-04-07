@@ -11,9 +11,9 @@ The app connects to Google Cloud Storage to access match history data and player
 You can access the app at: [Tennis Predictor App](https://utr-tennis-match-predictor.streamlit.app/)
 
 If you want to test the app with sample inputs, try these player names:
-- Player 1: `Medvedev D.`
-- Player 2: `Alcaraz C.`
-- Location: `Seattle`
+```
+Medvedev D. Alcaraz C. Seattle
+```
 
 **Note**: If the app becomes unresponsive, look for the "Rerun" button in the upper right corner of the interface to restart it.
 
