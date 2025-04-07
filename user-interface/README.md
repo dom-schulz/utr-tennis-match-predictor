@@ -4,13 +4,13 @@
 
 This interface utilizes [Streamlit](https://streamlit.io/) to create an interactive web application that predicts tennis match outcomes using UTR (Universal Tennis Rating) data and an AI agent. The current interface is a functional skeleton, with the last substantial update on March 6, 2024, and serves as a proof-of-concept for our tennis prediction system. We plan to update and improve this interface in mid April.
 
-The app connects to Google Cloud Storage to access match history data and player information. Rather than using pre-trained models, the application trains a custom logistic regression model on-demand whenever a prediction is requested, ensuring predictions are based on the most up-to-date data available.
+The app connects to Google Cloud Storage to access match history data and player information. Rather than using pre-trained models, the application trains a custom logistic regression model on-demand for each prediction (this model includes randomness which can slightly alter the model's predictions of the same match).
 
 ### Try it yourself
 
 You can access the app at: [Tennis Predictor App](https://utr-tennis-match-predictor.streamlit.app/)
 
-If you want to test the app with sample inputs, try these player names:
+If you want to test the app with sample inputs, try these player names and location:
 ```
 Medvedev D. Alcaraz C. Seattle
 ```
