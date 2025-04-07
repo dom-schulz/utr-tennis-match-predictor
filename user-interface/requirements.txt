@@ -5,5 +5,6 @@ pandas>=2.0.0
 numpy>=1.24.0
 scikit-learn>=1.2.0
 st-files-connection>=0.1.0
+gcsfs>=0.10.0
 # Terminal coloring (for debugging)
 colorama>=0.4.6 
