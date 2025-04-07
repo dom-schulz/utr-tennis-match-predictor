@@ -15,7 +15,7 @@ import threading
 import requests
 import socket
 
-# Set up logging
+# Set up logging for debugging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ UPLOAD_FILE_NAME = "utr_history.csv"  # file to upload to GCS after scraping
 LOCAL_PROFILE_FILE = "profile_id.csv"  # profile file bundled with the Docker image
 
 # Get credentials from environment variables, secrets passed in as environment 
-# variables via built in functionality in Cloud Run
+# variables via built in functionality in GCP
 email = os.getenv("UTR_EMAIL")
 password = os.getenv("UTR_PASSWORD")
 
@@ -39,7 +39,7 @@ csv_buffer = io.StringIO()
 writer = csv.writer(csv_buffer) # take file like object (csv_buffer) and prepares it for writing
 writer.writerow(['f_name', 'l_name', 'date', 'utr']) # write headers to csv
 
-# Log buffer and lock for thread safety
+# Log buffer/limit (prevents errors in logging and missing statements)
 log_buffer = deque(maxlen=100)  # Store up to 100 log messages
 log_buffer_lock = threading.Lock()
 last_log_upload_time = time.time()
@@ -84,7 +84,7 @@ def upload_to_gcs(source_file_name, destination_blob_name):
 
 def save_logs_to_gcs(log_message):
     """Buffers log messages and periodically writes them to GCS to avoid rate limits."""
-    global last_log_upload_time
+    global last_log_upload_time # tracker for last time logs were uploaded
     
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     formatted_message = f"[{timestamp}] {log_message}"
@@ -157,92 +157,53 @@ def flush_logs():
         except Exception as e:
             logger.error(f"Error flushing logs to GCS: {str(e)}")
 
-def debug_profile_ids(profile_data):
-    """Debug helper to check profile data"""
-    try:
-        logger.info(f"Profile data columns: {profile_data.columns.tolist()}")
-        logger.info(f"Profile data types: {profile_data.dtypes}")
-        logger.info(f"First few profiles: {profile_data.head(3).to_dict('records')}")
-        
-        # Check for missing values
-        missing_pids = profile_data['p_id'].isna().sum()
-        if missing_pids > 0:
-            logger.warning(f"{missing_pids} profiles have missing p_id values")
-            
-        # Check for data quality
-        logger.info(f"p_id range: {profile_data['p_id'].min()} to {profile_data['p_id'].max()}")
-        return True
-    except Exception as e:
-        logger.error(f"Error analyzing profile data: {str(e)}")
-        logger.error(traceback.format_exc())
-        return False
-
 def shutdown_vm():
     """Shut down the VM instance after the job completes."""
     try:
         # First try to get instance name from metadata server
         logger.info("Attempting to shut down VM...")
         save_logs_to_gcs("Attempting to shut down VM...")
+
+        # Get instance information from metadata server
+        metadata_url = "http://metadata.google.internal/computeMetadata/v1/instance/"
+        headers = {"Metadata-Flavor": "Google"}
         
-        try:
-            # Get instance information from metadata server
-            metadata_url = "http://metadata.google.internal/computeMetadata/v1/instance/"
-            headers = {"Metadata-Flavor": "Google"}
-            
-            # Get instance name and zone
-            instance_name = requests.get(metadata_url + "name", headers=headers).text
-            zone_url = metadata_url + "zone"
-            zone_path = requests.get(zone_url, headers=headers).text
-            project_id = requests.get(metadata_url + "project/project-id", headers=headers).text
-            
-            # Extract just the zone name from the path
-            zone = zone_path.split('/')[-1]
-            
-            logger.info(f"Shutting down VM: {instance_name} in zone {zone}, project {project_id}")
-            save_logs_to_gcs(f"Shutting down VM: {instance_name} in zone {zone}, project {project_id}")
-            
-            # Initialize the Compute Engine API client
-            instances_client = compute_v1.InstancesClient()
-            
-            # Create the stop request
-            operation = instances_client.stop(
-                project=project_id,
-                zone=zone,
-                instance=instance_name
-            )
-            
-            logger.info(f"Stop operation initiated: {operation.name}")
-            save_logs_to_gcs(f"Stop operation initiated: {operation.name}")
-            
-            return True
-        except Exception as e:
-            logger.error(f"Error using metadata server approach: {str(e)}")
-            logger.error(traceback.format_exc())
-            
-            # Fallback to using gcloud command if API fails
-            try:
-                logger.info("Attempting fallback using OS command...")
-                # Try to shutdown using gcloud or equivalent
-                hostname = socket.gethostname()
-                logger.info(f"Hostname: {hostname}")
-                
-                # Use the shutdown command directly
-                os.system("sudo shutdown -h now")
-                logger.info("Shutdown command issued")
-                save_logs_to_gcs("Shutdown command issued via OS command")
-                return True
-            except Exception as e2:
-                logger.error(f"Error in fallback shutdown method: {str(e2)}")
-                logger.error(traceback.format_exc())
-                save_logs_to_gcs(f"Failed to shut down VM: {str(e2)}")
-                return False
+        # Get instance name and zone
+        instance_name = requests.get(metadata_url + "name", headers=headers).text
+        zone_url = metadata_url + "zone"
+        zone_path = requests.get(zone_url, headers=headers).text
+        project_id = requests.get(metadata_url + "project/project-id", headers=headers).text
+        
+        # Extract just the zone name from the path
+        zone = zone_path.split('/')[-1]
+        
+        logger.info(f"Shutting down VM: {instance_name} in zone {zone}, project {project_id}")
+        save_logs_to_gcs(f"Shutting down VM: {instance_name} in zone {zone}, project {project_id}")
+        
+        # Initialize the Compute Engine API client
+        instances_client = compute_v1.InstancesClient()
+        
+        # Create the stop request
+        operation = instances_client.stop(
+            project=project_id,
+            zone=zone,
+            instance=instance_name
+        )
+        
+        logger.info(f"Stop operation initiated: {operation.name}")
+        save_logs_to_gcs(f"Stop operation initiated: {operation.name}")
+        
+        return True
+    
     except Exception as e:
         logger.error(f"Error in shutdown_vm: {str(e)}")
         logger.error(traceback.format_exc())
         save_logs_to_gcs(f"Error in shutdown_vm: {str(e)}")
         return False
 
-# Start execution
+
+
+########## Run the scraper ##########
 start_time = time.time()
 logger.info("Starting UTR scraper...")
 logger.info("Script version: 1.0.4 - Auto Shutdown VM")
@@ -255,12 +216,6 @@ logger.info(f"Environment variables: {env_vars}")
 # Get credentials from environment variables
 email = os.environ.get('UTR_EMAIL')
 password = os.environ.get('UTR_PASSWORD')
-
-# Remove any extra quotes that might be in the credentials
-if email and email.startswith("'") and email.endswith("'"):
-    email = email[1:-1]
-if password and password.startswith("'") and password.endswith("'"):
-    password = password[1:-1]
 
 logger.info(f"Environment variables - Email set: {email is not None}, Password set: {password is not None}")
 save_logs_to_gcs(f"Environment variables - Email set: {email is not None}, Password set: {password is not None}")
@@ -282,19 +237,16 @@ try:
     file_size = os.path.getsize(LOCAL_PROFILE_FILE)
     logger.info(f"Profile file size: {file_size} bytes")
     
-    # Log file content for debugging
-    with open(LOCAL_PROFILE_FILE, 'r') as f:
-        content = f.read()
-        logger.info(f"Profile file content:\n{content}")
-        save_logs_to_gcs(f"Profile file contains {content.count(chr(10))+1} lines")
+    # # Log file content for debugging
+    # with open(LOCAL_PROFILE_FILE, 'r') as f:
+    #     content = f.read()
+    #     logger.info(f"Profile file content:\n{content}")
+    #     save_logs_to_gcs(f"Profile file contains {content.count(chr(10))+1} lines")
         
     # Read the CSV file
     profile_ids = pd.read_csv(LOCAL_PROFILE_FILE)
     
-    # Debug profile data
-    debug_profile_ids(profile_ids)
-    
-    # Convert p_id column to integer, handling NaN values
+    # Convert p_id column to integer, handling NaN designation
     if 'p_id' in profile_ids.columns:
         # First remove any rows with NaN or empty values in p_id
         before_count = len(profile_ids)
@@ -354,7 +306,7 @@ logger.info(f"Processing {len(profile_ids)} profiles")
 save_logs_to_gcs(f"Processing {len(profile_ids)} profiles")
 
 try:
-    # Set stop=-1 to process all profiles (no limit)
+    # Set stop=-1 to process all profiles (ie. no limit)
     results_df = scrape_utr_history(profile_ids, email, password, offset=0, stop=-1, writer=None)
     
     if results_df is None or len(results_df) == 0:
@@ -415,6 +367,7 @@ save_logs_to_gcs(f"Script execution complete. Total time: {execution_time:.2f} s
 logger.info("Job complete, shutting down VM...")
 save_logs_to_gcs("Job complete, shutting down VM...")
 shutdown_success = shutdown_vm()
+
 if shutdown_success:
     logger.info("VM shutdown initiated successfully")
     save_logs_to_gcs("VM shutdown initiated successfully")

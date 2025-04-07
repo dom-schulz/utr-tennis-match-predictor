@@ -1,0 +1,14 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build' 
+      - '-t' # tag the image with a name
+      - 'us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo/utr-scraper-image:latest'
+      - '-f' # specify the Dockerfile to use
+      - 'automated-utr-scraper/Dockerfile'
+      - 'automated-utr-scraper' # This is the build context
+      - '.' 
+images:
+  - 'us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo/utr-scraper-image:latest'
+options:
+  logging: CLOUD_LOGGING_ONLY  # means the logs will be sent to the cloud logging service and not the console

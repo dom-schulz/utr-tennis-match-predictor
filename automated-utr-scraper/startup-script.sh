@@ -50,7 +50,7 @@ log_message() {
   echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> /tmp/monitor.log
 }
 
-# Get instance information
+# Get current instance information
 INSTANCE_NAME=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/name" -H "Metadata-Flavor: Google")
 ZONE=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/zone" -H "Metadata-Flavor: Google" | cut -d/ -f4)
 PROJECT_ID=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/project-id" -H "Metadata-Flavor: Google")
@@ -60,7 +60,7 @@ log_message "Starting monitor for container utr-scraper on instance $INSTANCE_NA
 # Default sleep time in seconds
 SLEEP_TIME=60
 CONTAINER_NAME="utr-scraper"
-MAX_RUNTIME_HOURS=4  # Safety measure: max runtime 4 hours
+MAX_RUNTIME_HOURS=5  # Safety measure: max runtime 5 hours
 
 # Get start time in seconds
 START_TIME=$(date +%s)
