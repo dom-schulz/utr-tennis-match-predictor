@@ -6,7 +6,7 @@ This interface utilizes [Streamlit](https://streamlit.io/) to create an interact
 
 The app connects to Google Cloud Storage to access match history data and player information. Rather than using pre-trained models, the application trains a custom logistic regression model on-demand whenever a prediction is requested, ensuring predictions are based on the most up-to-date data available.
 
-![Tennis Predictor Interface](https://placeholder-for-screenshot.png)
+![Tennis Predictor Interface](https://utr-tennis-match-predictor.streamlit.app/)
 
 ### Try it yourself
 
@@ -21,7 +21,7 @@ If you want to test the app with sample inputs, try these player names:
 
 ## Core Files
 
-### `streamlit_app.py`
+[`streamlit_app.py`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/user-interface/streamlit_app.py)
 
 This is the main application file that creates the web interface and handles user interactions. It uses Streamlit's components to render the UI and manages the conversation flow with the OpenAI-powered chat assistant.
 
@@ -48,7 +48,7 @@ get_agent = Agent(name="Get Agent",
                 tools=[gather_list_check_existence, make_prediction])
 ```
 
-### `predict_utils.py`
+[`predict_utils.py`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/user-interface/predict_utils.py)
 
 This utility file contains the machine learning model and prediction logic. About 80% of this file was created by a classmate, but I heavily modified the `make_prediction` function to integrate with Google Cloud Storage for data access and to format predictions in a way that works with the OpenAI API. We are currently working with different models with better performance and will integrate in mid to late April as well. 
 
@@ -75,7 +75,7 @@ def make_prediction(player_1, player_2, location):
     return output_prediction
 ```
 
-### `secrets.toml` (not in repository)
+[`secrets.toml`] (not in repository)
 
 This file contains sensitive information such as API keys and cloud service credentials. It is automatically excluded from version control via `.gitignore` for security reasons. This file's contents are input into Streamlit's built in secret manager.
 
