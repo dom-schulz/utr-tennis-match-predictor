@@ -1,20 +1,8 @@
-# Tennis Match Predictor Project (4/6/25)
+# Tennis Match Predictor Project (Update: 4/6/25)
 
 This repository contains two completed components for a tennis match prediction system:
 
 ## Current Items
-
-### [Streamlit App](https://github.com/dom-schulz/utr-tennis-match-predictor/tree/main/user-interface)
-
-The Streamlit app serves as the user interface for the tennis match prediction system. It allows users to:
-
-- Input player names to receive a prediction
-- Receive generated match predictions based on UTR data via an AI chatbot
-- View detailed match outcome probabilities and expected scores
-
-The app is currently a functional prototype and will receive significant updates in mid-April. You can access the live interface at [Tennis Predictor App](https://utr-tennis-match-predictor.streamlit.app/).
-
-For more details, see the [Streamlit App README](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/user-interface/README.md).
 
 ### [Automated Scraper](https://github.com/dom-schulz/utr-tennis-match-predictor/tree/main/automated-utr-scraper)
 
@@ -29,6 +17,20 @@ The automated scraper collects historical match data from the Universal Tennis R
 The system automatically runs twice weekly and intelligently shuts down after completion to minimize costs.
 
 For more details, see the [Automated Scraper README](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/README.md). 
+
+
+### [Streamlit App](https://github.com/dom-schulz/utr-tennis-match-predictor/tree/main/user-interface)
+
+The Streamlit app serves as the user interface for the tennis match prediction system. It allows users to:
+
+- Input player names to receive a prediction
+- Receive generated match predictions based on UTR data via an AI chatbot
+- View detailed match outcome probabilities and expected scores
+
+The app is currently a functional prototype and will receive significant updates in mid-April. You can access the live interface at [Tennis Predictor App](https://utr-tennis-match-predictor.streamlit.app/).
+
+For more details, see the [Streamlit App README](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/user-interface/README.md).
+
 
 ## Next Developments (April 2025)
 
