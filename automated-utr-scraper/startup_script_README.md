@@ -4,7 +4,7 @@ This repository contains a Docker-based web scraper for UTR (Universal Tennis Ra
 
 ## Startup Script
 
-The `startup-script.sh` is a comprehensive bash script that handles the entire lifecycle of the scraping process on GCP:
+The `startup-script.sh` is a bash script that handles the lifecycle of the scraping process on GCP:
 
 ### 1. Initial Setup
 
@@ -24,7 +24,7 @@ The `startup-script.sh` is a comprehensive bash script that handles the entire l
 
 ### 3. Monitoring and Auto-Shutdown
 
-The script implements a robust monitoring system that:
+The script implements a monitoring system that:
 
 - Runs as a background process
 - Checks container status every 60 seconds
@@ -54,7 +54,7 @@ The VM automatically shuts down based on container status:
    - Compute Engine access to stop itself
 
 3. The VM will:
-   - Start automatically (scheduled twice a week)
+   - Start automatically (scheduled twice a week via Cloud Function)
    - Run the scraper (ie. collect data)
    - Write to the GCS bucket
    - Shut down upon completion
@@ -79,8 +79,4 @@ The container expects these environment variables:
 
 ## Maintenance
 
-If you need to update the script:
-
-1. Modify the `startup-script.sh` file
-2. If changing the monitoring parameters, update the MAX_RUNTIME_HOURS or SLEEP_TIME variables
-3. The script is designed to be idempotent and can be run multiple times 
+1. If changing the monitoring parameters, update the MAX_RUNTIME_HOURS or SLEEP_TIME variables
