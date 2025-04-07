@@ -1,4 +1,4 @@
-# UTR Automated Tennis Match Scraper
+# Automated UTR SScraper
 
 ## Overview
 
@@ -8,7 +8,7 @@ This automated scraper collects historical match data from the Universal Tennis 
 
 The scraper is fully automated on Google Cloud Platform that minimizes costs by only running when needed and automatically shutting down after completion.
 
-![Process Visualization](process_visualization.png)
+<img src="process_visualization.png" alt="Process Visualization" width="100%">
 
 ### Process Flow
 
@@ -19,12 +19,12 @@ The scraper is fully automated on Google Cloud Platform that minimizes costs by 
  
 
 2. **Cloud Function runs script to start Compute Engine VM**
-   - [cloud_function_trigger.py](/utr-automated-scraper/cloud_function_trigger.py) contains the Cloud Function code
+   - [cloud_function_trigger.py](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/utr-automated-scraper/cloud_function_trigger.py) contains the Cloud Function code
    - Allows for retry logic and monitoring of trigger events
 
 3. **VM (running on Compute Engine) spins up container to run scraper**
-   - [startup-script.sh](/utr-automated-scraper/startup-script.sh) initializes the environment and runs the container
-   - [Dockerfile](/utr-automated-scraper/Dockerfile) defines the container environment
+   - [startup-script.sh](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/utr-automated-scraper/startup-script.sh) initializes the environment and runs the container
+   - [Dockerfile](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/utr-automated-scraper/Dockerfile) defines the container environment
    - Compute Engine used instead of Cloud Run/Cloud Functions due to the long-run time of the scraping process (2+ hours)
    - Docker provides consistent environment management for local and cloud testing
 
@@ -34,13 +34,13 @@ The scraper is fully automated on Google Cloud Platform that minimizes costs by 
    - Structured logs are also written to GCS for debugging and monitoring
 
 5. **VM shuts down automatically**
-   - [startup-script.sh](/utr-automated-scraper/startup-script.sh) includes a monitoring section that watches for container completion
+   - [startup-script.sh](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/utr-automated-scraper/startup-script.sh) includes a monitoring section that watches for container completion
    - VM automatically terminates after successful completion of scraping, minimizing compute costs
    - Safety timeout ensures shutdown even in error cases after 5 hours
 
 ## Files
 
-### [scrape_history_gcp.py](/utr-automated-scraper/scrape_history_gcp.py)
+### [scrape_history_gcp.py](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/utr-automated-scraper/scrape_history_gcp.py)
 The "main" file of the scraper that orchestrates the entire process. It:
 - Initializes logging and configuration
 - Sets up connections to Google Cloud Storage
@@ -48,7 +48,7 @@ The "main" file of the scraper that orchestrates the entire process. It:
 - Includes extensive logging for debugging and future troubleshooting
 - Manages error handling and retry logic
 
-### [scraper.py](/utr-automated-scraper/scraper.py)
+### [scraper.py](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/utr-automated-scraper/scraper.py)
 Contains the core scraping functions and functionality:
 - Originally received from a classmate (approximately 85% unchanged)
 - Modified to run in a containerized environment on GCP
@@ -56,23 +56,23 @@ Contains the core scraping functions and functionality:
 - Includes functions to navigate UTR website and extract match data
 - Handles data extraction from the UTR profile pages
 
-### [cloudbuild.yaml](/utr-automated-scraper/cloudbuild.yaml)
+### [cloudbuild.yaml](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/utr-automated-scraper/cloudbuild.yaml)
 Automates the Docker image build process:
 - Connected to GitHub repository for continuous deployment
 - Automatically builds a new Docker image whenever changes are committed
 - Pushes the image to Google Artifact Registry
 - Ensures the scraper always runs with the latest code
 
-### [startup-script.sh](/utr-automated-scraper/startup-script.sh)
+### [startup-script.sh](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/utr-automated-scraper/startup-script.sh)
 Runs when the VM starts and:
 - Installs necessary dependencies
 - Pulls the latest Docker image
 - Starts the container with required environment variables
 - Monitors container execution and logs
 - Handles the auto-shutdown logic to terminate the VM after completion
-- See [startup_script_README.md](/utr-automated-scraper/startup_script_README.md) for more detailed documentation
+- See [startup_script_README.md](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/utr-automated-scraper/startup_script_README.md) for more detailed documentation
 
-### [Dockerfile](/utr-automated-scraper/Dockerfile)
+### [Dockerfile](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/utr-automated-scraper/Dockerfile)
 Defines the container environment:
 - Based on the Selenium standalone Chrome image (prebuilt docker image for these packages)
 - Installs Python and required libraries
@@ -80,12 +80,12 @@ Defines the container environment:
 - Configures environment variables and entry points (i.e., `CMD ["python", "scrape_history_gcp.py"]`)
 - Creates a reproducible environment for consistent execution during local and cloud testing
 
-### [profile_id.csv](/utr-automated-scraper/profile_id.csv)
+### [profile_id.csv](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/utr-automated-scraper/profile_id.csv)
 Contains the list of UTR profile IDs to scrape:
 - Each row represents a tennis player to be processed
 - The scraper iterates through these profiles to collect match data
 
-### [credentials.json](/utr-automated-scraper/credentials.json) (not in repository)
+### [credentials.json] (not in repository)
 - Used for local testing with Google Cloud services
 - Contains service account credentials for GCP authentication
 - Excluded from git repository via `.gitignore` for security
@@ -149,9 +149,6 @@ This project presented several significant technical challenges that required ex
 - Implement automated end-to-end testing in CI/CD pipeline
 - Add performance benchmarks to catch regressions
 - Create development, staging, and production environments for safer deployments
-
-
-
 
 ## Helpful Docker Commands for Local Testing
 
