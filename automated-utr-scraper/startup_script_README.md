@@ -1,10 +1,6 @@
-# UTR Scraper - GCP Automation
+# Scraper VM Startup Script 
 
-This repository contains a Docker-based web scraper for UTR (Universal Tennis Rating) data, designed to run on Google Cloud Platform (GCP) Compute Engine instances.
-
-## Startup Script
-
-The `startup-script.sh` is a bash script that handles the lifecycle of the scraping process on GCP:
+The [`startup-script.sh`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/statup-script.sh) is a bash script that handles the startup and shutdomw of the scraping process on GCP:
 
 ### 1. Initial Setup
 
