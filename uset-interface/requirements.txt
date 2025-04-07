@@ -1,0 +1,9 @@
+streamlit>=1.25.0
+openai>=1.1.0
+pydantic>=2.0.0
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.2.0
+st-files-connection>=0.1.0
+# Terminal coloring (for debugging)
+colorama>=0.4.6 
