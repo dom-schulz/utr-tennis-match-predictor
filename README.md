@@ -32,9 +32,7 @@ The app is currently a functional prototype and will receive significant updates
 #### Sample Chat Inputs
 Try these player names:
 ```
-Player 1: Medvedev D.
-Player 2: Alcaraz C.
-Location: Seattle
+Medvedev D. Alcaraz C. Seattle
 ```
 
 For more details, see the [Streamlit App README](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/user-interface/README.md).
