@@ -58,7 +58,7 @@ Contains the core scraping functions and functionality:
 - Includes functions to navigate UTR website and extract match data
 - Handles data extraction from the UTR profile pages
 
-[`cloudbuild.yaml`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/scraper.py)
+[`cloudbuild.yaml`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/cloudbuild.yaml)
 
 Automates the Docker image build process:
 - Connected to GitHub repository for continuous deployment
