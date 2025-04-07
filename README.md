@@ -1,4 +1,4 @@
-# Tennis Match Predictor Project (Update: 4/6/25)
+# Tennis Match Predictor Project (4/6/25)
 
 This repository contains two completed components for a tennis match prediction system:
 
@@ -29,6 +29,14 @@ The Streamlit app serves as the user interface for the tennis match prediction s
 
 The app is currently a functional prototype and will receive significant updates in mid-April. You can access the live interface at [Tennis Predictor App](https://utr-tennis-match-predictor.streamlit.app/).
 
+#### Sample Chat Inputs
+Try these player names:
+```
+Player 1: Medvedev D.
+Player 2: Alcaraz C.
+Location: Seattle
+```
+
 For more details, see the [Streamlit App README](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/user-interface/README.md).
 
 
@@ -39,8 +47,9 @@ For more details, see the [Streamlit App README](https://github.com/dom-schulz/u
 After the automated scraper runs, we plan to develop a training infrastructure to retrain the model automatically. This will allow the prediction system to:
 
 - Use the latest scraped data without manual intervention
+- Improve prediction accuracy with continuously updated training
 - Serve predictions by accessing the pre-trained model instead of retraining it for every request
-- Upgrade from logistic regression to a neural network model, which has shown significant improvements in prediction accuracy during testing recently
+- Upgrade from logistic regression to a neural network model, which has shown significant improvements in prediction accuracy during testing
 
 ### User Interface Updates
 
