@@ -1,4 +1,4 @@
-# Automated UTR Scraper (4/6/25)
+# Automated UTR Scraper
 
 ## Overview
 
@@ -40,7 +40,7 @@ The scraper is fully automated on Google Cloud Platform that minimizes costs by 
 
 ## Files
 
-### [scrape_history_gcp.py](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/scrape_history_gcp.py)
+### [`scrape_history_gcp.py`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/scrape_history_gcp.py)
 The "main" file of the scraper that orchestrates the entire process. It:
 - Initializes logging and configuration
 - Sets up connections to Google Cloud Storage
@@ -48,7 +48,7 @@ The "main" file of the scraper that orchestrates the entire process. It:
 - Includes extensive logging for debugging and future troubleshooting
 - Manages error handling and retry logic
 
-### [scraper.py](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/scraper.py)
+### [`scraper.py`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/scraper.py)
 Contains the core scraping functions and functionality:
 - Originally received from a classmate (approximately 85% unchanged)
 - Modified to run in a containerized environment on GCP
@@ -56,7 +56,7 @@ Contains the core scraping functions and functionality:
 - Includes functions to navigate UTR website and extract match data
 - Handles data extraction from the UTR profile pages
 
-### [cloudbuild.yaml](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/cloudbuild.yaml)
+### [`cloudbuild.yaml`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/scraper.py)
 Automates the Docker image build process:
 - Connected to GitHub repository for continuous deployment
 - Automatically builds a new Docker image whenever changes are committed
@@ -64,7 +64,8 @@ Automates the Docker image build process:
 - Ensures the scraper always runs with the latest code
 - Located in repo root directory
 
-### [startup-script.sh](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/startup-script.sh)
+### [`startup-script.sh`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/statup-script.sh)
+
 Runs when the VM starts and:
 - Installs necessary dependencies
 - Pulls the latest Docker image
@@ -73,7 +74,7 @@ Runs when the VM starts and:
 - Handles the auto-shutdown logic to terminate the VM after completion
 - See [startup_script_README.md](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/startup_script_README.md) for more detailed documentation
 
-### [Dockerfile](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/Dockerfile)
+### [`Dockerfile`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/Dockerfile)
 Defines the container environment:
 - Based on the Selenium standalone Chrome image (prebuilt docker image for these packages)
 - Installs Python and required libraries
@@ -81,7 +82,7 @@ Defines the container environment:
 - Configures environment variables and entry points (i.e., `CMD ["python", "scrape_history_gcp.py"]`)
 - Creates a reproducible environment for consistent execution during local and cloud testing
 
-### [profile_id.csv](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/profile_id.csv)
+### [`profile_id.csv`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/profile_id.csv)
 Contains the list of UTR profile IDs to scrape:
 - Each row represents a tennis player to be processed
 - The scraper iterates through these profiles to collect match data
