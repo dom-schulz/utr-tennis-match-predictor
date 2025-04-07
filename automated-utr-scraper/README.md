@@ -41,6 +41,7 @@ The scraper is fully automated on Google Cloud Platform that minimizes costs by 
 ## Files
 
 [`scrape_history_gcp.py`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/scrape_history_gcp.py)
+
 The "main" file of the scraper that orchestrates the entire process. It:
 - Initializes logging and configuration
 - Sets up connections to Google Cloud Storage
@@ -49,6 +50,7 @@ The "main" file of the scraper that orchestrates the entire process. It:
 - Manages error handling and retry logic
 
 [`scraper.py`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/scraper.py)
+
 Contains the core scraping functions and functionality:
 - Originally received from a classmate (approximately 85% unchanged)
 - Modified to run in a containerized environment on GCP
@@ -57,6 +59,7 @@ Contains the core scraping functions and functionality:
 - Handles data extraction from the UTR profile pages
 
 [`cloudbuild.yaml`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/scraper.py)
+
 Automates the Docker image build process:
 - Connected to GitHub repository for continuous deployment
 - Automatically builds a new Docker image whenever changes are committed
@@ -75,6 +78,7 @@ Runs when the VM starts and:
 - See [startup_script_README.md](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/startup_script_README.md) for more detailed documentation
 
 [`Dockerfile`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/Dockerfile)
+
 Defines the container environment:
 - Based on the Selenium standalone Chrome image (prebuilt docker image for these packages)
 - Installs Python and required libraries
@@ -83,11 +87,13 @@ Defines the container environment:
 - Creates a reproducible environment for consistent execution during local and cloud testing
 
 [`profile_id.csv`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/profile_id.csv)
+
 Contains the list of UTR profile IDs to scrape:
 - Each row represents a tennis player to be processed
 - The scraper iterates through these profiles to collect match data
 
-[credentials.json] (not in repository)
+[credentials.json] 
+(not in repository)
 - Used for local testing with Google Cloud services
 - Contains service account credentials for GCP authentication
 - Excluded from git repository via `.gitignore` for security
