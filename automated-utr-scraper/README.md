@@ -38,7 +38,7 @@ The scraper is fully automated on Google Cloud Platform that minimizes costs by 
    - VM automatically terminates after successful completion of scraping, minimizing compute costs
    - Safety timeout ensures shutdown even in error cases after 5 hours
 
-## Files
+## Core Files
 
 [`scrape_history_gcp.py`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/scrape_history_gcp.py)
 
