@@ -73,7 +73,7 @@ def make_prediction(player_1, player_2, location):
     return output_prediction
 ```
 
-[`secrets.toml`] (not in repository)
+`secrets.toml` (not in repository)
 
 This file contains sensitive information such as API keys and cloud service credentials. It is automatically excluded from version control via `.gitignore` for security reasons. This file's contents are input into Streamlit's built in secret manager.
 
