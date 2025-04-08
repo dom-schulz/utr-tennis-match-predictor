@@ -1,6 +1,6 @@
 # Tennis Match Predictor Project (4/6/25)
 
-This repository contains two completed components for a tennis match prediction system:
+This repository currently contains two components for a tennis match prediction system:
 
 ## Current Items
 
