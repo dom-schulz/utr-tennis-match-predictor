@@ -58,15 +58,6 @@ Contains the core scraping functions and functionality:
 - Includes functions to navigate UTR website and extract match data
 - Handles data extraction from the UTR profile pages
 
-[`cloudbuild.yaml`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/cloudbuild.yaml)
-
-Automates the Docker image build process:
-- Connected to GitHub repository for continuous deployment
-- Automatically builds a new Docker image whenever changes are committed
-- Pushes the image to Google Artifact Registry
-- Ensures the scraper always runs with the latest code
-- Located in repo root directory
-
 [`startup-script.sh`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/statup-script.sh)
 
 Runs when the VM starts and:
@@ -85,6 +76,15 @@ Defines the container environment:
 - Sets up the scraper code within the container
 - Configures environment variables and entry points (i.e., `CMD ["python", "scrape_history_gcp.py"]`)
 - Creates a reproducible environment for consistent execution during local and cloud testing
+
+[`cloudbuild.yaml`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/cloudbuild.yaml)
+
+Automates the Docker image build process:
+- Connected to GitHub repository for continuous deployment
+- Automatically builds a new Docker image whenever changes are committed
+- Pushes the image to Google Artifact Registry
+- Ensures the scraper always runs with the latest code
+- Located in repo root directory
 
 [`profile_id.csv`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/profile_id.csv)
 
