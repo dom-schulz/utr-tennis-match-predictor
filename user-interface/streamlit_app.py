@@ -146,7 +146,7 @@ get_agent = Agent(name="Get Agent",
 
 # ========== Streamlit UI ==========
 st.title("Tennis Timmy 🤖")
-st.write("Enter two player names and a match location to check if they exist in the dataset.")
+st.write("Enter two player names and a match location to receive a prediction for the match.")
 
 # Ensure chat history persists across reruns
 if "messages" not in st.session_state:
