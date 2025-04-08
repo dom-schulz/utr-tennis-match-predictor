@@ -1,6 +1,6 @@
 # Tennis Match Predictor Project (4/6/25)
 
-This repository contains two components for a tennis match prediction system:
+This repository contains two completed components for a tennis match prediction system:
 
 ## Current Items
 
@@ -42,12 +42,11 @@ For more details, see the [Streamlit App README](https://github.com/dom-schulz/u
 
 ### Automated Model Training
 
-After the automated scraper runs, we plan to develop a training infrastructure to retrain the model automatically. This will allow the prediction system to:
+After each iteration of the automated scraper runs, we plan to retrain the model automatically. This will allow the prediction system to:
 
 - Use the latest scraped data without manual intervention
-- Improve prediction accuracy with continuously updated training
 - Serve predictions by accessing the pre-trained model instead of retraining it for every request
-- Upgrade from logistic regression to a neural network model, which has shown significant improvements in prediction accuracy during testing
+- Upgrade from logistic regression to a neural network model, which has shown significant improvements in prediction accuracy during recent testing
 
 ### User Interface Updates
 
