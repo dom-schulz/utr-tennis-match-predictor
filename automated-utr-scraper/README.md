@@ -92,8 +92,7 @@ Contains the list of UTR profile IDs to scrape:
 - Each row represents a tennis player to be processed
 - The scraper iterates through these profiles to collect match data
 
-[credentials.json] 
-(not in repository)
+`credentials.json`(not in repository)
 - Used for local testing with Google Cloud services
 - Contains service account credentials for GCP authentication
 - Excluded from git repository via `.gitignore` for security
