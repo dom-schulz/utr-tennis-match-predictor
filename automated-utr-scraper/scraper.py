@@ -24,17 +24,6 @@ import traceback
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-'''
-NOTES:
-    - Scraper can't go past Denver, CO (19th row in cities.csv). Gives error:
-        * DevTools listening on ws://127.0.0.1:61306/devtools/browser/3da6171b-a2e7-40ec-88a5-55c69b3d4dfa
-        * Created TensorFlow Lite XNNPACK delegate for CPU.
-        * [24276:6160:0123/230738.058:ERROR:ssl_client_socket_impl.cc(878)] handshake failed; returned -1, SSL error code 1, net_error -101
-        * [24276:6160:0123/230738.103:ERROR:ssl_client_socket_impl.cc(878)] handshake failed; returned -1, SSL error code 1, net_error -100
-        * Attempting to use a delegate that only supports static-sized tensors with a graph that has dynamic-sized tensors (tensor#58 is a dynamic-sized tensor).
-        * Traceback (most recent call last):
-        * ...
-'''
 
 # Function to get configured Chrome options for headless mode in Docker
 def get_chrome_options():
@@ -54,6 +43,7 @@ def get_chrome_options():
     
     logger.info("Chrome options configured for headless mode")
     return chrome_options
+
 
 ### Sign In UTR ###
 def sign_in(driver, log_in_url, email, password):
