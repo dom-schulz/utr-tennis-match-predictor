@@ -1,0 +1,12 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-west1-docker.pkg.dev/cpsc324-project-452600/matches-scraper-repo/matches-scraper-image:latest'
+      - '.'
+    dir: 'automated-matches-scraper'
+images:
+  - 'us-west1-docker.pkg.dev/cpsc324-project-452600/matches-scraper-repo/matches-scraper-image:latest'
+options:
+  logging: CLOUD_LOGGING_ONLY
