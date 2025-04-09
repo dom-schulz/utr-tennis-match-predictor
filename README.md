@@ -4,7 +4,7 @@ This repository currently contains 3 components for a tennis match prediction sy
 
 ## Current Items
 
-### [Automated Scrapers]
+### Automated Scrapers
 [`automated-utr-scraper`](https://github.com/dom-schulz/utr-tennis-match-predictor/tree/main/automated-utr-scraper)
 [`automated-matches-scraper`](https://github.com/dom-schulz/utr-tennis-match-predictor/tree/main/automated-matches-scraper)
 
