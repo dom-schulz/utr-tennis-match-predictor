@@ -18,7 +18,7 @@ These automated scrapers collect historical match data from the Universal Tennis
 
 The system automatically runs twice weekly and intelligently shuts down after completion to minimize costs.
 
-Both scrapers have near identical logic/structure. For more details, see the [Automated UTR Scraper README](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/README.md). 
+Both scrapers have near identical logic/structure. For more details, see the [UTR Scraper Documentation](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/README.md). 
 
 
 ### [Streamlit App](https://github.com/dom-schulz/utr-tennis-match-predictor/tree/main/user-interface)
@@ -37,7 +37,7 @@ Try these player names:
 Medvedev D. Alcaraz C. Seattle
 ```
 
-For more details, see the [Streamlit App README](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/user-interface/README.md).
+For more details, see the [Streamlit App Documentation](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/user-interface/README.md).
 
 
 ## Next Developments (April 2025)
