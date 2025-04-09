@@ -104,7 +104,7 @@ Contains the list of UTR profile IDs to scrape:
 
 This project leverages Google Cloud's built-in security features:
 - Service accounts with appropriate IAM permissions
-- Secrets are managed through environment variables
+- Secrets are managed through GCP Secret Manager
 - No credentials are hardcoded in the source code
 
 ## Challenges and Solutions
