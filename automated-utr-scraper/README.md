@@ -77,7 +77,7 @@ Defines the container environment:
 - Configures environment variables and entry points (i.e., `CMD ["python", "scrape_history_gcp.py"]`)
 - Creates a reproducible environment for consistent execution during local and cloud testing
 
-[`cloudbuild.yaml`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/cloudbuild.yaml)
+[`cloudbuild.yaml`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/cloudbuild.yaml)
 
 Automates the Docker image build process:
 - Connected to GitHub repository for continuous deployment
