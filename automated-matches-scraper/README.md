@@ -46,17 +46,27 @@ Automates the Docker image build process:
 - Ensures the scraper always runs with the latest code
 - Located in repo root directory
 
+`credentials.json`(not in repository)
+- Used for local testing with Google Cloud services
+- Contains service account credentials for GCP authentication
+- Excluded from git repository via `.gitignore` for security
+- On the cloud, credentials are managed through GCP's built-in authentication
+
+### Datasets
+
+The repository contains sample datasets for reference. The production data is continuously updated and maintained in Google Cloud Storage (GCS) buckets.
+
 [`profile_id.csv`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-matches-scraper/profile_id.csv)
 
 Contains the list of UTR profile IDs to scrape:
-- Stored in the `utr_scraper_bucket` in Google Cloud Storage (GCS)
+- Stored and written to in `utr_scraper_bucket` in Google Cloud Storage (GCS)
 - Each row represents a tennis player to be processed
 - The scraper iterates through these profiles to collect match data
 
 [`utr_history.csv`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-matches-scraper/utr_history.csv)
 
 Contains historical UTR ratings for players:
-- Stored in the `utr_scraper_bucket` in GCS
+- Stored and written to the `utr_scraper_bucket` in GCS
 - Includes player names, dates, and corresponding UTR ratings
 - Used to track player rating changes over time
 - Processed into a dictionary format for efficient lookup during scraping
@@ -64,15 +74,9 @@ Contains historical UTR ratings for players:
 [`atp_utr_tennis_matches.csv`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-matches-scraper/atp_utr_tennis_matches.csv)
 
 Contains the collected tennis match data:
-- Stored in the `matches-scraper-bucket` in GCS
+- Stored and written to in the `matches-scraper-bucket` in GCS
 - Columns include date, player names, IDs, UTR ratings, tournament category, score, winner, etc.
 - Updated with new matches after each scraping run
 - Duplicates are automatically removed based on date and player combinations
-
-`credentials.json`(not in repository)
-- Used for local testing with Google Cloud services
-- Contains service account credentials for GCP authentication
-- Excluded from git repository via `.gitignore` for security
-- On the cloud, credentials are managed through GCP's built-in authentication
 
 **Note**: For additional details and architecture information, refer to the [UTR Scraper Documentation](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/README.md).
