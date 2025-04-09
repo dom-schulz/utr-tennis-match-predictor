@@ -4,10 +4,8 @@ steps:
       - 'build' 
       - '-t' # tag the image with a name
       - 'us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo/utr-scraper-image:latest'
-      - '-f' # specify the Dockerfile to use
-      - 'automated-utr-scraper/Dockerfile'
-      - 'automated-utr-scraper' # This is the build context
-      - '.' 
+      - '.'
+    dir: 'automated-matches-scraper'
 images:
   - 'us-west1-docker.pkg.dev/cpsc324-project-452600/utr-scraper-repo/utr-scraper-image:latest'
 options:
