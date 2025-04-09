@@ -1,12 +1,14 @@
-# Tennis Match Predictor Project (4/6/25)
+# Tennis Match Predictor Project (4/9/25)
 
-This repository currently contains two components for a tennis match prediction system:
+This repository currently contains 3 components for a tennis match prediction system:
 
 ## Current Items
 
-### [Automated Scraper](https://github.com/dom-schulz/utr-tennis-match-predictor/tree/main/automated-utr-scraper)
+### [Automated Scrapers]
+[`automated-utr-scraper`](https://github.com/dom-schulz/utr-tennis-match-predictor/tree/main/automated-utr-scraper)
+[`automated-matches-scraper`](https://github.com/dom-schulz/utr-tennis-match-predictor/tree/main/automated-matches-scraper)
 
-The automated scraper collects historical match data from the Universal Tennis Rating (UTR) platform for professional tennis players. It's built on Google Cloud Platform with a fully automated pipeline utilizing:
+These automated scrapers collect historical match data from the Universal Tennis Rating (UTR) platform for professional tennis players. It's built on Google Cloud Platform with a fully automated pipeline utilizing:
 
 - Cloud Scheduler for timing automation
 - Cloud Pub/Sub for message passing
@@ -16,7 +18,7 @@ The automated scraper collects historical match data from the Universal Tennis R
 
 The system automatically runs twice weekly and intelligently shuts down after completion to minimize costs.
 
-For more details, see the [Automated Scraper README](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/README.md). 
+Both scrapers have near identical logic/structure. For more details, see the [Automated UTR Scraper README](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/README.md). 
 
 
 ### [Streamlit App](https://github.com/dom-schulz/utr-tennis-match-predictor/tree/main/user-interface)
