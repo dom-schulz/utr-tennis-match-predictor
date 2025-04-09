@@ -1,6 +1,6 @@
 # Tennis Match Predictor Project (4/9/25)
 
-This repository contains our project to develop a tennis prediction system that collects player data through automated scrapers, analyzes match perforamnce, and delivers accurate match outcome predictions through an interactive web application. The system uses UTR (Universal Tennis Rating) data and machine learning to provide probabilistic forecasts for professional tennis matches.
+This repository contains a project to develop a tennis prediction system that collects player data through automated scrapers, analyzes match perforamnce, and delivers accurate match outcome predictions through an interactive web application. The system uses UTR (Universal Tennis Rating) data and machine learning to provide probabilistic forecasts for professional tennis matches.
 
 This repository currently contains 3 components for a tennis match prediction system:
 
