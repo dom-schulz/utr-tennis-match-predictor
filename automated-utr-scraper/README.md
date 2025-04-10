@@ -85,7 +85,6 @@ Automates the Docker image build process:
 - Automatically builds a new Docker image whenever changes are committed
 - Pushes the image to Google Artifact Registry
 - Ensures the scraper always runs with the latest code
-- Located in repo root directory
 
 [`profile_id.csv`](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/automated-utr-scraper/profile_id.csv)
 
