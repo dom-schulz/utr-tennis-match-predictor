@@ -13,7 +13,7 @@ The scraper is fully automated on Google Cloud Platform that minimizes costs by 
 ### Process Flow
 
 1. **Cloud Scheduler Cron Job triggers PubSub Topic**
-   - Scheduled to run twice weekly on Mondays and Thursdays at midnight (best time relative to utr updates after matches)
+   - Scheduled to run once a week, on Tuesdays at midnight (best time relative to utr updates after matches)
    - Uses cron expression format for precise scheduling
    - PubSub serves as an asynchronous intermediary 
       - The PubSub service's only job is to tell the Cloud Function to run and doesn't care about the execution of the script. This allows for future integration where match completion triggers a new scrape (ie. handling many requests to scrape instead of just the one)
