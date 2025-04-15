@@ -173,6 +173,8 @@ def make_prediction(player_1, player_2, location):
     utr_history = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
     # random.seed(30)
+    
+    print(data.head())
 
     x = np.empty(1)
     for i in range(len(data)):
@@ -184,7 +186,7 @@ def make_prediction(player_1, player_2, location):
     model = LogitRegression()
     model.fit(0.9*x, p)
 
-    p1 = player_1 #"Medvedev D."
+    p1 = player_1 # "Medvedev D."
     p2 = player_2 # "Alcaraz C."
     ps = [p1, p2]
     history = get_player_history(utr_history)
