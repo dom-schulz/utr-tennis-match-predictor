@@ -174,7 +174,8 @@ def make_prediction(player_1, player_2, location):
 
     # random.seed(30)
     
-    print(data.head())
+    # print data colomn types
+    print(data.dtypes)
 
     x = np.empty(1)
     for i in range(len(data)):
