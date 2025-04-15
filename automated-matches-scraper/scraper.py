@@ -366,9 +366,33 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
 
                     ri = random.randint(0,1)
                     if ri == 0:
-                        data_row += [winner_name1, w_utr, loser_name1, l_utr, winner_name1, p1_games, p2_games, score, 0]
+                        # Format: date, p1, p2, p1_id, p2_id, p1_utr, p2_utr, tournament_category, score, winner
+                        data_row = [
+                            match_date,           # date
+                            winner_name1,         # p1
+                            loser_name1,          # p2
+                            winner_name,          # p1_id (using full name as ID)
+                            loser_name,           # p2_id (using full name as ID)
+                            w_utr,                # p1_utr
+                            l_utr,                # p2_utr
+                            tourney_name,         # tournament_category
+                            score,                # score
+                            0                     # winner (0 = p1 wins)
+                        ]
                     else:
-                        data_row += [loser_name1, l_utr, winner_name1, w_utr, winner_name1, p1_games, p2_games, score, 1]
+                        # Format: date, p1, p2, p1_id, p2_id, p1_utr, p2_utr, tournament_category, score, winner
+                        data_row = [
+                            match_date,           # date
+                            loser_name1,          # p1
+                            winner_name1,         # p2
+                            loser_name,           # p1_id (using full name as ID)
+                            winner_name,          # p2_id (using full name as ID)
+                            l_utr,                # p1_utr
+                            w_utr,                # p2_utr
+                            tourney_name,         # tournament_category
+                            score,                # score
+                            1                     # winner (1 = p2 wins)
+                        ]
 
                     if is_tie:
                         data_row[-1] = 0.5  # Mark ties properly
