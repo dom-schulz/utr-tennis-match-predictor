@@ -147,7 +147,7 @@ get_agent = Agent(name="Get Agent",
 # ========== Streamlit UI ==========
 st.title("TEST Jared 🤖")
 
-tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves"])
+tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "ℹ️ About"])
 
 with tabs[0]:
     st.write("Enter two player names and a match location to receive a prediction for the match.")
