@@ -99,7 +99,6 @@ def execute_tool_call(tool_call, tools_map):
 
 ########### Tools ###############
 # Tool function to check players
-# Tool function to check players
 def gather_list_check_existence(player_1, player_2, location):
     """
     Reads UTR history, finds unique players, formats them as 'FirstName, LastName',
@@ -127,6 +126,7 @@ def gather_list_check_existence(player_1, player_2, location):
             # Ensure names are strings before joining
             f_name_str = str(row.f_name)
             l_name_str = str(row.l_name)
+            print(f'{row.f_name} {row.l_name}')
             player_list.append(f"{f_name_str} {l_name_str}") # Combine names with a comma and space
 
     except Exception as e:

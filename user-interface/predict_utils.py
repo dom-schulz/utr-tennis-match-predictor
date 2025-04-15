@@ -189,7 +189,7 @@ def make_prediction(player_1, player_2, location):
             p1_utr_value = np.int64(p1_utr_value)
             p2_utr_value = np.int64(p2_utr_value)
         except (ValueError, TypeError):
-            print(f"Discarding entry {i}: p1_utr={p1_utr_value}, p2_utr={p2_utr_value} (casting failed)")
+            # print(f"Discarding entry {i}: p1_utr={p1_utr_value}, p2_utr={p2_utr_value} (casting failed)")
             continue  # Skip this entry
 
         x = np.append(x, p1_utr_value - p2_utr_value)
