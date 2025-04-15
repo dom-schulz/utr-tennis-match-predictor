@@ -148,7 +148,7 @@ get_agent = Agent(name="Get Agent",
 st.title("Tennis Timmy 🤖")
 st.write("Enter two player names and a match location to receive a prediction for the match.")
 
-# Ensure chat history persists across reruns
+# Ensure chat history persists across rerun
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
