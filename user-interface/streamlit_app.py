@@ -145,7 +145,7 @@ get_agent = Agent(name="Get Agent",
 
 
 # ========== Streamlit UI ==========
-st.title("TEST Jared 🤖")
+st.title("UTR Match Predictor Test 🤖")
 
 tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "ℹ️ About"])
 
