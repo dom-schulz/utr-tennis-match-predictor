@@ -178,8 +178,17 @@ def make_prediction(player_1, player_2, location):
     print(data.dtypes)
 
     x = np.empty(1)
+    
     for i in range(len(data)):
-        x = np.append(x, data['p1_utr'][i]-data['p2_utr'][i])
+        p1_utr_value = data['p1_utr'][i]
+        p2_utr_value = data['p2_utr'][i]
+
+        # Check if both values are int64
+        if not (isinstance(p1_utr_value, (int, np.int64)) and isinstance(p2_utr_value, (int, np.int64))):
+            print(f"Discarding entry {i}: p1_utr={p1_utr_value}, p2_utr={p2_utr_value}")
+            continue  # Skip this entry
+
+        x = np.append(x, p1_utr_value - p2_utr_value)
 
     x = x.reshape(-1,1)
 
