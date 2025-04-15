@@ -73,7 +73,7 @@ log_message "Starting monitor for container ${CONTAINER_NAME} on instance $INSTA
 
 # Default sleep time in seconds
 SLEEP_TIME=60
-MAX_RUNTIME_HOURS=5  # Safety measure: max runtime 5 hours
+MAX_RUNTIME_HOURS=10  # Safety measure: max runtime 10 hours
 
 # Get start time in seconds
 START_TIME=$(date +%s)
