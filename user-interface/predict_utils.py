@@ -183,9 +183,12 @@ def make_prediction(player_1, player_2, location):
         p1_utr_value = data['p1_utr'][i]
         p2_utr_value = data['p2_utr'][i]
 
-        # Check if both values are int64
-        if not (isinstance(p1_utr_value, (int, np.int64)) and isinstance(p2_utr_value, (int, np.int64))):
-            print(f"Discarding entry {i}: p1_utr={p1_utr_value}, p2_utr={p2_utr_value}")
+        try:
+            # Attempt to cast to int64
+            p1_utr_value = np.int64(p1_utr_value)
+            p2_utr_value = np.int64(p2_utr_value)
+        except (ValueError, TypeError):
+            print(f"Discarding entry {i}: p1_utr={p1_utr_value}, p2_utr={p2_utr_value} (casting failed)")
             continue  # Skip this entry
 
         x = np.append(x, p1_utr_value - p2_utr_value)
