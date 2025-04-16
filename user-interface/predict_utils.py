@@ -179,6 +179,9 @@ def make_prediction(player_1, player_2, location):
     # print data colomn types
     print(data.dtypes)
     print(f'\n\n{data.head()}')
+    
+    print(utr_history.dtypes)
+    print(f'\n\n{utr_history.head()}')
 
     x = np.empty(1)
     
