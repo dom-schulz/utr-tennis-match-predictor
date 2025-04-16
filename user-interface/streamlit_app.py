@@ -258,6 +258,6 @@ with tabs[3]:
     ax.scatter(df['p1_utr'], df['p2_utr'], c=colors)
     ax.set_xlabel("Player 1 UTR")
     ax.set_ylabel("Player 2 UTR")
-    ax.set_title("UTR Matchups by Outcome")
+    ax.set_title("UTR Matchups by Outcome (R=p1w, B=p2w)")
 
     st.pyplot(fig)
