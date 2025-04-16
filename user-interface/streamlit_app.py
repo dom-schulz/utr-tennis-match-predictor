@@ -223,12 +223,13 @@ with tabs[2]:
     content = []
     prev_name = ''
     for i in range(len(df)):
-        curr_name = df['f_name'][i]+' '+df['l_name'][i]
-        if curr_name != prev_name:
+        if df['utr'][i] > 13:
             curr_name = df['f_name'][i]+' '+df['l_name'][i]
-            content.append([df['f_name'][i]+' '+df['l_name'][i], df['utr'][i+1], df['utr'][i], 
-                            df['utr'][i]-df['utr'][i+1], 100*((df['utr'][i]/df['utr'][i+1])-1)])
-        prev_name = curr_name
+            if curr_name != prev_name:
+                curr_name = df['f_name'][i]+' '+df['l_name'][i]
+                content.append([df['f_name'][i]+' '+df['l_name'][i], df['utr'][i+1], df['utr'][i], 
+                                df['utr'][i]-df['utr'][i+1], 100*((df['utr'][i]/df['utr'][i+1])-1)])
+            prev_name = curr_name
     df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
     df = df.sort_values(by="UTR Change", ascending=False)
     st.dataframe(df.head(10))
