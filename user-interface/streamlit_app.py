@@ -231,7 +231,7 @@ with tabs[2]:
                                 df['utr'][i]-df['utr'][i+1], 100*((df['utr'][i]/df['utr'][i+1])-1)])
             prev_name = curr_name
     df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
-    df = df.sort_values(by="UTR Change", ascending=False)
+    df = df.sort_values(by="UTR % Change", ascending=False)
     st.dataframe(df.head(10))
 
     # history = get_player_history(df)
