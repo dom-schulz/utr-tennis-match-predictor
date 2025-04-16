@@ -220,8 +220,8 @@ with tabs[2]:
     st.write("This tab will highlight matches where players gained or lost a large amount of UTR.")
 
     # Load the CSV from your bucket
-    # conn = st.connection('gcs', type=FilesConnection)
-    # df = conn.read("project-tennis-test-bucket/utr_history.csv", input_format="csv", ttl=600)
+    conn = st.connection('gcs', type=FilesConnection)
+    df = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
     # # Show the top few rows
     # st.dataframe(df)
