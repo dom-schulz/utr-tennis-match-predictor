@@ -8,3 +8,4 @@ st-files-connection>=0.1.0
 gcsfs>=0.10.0
 # Terminal coloring (for debugging)
 colorama>=0.4.6 
+plotly
