@@ -119,6 +119,8 @@ def get_player_history(utr_history):
     return history
 
 def get_score(players, player_profiles, model):
+    print(f'players: {players}')
+    print(f'player_profiles: {player_profiles}')
     utr_diff = []
     for j in range(len(players)):
         if j == 0:

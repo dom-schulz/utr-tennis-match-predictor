@@ -63,7 +63,7 @@ def run_full_turn(agent, messages):
         tool_schemas = [function_to_schema(tool) for tool in agent.tools]
         tools_map = {tool.__name__: tool for tool in agent.tools}
 
-        # 1. get openai completion
+        # get openai completion
         response = client.chat.completions.create(
             model=agent.model,
             messages=[{"role": "user", "content": agent.instructions}] + messages,
@@ -75,7 +75,7 @@ def run_full_turn(agent, messages):
         if not message.tool_calls:  # if finished handling tool calls, break
             break
 
-        # 2 handle tool calls
+        # handle tool calls
 
         for tool_call in message.tool_calls:
             result = execute_tool_call(tool_call, tools_map)
@@ -87,7 +87,7 @@ def run_full_turn(agent, messages):
             }
             messages.append(result_message)
 
-    # 3. return new messages
+    # return new messages
     return messages[num_init_messages:]
 
 # Execute tool function
@@ -121,7 +121,7 @@ def gather_list_check_existence(player_1, player_2, location):
         # Create DataFrame 'df' with unique names (handle potential missing values)
         df = df_full[['f_name', 'l_name']].dropna().drop_duplicates().reset_index(drop=True)
 
-        # 3. Append player list in "f_name l_name" format
+        # Append player list in "f_name l_name" format
         for row in df.itertuples(index=False):
             # Ensure names are strings before joining
             f_name_str = str(row.f_name)
