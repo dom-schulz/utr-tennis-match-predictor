@@ -177,13 +177,7 @@ with tabs[0]:
     
         # Display message
         with st.chat_message(role):
-            st.markdown(f"""
-        <div style="background-color:#f8f9fa; border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-            <h4 style="color:#003366;">🎾 Prediction</h4>
-            <pre style="white-space: pre-wrap; font-family: 'Courier New', monospace;">{content}</pre>
-        </div>
-        """,
-        unsafe_allow_html=True)
+            st.markdown(content)
     
     # User input field at the bottom
     if user_query := st.chat_input("Your request:"):
