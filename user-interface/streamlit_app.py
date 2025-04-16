@@ -6,6 +6,7 @@ import inspect
 from st_files_connection import FilesConnection
 import pandas as pd
 from predict_utils import *
+import plotly.express as px
 
 # OpenAI client
 my_api_key = st.secrets['openai_key']
@@ -147,7 +148,7 @@ get_agent = Agent(name="Get Agent",
 # ========== Streamlit UI ==========
 st.title("UTR Match Predictor Test 🤖")
 
-tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "ℹ️ About"])
+tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "UTR Graph", "ℹ️ About"])
 
 with tabs[0]:
     st.write("Enter two player names and a match location to receive a prediction for the match.")
@@ -244,3 +245,26 @@ with tabs[2]:
     # df_sorted = df.sort_values(by="utr_change", ascending=False)
     # st.subheader("Top UTR Gains")
     # st.dataframe(df_sorted.head(10))
+
+with tabs[3]:
+    # Load data from GCS
+    conn = st.connection('gcs', type=FilesConnection)
+    df = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
+
+    # Create winner column
+    df["winner"] = df["p_win"].map({1: "p1", 0: "p2"})
+
+    # Make the plot
+    fig = px.scatter(
+        df,
+        x="p1_utr",
+        y="p2_utr",
+        color="winner",
+        labels={"p1_utr": "Player 1 UTR", "p2_utr": "Player 2 UTR"},
+        title="Player 1 vs Player 2 UTR — Match Outcomes",
+        hover_data=["f_name", "l_name"]
+    )
+
+    # Show it in Streamlit
+    st.subheader("UTR Scatter Plot of Match Winners")
+    st.plotly_chart(fig, use_container_width=True)
