@@ -189,6 +189,7 @@ def get_score(players, player_profiles, model):
     
     # Check if we have profiles for both players
     if not all(player in player_profiles for player in players):
+        print(f'Missing Player Profiles. Players: {players} and Player Profiles: {player_profiles}')
         raise ValueError(f"Missing Player Profiles. Players: {players} and Player Profiles: {player_profiles}")
     
     utr_diff = []
