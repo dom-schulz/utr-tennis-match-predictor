@@ -74,30 +74,53 @@ class LogitRegression(LinearRegression):
 def get_player_profiles(data, history, p1, p2):
     player_profiles = {}
 
+    # First, create a mapping of full names to history names
+    name_mapping = {}
+    for hist_name in history.keys():
+        # Extract last name and first initial from history name (e.g., "Alcaraz C." -> "Alcaraz")
+        parts = hist_name.split()
+        if len(parts) >= 2:
+            last_name = parts[0]
+            first_initial = parts[1][0]
+            # Create variations of the name that might appear in the data
+            name_mapping[last_name] = hist_name
+            name_mapping[f"{last_name} {first_initial}"] = hist_name
+            name_mapping[f"{last_name} {first_initial}."] = hist_name
+
     for i in range(len(data)):
         for player, opponent in [(data['p1'][i], data['p2'][i]), (data['p2'][i], data['p1'][i])]:
             if player == p1 or player == p2:
+                # Find the matching history name
+                hist_name = None
+                for name_var in name_mapping:
+                    if name_var in player:
+                        hist_name = name_mapping[name_var]
+                        break
+                
+                if hist_name is None:
+                    continue  # Skip if no matching history name found
+                
                 utr_diff = data['p1_utr'][i] - data['p2_utr'][i] if data['p1'][i] == player else data['p2_utr'][i] - data['p1_utr'][i]
-                # print(f'history: {history}')
+                
                 if player not in player_profiles:
                     player_profiles[player] = {
                         "win_vs_lower": [],
                         "win_vs_higher": [],
                         "recent10": [],
-                        "utr": history[player]['utr']
+                        "utr": history[hist_name]['utr']
                     }
                 
                 # Record win rates vs higher/lower-rated opponents
                 if utr_diff > 0:  # Player faced a lower-rated opponent
-                    player_profiles[player]["win_vs_lower"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
+                    player_profiles[player]["win_vs_lower"].append(data["winner"][i] == 0 if data["p1"][i] == player else data["winner"][i] == 1)
                 else:  # Player faced a higher-rated opponent
-                    player_profiles[player]["win_vs_higher"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
+                    player_profiles[player]["win_vs_higher"].append(data["winner"][i] == 0 if data["p1"][i] == player else data["winner"][i] == 1)
                 
                 if len(player_profiles[player]["recent10"]) < 10:
-                    player_profiles[player]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
+                    player_profiles[player]["recent10"].append(data["winner"][i] == 0 if data["p1"][i] == player else data["winner"][i] == 1)
                 else:
                     player_profiles[player]["recent10"] = player_profiles[player]["recent10"][1:]
-                    player_profiles[player]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
+                    player_profiles[player]["recent10"].append(data["winner"][i] == 0 if data["p1"][i] == player else data["winner"][i] == 1)
 
     for player in player_profiles:
         profile = player_profiles[player]
