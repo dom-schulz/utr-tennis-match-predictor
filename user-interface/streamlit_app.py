@@ -227,6 +227,7 @@ with tabs[2]:
             temp_name = df['f_name'][i]+' '+df['l_name'][i]
             content.append([df['f_name'][i]+' '+df['l_name'][i], df['utr'][i]-df['utr'][i+1]])
     df = pd.DataFrame(content, columns=["Name", "UTR Change"])
+    df = df.sort_values(by="UTR Change", ascending=False)
     st.dataframe(df.head(10))
 
     # history = get_player_history(df)
