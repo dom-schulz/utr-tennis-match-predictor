@@ -239,16 +239,23 @@ def get_score(players, player_profiles, model):
 
 
 def make_prediction(player_1, player_2, location):
+
+    # Convert players to the desired format
+    formatted_player_1 = player_1.split()[1] + ' ' + player_1.split()[0][0] + '.'
+    formatted_player_2 = player_2.split()[1] + ' ' + player_2.split()[0][0] + '.'
+
+    print(formatted_player_1)  # Output Ex. : "Alcaraz C."
+    print(formatted_player_2)  
+    
     # get data to fit to model    
     conn = st.connection('gcs', type=FilesConnection)
     data = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
     conn = st.connection('gcs', type=FilesConnection)
+    
+    # Converts utr history f_name l_name format to player_name (l_name + f_name[0] + '.')
     utr_history = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
-    # Assuming 'utr_history' is your DataFrame
     utr_history['player_name'] = utr_history['l_name'] + ' ' + utr_history['f_name'].str[0] + '.'
-    
-    # random.seed(30)
-    
+        
     # print data colomn types
     print(data.dtypes)
     print(f'\n\n{data.head()}')
