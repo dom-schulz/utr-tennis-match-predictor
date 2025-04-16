@@ -220,9 +220,9 @@ with tabs[2]:
     # # Show the top few rows
     # st.dataframe(df.head(10))
 
-    content = []
-    temp_name = df['f_name'][0]+df['l_name'][0]
-    for i in range(len(df)):
+    # content = []
+    # temp_name = df['f_name'][0]+df['l_name'][0]
+    # for i in range(len(df)):
         
 
     # history = get_player_history(df)
