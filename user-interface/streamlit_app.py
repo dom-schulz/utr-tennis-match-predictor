@@ -218,3 +218,15 @@ with tabs[1]:
 with tabs[2]:
     st.header("📈 Large UTR Moves")
     st.write("This tab will highlight matches where players gained or lost a large amount of UTR.")
+
+    # Load the CSV from your bucket
+    conn = st.connection('gcs', type=FilesConnection)
+    df = conn.read("project-tennis-test-bucket/utr_history.csv", input_format="csv", ttl=600)
+
+    # Show the top few rows
+    st.dataframe(df)
+
+    # Optionally, sort or filter
+    # df_sorted = df.sort_values(by="utr_change", ascending=False)
+    # st.subheader("Top UTR Gains")
+    # st.dataframe(df_sorted.head(10))
