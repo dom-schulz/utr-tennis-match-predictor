@@ -6,7 +6,7 @@ import inspect
 from st_files_connection import FilesConnection
 import pandas as pd
 from predict_utils import *
-import plotly.express as px
+import matplotlib.pyplot as plt
 
 # OpenAI client
 my_api_key = st.secrets['openai_key']
@@ -251,20 +251,12 @@ with tabs[3]:
     conn = st.connection('gcs', type=FilesConnection)
     df = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
 
-    # Create winner column
-    df["winner"] = df["p_win"].map({1: "p1", 0: "p2"})
+    # Example scatter plot
+    fig, ax = plt.subplots()
+    colors = df['p_win'].map({1: 'blue', 0: 'red'})  # Adjust depending on how p_win is encoded
+    ax.scatter(df['p1_utr'], df['p2_utr'], c=colors)
+    ax.set_xlabel("Player 1 UTR")
+    ax.set_ylabel("Player 2 UTR")
+    ax.set_title("UTR Matchups by Outcome")
 
-    # Make the plot
-    fig = px.scatter(
-        df,
-        x="p1_utr",
-        y="p2_utr",
-        color="winner",
-        labels={"p1_utr": "Player 1 UTR", "p2_utr": "Player 2 UTR"},
-        title="Player 1 vs Player 2 UTR — Match Outcomes",
-        hover_data=["f_name", "l_name"]
-    )
-
-    # Show it in Streamlit
-    st.subheader("UTR Scatter Plot of Match Winners")
-    st.plotly_chart(fig, use_container_width=True)
+    st.pyplot(fig)
