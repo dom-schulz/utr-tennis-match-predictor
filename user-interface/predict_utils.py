@@ -72,6 +72,12 @@ class LogitRegression(LinearRegression):
         return profile
 
 def get_player_profiles(data, history, p1, p2):
+    print(f'get player profiles inputs')
+    print(f'data: {data}')
+    print(f'history: {history}')
+    print(f'p1: {p1}')
+    print(f'p2: {p2}\nEND OF INPUTS')
+    
     player_profiles = {}
 
     # First, create a mapping of full names to history names
@@ -87,6 +93,8 @@ def get_player_profiles(data, history, p1, p2):
             name_mapping[f"{last_name} {first_initial}"] = hist_name
             name_mapping[f"{last_name} {first_initial}."] = hist_name
 
+    print(f'name_mapping: {name_mapping}')
+    
     for i in range(len(data)):
         for player, opponent in [(data['p1'][i], data['p2'][i]), (data['p2'][i], data['p1'][i])]:
             if player == p1 or player == p2:
