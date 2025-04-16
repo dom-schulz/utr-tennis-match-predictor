@@ -226,7 +226,7 @@ with tabs[2]:
         if temp_name != df['f_name'][i]+' '+df['l_name'][i]:
             temp_name = df['f_name'][i]+' '+df['l_name'][i]
             content.append([df['f_name'][i]+' '+df['l_name'][i], df['utr'][i]-df['utr'][i+1]])
-    df = pd.DataFrame(arr, columns=["Name", "UTR Change"])
+    df = pd.DataFrame(content, columns=["Name", "UTR Change"])
     st.dataframe(df.head(10))
 
     # history = get_player_history(df)
