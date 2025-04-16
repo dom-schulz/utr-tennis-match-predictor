@@ -212,7 +212,7 @@ with tabs[1]:
 # === Tab: Large UTR Moves ===
 with tabs[2]:
     st.header("📈 Large UTR Moves")
-    st.write("This tab will highlight matches where players gained or lost a large amount of UTR.")
+    st.write("This tab will highlight matches where players gained or lost a large amount of UTR since the previous week.")
 
     # Load the CSV from your bucket
     conn = st.connection('gcs', type=FilesConnection)
@@ -233,6 +233,9 @@ with tabs[2]:
             prev_name = curr_name
     df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
     df = df.sort_values(by="UTR % Change", ascending=False)
+    st.dataframe(df.head(10))
+
+    df = df.sort_values(by="UTR % Change", ascending=True)
     st.dataframe(df.head(10))
 
     # history = get_player_history(df)
