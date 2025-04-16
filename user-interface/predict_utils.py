@@ -168,9 +168,9 @@ def get_score(players, player_profiles, model):
 def make_prediction(player_1, player_2, location):
     # get data to fit to model    
     conn = st.connection('gcs', type=FilesConnection)
-    data = conn.read("project-tennis-test-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
+    data = conn.read("utr_scraper_bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
     conn = st.connection('gcs', type=FilesConnection)
-    utr_history = conn.read("project-tennis-test-bucket/utr_history.csv", input_format="csv", ttl=600)
+    utr_history = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
     # random.seed(30)
 
