@@ -225,8 +225,9 @@ with tabs[2]:
     for i in range(len(df)):
         if temp_name != df['f_name'][i]+' '+df['l_name'][i]:
             temp_name = df['f_name'][i]+' '+df['l_name'][i]
-            content.append([df['f_name'][i]+' '+df['l_name'][i], df['utr'][i]-df['utr'][i+1]])
-    df = pd.DataFrame(content, columns=["Name", "UTR Change"])
+            content.append([df['f_name'][i]+' '+df['l_name'][i], df['utr'][i+1], df['utr'][i], 
+                            df['utr'][i]-df['utr'][i+1], df['utr'][i+1]/df['utr'][i]])
+    df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
     df = df.sort_values(by="UTR Change", ascending=False)
     st.dataframe(df.head(10))
 
