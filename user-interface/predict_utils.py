@@ -142,8 +142,6 @@ def get_player_history(utr_history):
     return history
 
 def get_score(players, player_profiles, model):
-    print(f'players: {players}')
-    print(f'player_profiles: {player_profiles}')
     
     # Check if we have profiles for both players
     if not all(player in player_profiles for player in players):
