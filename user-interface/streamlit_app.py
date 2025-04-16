@@ -104,7 +104,7 @@ def gather_list_check_existence(player_1, player_2, location, player_list):
     player_list = []
 
     conn = st.connection('gcs', type=FilesConnection)
-    df = conn.read("project-tennis-test-bucket/sample_names.csv", input_format="csv", ttl=600)
+    df = conn.read("utr_scraper_bucket/sample_names.csv", input_format="csv", ttl=600)
 
     # Append player list
     for row in df.itertuples():
@@ -224,13 +224,18 @@ with tabs[2]:
     df = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
     # # Show the top few rows
-    st.dataframe(df.head(10))
+    # st.dataframe(df.head(10))
 
-    history = get_player_history(df)
+    content = []
+    temp_name = df['f_name'][0]+df['l_name'][0]
+    for i in range(len(df)):
+        
+
+    # history = get_player_history(df)
 
     # content = []
-    # for i in range(len(df)):
-        
+    # for player in history.keys():
+    #     row = {player: history[player]}
 
     # Optionally, sort or filter
     # df_sorted = df.sort_values(by="utr_change", ascending=False)
