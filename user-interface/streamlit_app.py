@@ -182,6 +182,13 @@ if user_query := st.chat_input("Your request:"):
     with st.chat_message("user"):
         st.markdown(user_query)
 
+# User input field at the bottom
+if user_query := st.chat_input("Your request:"):
+    # Append user message
+    st.session_state.messages.append({"role": "user", "content": user_query})
+    with st.chat_message("user"):
+        st.markdown(user_query)
+
     # Generate response
     new_messages = run_full_turn(get_agent, st.session_state.messages)
 
