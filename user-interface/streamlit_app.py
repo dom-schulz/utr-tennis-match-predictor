@@ -220,10 +220,14 @@ with tabs[2]:
     # # Show the top few rows
     # st.dataframe(df.head(10))
 
-    # content = []
-    # temp_name = df['f_name'][0]+df['l_name'][0]
-    # for i in range(len(df)):
-        
+    content = []
+    temp_name = df['f_name'][0]+' '+df['l_name'][0]
+    for i in range(len(df)):
+        if temp_name != df['f_name'][i]+' '+df['l_name'][i]:
+            temp_name = df['f_name'][i]+' '+df['l_name'][i]
+            content.append([df['f_name'][i]+' '+df['l_name'][i], df['utr'][i]-df['utr'][i+1]])
+    df = pd.DataFrame(arr, columns=["Name", "UTR Change"])
+    st.dataframe(df.head(10))
 
     # history = get_player_history(df)
 
