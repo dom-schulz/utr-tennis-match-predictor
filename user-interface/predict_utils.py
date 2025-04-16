@@ -285,8 +285,8 @@ def make_prediction(player_1, player_2, location):
     model = LogitRegression()
     model.fit(0.9*x, p)
 
-    p1 = player_1 # "Medvedev D."
-    p2 = player_2 # "Alcaraz C."
+    p1 = formatted_player_1 # "Medvedev D."
+    p2 = formatted_player_2 # "Alcaraz C."
     ps = [p1, p2]
     history = get_player_history(utr_history)
     player_profiles = get_player_profiles(data, history, ps[0], ps[1])
