@@ -224,9 +224,9 @@ with tabs[2]:
     df = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
     # # Show the top few rows
-    # st.dataframe(df)
+    st.dataframe(df)
 
-    # history = get_player_history(df)
+    history = get_player_history(df)
 
     # content = []
     # for i in range(len(df)):
