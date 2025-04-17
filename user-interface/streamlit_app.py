@@ -205,4 +205,29 @@ if user_query := st.chat_input("Your request:"):
         else:
             with st.chat_message(role):
                 st.markdown(content)
+                
+    # User input field at the bottom
+if user_query_two := st.chat_input("Your request:"):
+    # Append user message
+    st.session_state.messages.append({"role": "user", "content": user_query})
+    with st.chat_message("user"):
+        st.markdown(user_query)
+
+    # Generate response
+    new_messages = run_full_turn(get_agent, st.session_state.messages)
+
+    # Append new messages to session history without altering prior assistant messages
+    st.session_state.messages.extend(new_messages)
+
+    # Display assistant response
+    for msg in new_messages:
+        role = msg.role if hasattr(msg, "role") else msg["role"]
+        content = msg.content if hasattr(msg, "content") else msg["content"]
+
+        if content is None or role == "tool" or role == "user":
+            continue  # Skip None content, tool responses, or user input
+        else:
+            with st.chat_message(role):
+                st.markdown(content)
     
+
