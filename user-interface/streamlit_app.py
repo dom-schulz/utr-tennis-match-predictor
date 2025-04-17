@@ -151,8 +151,8 @@ st.title("Tennis Match Predictor🤖")
 st.write("Enter two player names and a match location to receive a prediction for the match.")
     
     # Ensure chat history persists across reruns
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+if "messages" not in st.session_state:
+    st.session_state.messages = []
     
     # Display chat history using `st.chat_message`
     for msg in st.session_state.messages:
