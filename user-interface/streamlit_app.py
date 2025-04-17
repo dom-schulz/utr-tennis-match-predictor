@@ -179,20 +179,20 @@ get_agent = Agent(name="Get Agent",
 
 
 
-# # ========== Streamlit UI ==========
-# def set_bg_image(image_url):
-#     st.markdown(
-#         f"""
-#         <style>
-#         .stApp {{
-#             background-image: url("{image_url}");
-#             background-size: cover;
-#             background-attachment: fixed;
-#         }}
-#         </style>
-#         """,
-#         unsafe_allow_html=True
-#     )
+# ========== Streamlit UI ==========
+def set_bg_image(image_url):
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("{image_url}");
+            background-size: cover;
+            background-attachment: fixed;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 tennis_court_bg_url = "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.istockphoto.com%2Fillustrations%2Ftennis-court&psig=AOvVaw0lVhJj0KLkLhRKgLmDqxld&ust=1744951115859000&source=images&cd=vfe&opi=89978449&ved=0CBkQjhxqFwoTCOiW6tKf3owDFQAAAAAdAAAAABAJ"
 set_bg_image(tennis_court_bg_url)
