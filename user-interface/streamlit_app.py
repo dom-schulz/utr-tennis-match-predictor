@@ -146,6 +146,14 @@ get_agent = Agent(name="Get Agent",
 
 # ========== Streamlit UI ==========
 st.title("Tennis-Match-Predictor 🤖")
+
+
+
+
+
+
+
+
 st.write("Enter two player names and a match location to receive a prediction for the match.")
 
 
@@ -176,50 +184,26 @@ for msg in st.session_state.messages:
     with st.chat_message(role):
         st.markdown(content)
 
-# First user input field at the bottom
-if user_query_1 := st.chat_input("Your first request:"):
+# User input field at the bottom
+if user_query := st.chat_input("Your request:"):
     # Append user message
-    st.session_state.messages.append({"role": "user", "content": user_query_1})
+    st.session_state.messages.append({"role": "user", "content": user_query})
     with st.chat_message("user"):
-        st.markdown(user_query_1)
+        st.markdown(user_query)
 
     # Generate response
-    new_messages_1 = run_full_turn(get_agent, st.session_state.messages)
+    new_messages = run_full_turn(get_agent, st.session_state.messages)
 
     # Append new messages to session history without altering prior assistant messages
-    st.session_state.messages.extend(new_messages_1)
+    st.session_state.messages.extend(new_messages)
 
     # Display assistant response
-    for msg in new_messages_1:
+    for msg in new_messages:
         role = msg.role if hasattr(msg, "role") else msg["role"]
         content = msg.content if hasattr(msg, "content") else msg["content"]
 
         if content is None or role == "tool" or role == "user":
             continue  # Skip None content, tool responses, or user input
-        else:
-            with st.chat_message(role):
-                st.markdown(content)
-
-# Second user input field at the bottom
-if user_query_2 := st.chat_input("Your second request:"):
-    # Append user message
-    st.session_state.messages.append({"role": "user", "content": user_query_2})
-    with st.chat_message("user"):
-        st.markdown(user_query_2)
-
-    # Generate response (you might want to handle this independently if needed)
-    new_messages_2 = run_full_turn(get_agent, st.session_state.messages)
-
-    # Append new messages to session history
-    st.session_state.messages.extend(new_messages_2)
-
-    # Display assistant response
-    for msg in new_messages_2:
-        role = msg.role if hasattr(msg, "role") else msg["role"]
-        content = msg.content if hasattr(msg, "content") else msg["content"]
-
-        if content is None or role == "tool" or role == "user":
-            continue
         else:
             with st.chat_message(role):
                 st.markdown(content)
