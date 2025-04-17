@@ -73,7 +73,8 @@ ENV UTR_BUCKET_NAME=utr_scraper_bucket
 ENV PORT=8080
 ENV CHROME_BIN="/usr/bin/google-chrome-stable"
 ENV CHROME_DRIVER="/usr/local/bin/chromedriver"
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONUNBUFFERED=1 
+# output from print statements and other standard output will be sent directly to the terminal (or wherever the output is directed)
 
 # Create necessary directories and set permissions
 RUN mkdir -p /tmp/chrome-profile /tmp/.X11-unix \
