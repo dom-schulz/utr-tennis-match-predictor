@@ -180,6 +180,22 @@ get_agent = Agent(name="Get Agent",
 
 
 # ========== Streamlit UI ==========
+def set_bg_image(image_url):
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("{image_url}");
+            background-size: cover;
+            background-attachment: fixed;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+tennis_court_bg_url = "https://png.pngtree.com/png-vector/20220711/ourmid/pngtree-tennis-court-png-image_5823087.png"
+set_bg_image(tennis_court_bg_url)
 st.title("🎾 Tennis Timmy Predictor 🤖") 
 st.write("Enter two player names and a match location to receive a prediction for the match.")
 
