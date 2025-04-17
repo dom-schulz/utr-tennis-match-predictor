@@ -192,7 +192,7 @@ def set_bg_image(image_url):
         unsafe_allow_html=True
     )
 
-tennis_court_bg_url = "https://pngimg.com/d/tennis_ball_PNG23.png"
+tennis_court_bg_url = "https://t4.ftcdn.net/jpg/03/66/76/89/360_F_366768939_OlWaxKMSVafGpXEfJoDSrrplwVeKXwmm.jpg"
 set_bg_image(tennis_court_bg_url)
 # ========== Streamlit UI ==========
 st.title("🎾 Tennis Timmy Predictor 🤖") 
