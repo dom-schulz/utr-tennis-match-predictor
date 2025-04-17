@@ -72,53 +72,60 @@ class LogitRegression(LinearRegression):
         return profile
 
 def get_player_profiles(data, history, p1, p2):
-    player_profiles = {}
+     player_profiles = {}
+ 
+     for i in range(len(data)):
+         for player, opponent in [(data['p1'][i], data['p2'][i]), (data['p2'][i], data['p1'][i])]:
+             if player == p1 or player == p2:
+                 utr_diff = data['p1_utr'][i] - data['p2_utr'][i] if data['p1'][i] == player else data['p2_utr'][i] - data['p1_utr'][i]
+                 # print(f'history: {history}')
+                 if player not in player_profiles:
+                     player_profiles[player] = {
+                         "win_vs_lower": [],
+                         "win_vs_higher": [],
+                         "recent10": [],
+                         "utr": history[player]['utr']
+                     }
+                 
+                 # Record win rates vs higher/lower-rated opponents
+                 if utr_diff > 0:  # Player faced a lower-rated opponent
+                     player_profiles[player]["win_vs_lower"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
+                 else:  # Player faced a higher-rated opponent
+                     player_profiles[player]["win_vs_higher"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
+                 
+                 if len(player_profiles[player]["recent10"]) < 10:
+                     player_profiles[player]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
+                 else:
+                     player_profiles[player]["recent10"] = player_profiles[player]["recent10"][1:]
+                     player_profiles[player]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
+ 
+     for player in player_profiles:
+         profile = player_profiles[player]
+         profile["win_vs_lower"] = np.mean(profile["win_vs_lower"]) if len(profile["win_vs_lower"]) > 0 else 0.5
+         profile["win_vs_higher"] = np.mean(profile["win_vs_higher"]) if len(profile["win_vs_higher"]) > 0 else 0.5
+         profile["recent10"] = np.mean(profile["recent10"]) if len(profile["recent10"]) > 0 else 0
+     
+     return player_profiles
 
-    for i in range(len(data)):
-        for player, opponent in [(data['p1'][i], data['p2'][i]), (data['p2'][i], data['p1'][i])]:
-            if player == p1 or player == p2:
-                utr_diff = data['p1_utr'][i] - data['p2_utr'][i] if data['p1'][i] == player else data['p2_utr'][i] - data['p1_utr'][i]
-                # print(f'history: {history}')
-                if player not in player_profiles:
-                    player_profiles[player] = {
-                        "win_vs_lower": [],
-                        "win_vs_higher": [],
-                        "recent10": [],
-                        "utr": history[player]['utr']
-                    }
-                
-                # Record win rates vs higher/lower-rated opponents
-                if utr_diff > 0:  # Player faced a lower-rated opponent
-                    player_profiles[player]["win_vs_lower"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
-                else:  # Player faced a higher-rated opponent
-                    player_profiles[player]["win_vs_higher"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
-                
-                if len(player_profiles[player]["recent10"]) < 10:
-                    player_profiles[player]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
-                else:
-                    player_profiles[player]["recent10"] = player_profiles[player]["recent10"][1:]
-                    player_profiles[player]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
-
-    for player in player_profiles:
-        profile = player_profiles[player]
-        profile["win_vs_lower"] = np.mean(profile["win_vs_lower"]) if len(profile["win_vs_lower"]) > 0 else 0.5
-        profile["win_vs_higher"] = np.mean(profile["win_vs_higher"]) if len(profile["win_vs_higher"]) > 0 else 0.5
-        profile["recent10"] = np.mean(profile["recent10"]) if len(profile["recent10"]) > 0 else 0
-    
-    return player_profiles
 
 def get_player_history(utr_history):
     history = {}
 
     for i in range(len(utr_history)):
-        if utr_history['l_name'][i]+' '+utr_history['f_name'][i][0]+'.' not in history:
-            history[utr_history['l_name'][i]+' '+utr_history['f_name'][i][0]+'.'] = {
+        if utr_history['player_name'][i] not in history:
+            history[utr_history['player_name'][i]] = {
                 'utr': utr_history['utr'][i]
             }
-
+    print(f'history: {history}')
     return history
 
 def get_score(players, player_profiles, model):
+    
+    # Check if we have profiles for both players
+    if not all(player in player_profiles for player in players):
+        print(f'Missing Player Profiles. Players: {players} and Player Profiles: {player_profiles}')
+        raise ValueError(f"Missing Player Profiles. Players: {players} and Player Profiles: {player_profiles}")
+    
     utr_diff = []
     for j in range(len(players)):
         if j == 0:
@@ -166,17 +173,35 @@ def get_score(players, player_profiles, model):
 
 
 def make_prediction(player_1, player_2, location):
+
+    # Convert players to the desired format
+    formatted_player_1 = player_1.split()[1] + ' ' + player_1.split()[0][0] + '.'
+    formatted_player_2 = player_2.split()[1] + ' ' + player_2.split()[0][0] + '.'
+    
     # get data to fit to model    
     conn = st.connection('gcs', type=FilesConnection)
-    data = conn.read("project-tennis-test-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
+    data = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
     conn = st.connection('gcs', type=FilesConnection)
-    utr_history = conn.read("project-tennis-test-bucket/utr_history.csv", input_format="csv", ttl=600)
-
-    # random.seed(30)
-
+    
+    # Converts utr history f_name l_name format to player_name (l_name + f_name[0] + '.')
+    utr_history = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
+    utr_history['player_name'] = utr_history['l_name'] + ' ' + utr_history['f_name'].str[0] + '.'
+    
     x = np.empty(1)
+    
     for i in range(len(data)):
-        x = np.append(x, data['p1_utr'][i]-data['p2_utr'][i])
+        p1_utr_value = data['p1_utr'][i]
+        p2_utr_value = data['p2_utr'][i]
+
+        try:
+            # Attempt to cast to int64
+            p1_utr_value = np.int64(p1_utr_value)
+            p2_utr_value = np.int64(p2_utr_value)
+        except (ValueError, TypeError):
+            # print(f"Discarding entry {i}: p1_utr={p1_utr_value}, p2_utr={p2_utr_value} (casting failed)")
+            continue  # Skip this entry
+
+        x = np.append(x, p1_utr_value - p2_utr_value)
 
     x = x.reshape(-1,1)
 
@@ -184,8 +209,8 @@ def make_prediction(player_1, player_2, location):
     model = LogitRegression()
     model.fit(0.9*x, p)
 
-    p1 = player_1 #"Medvedev D."
-    p2 = player_2 # "Alcaraz C."
+    p1 = formatted_player_1 # "Medvedev D."
+    p2 = formatted_player_2 # "Alcaraz C."
     ps = [p1, p2]
     history = get_player_history(utr_history)
     player_profiles = get_player_profiles(data, history, ps[0], ps[1])
