@@ -217,11 +217,17 @@ with tabs[0]:
 # === Tab: Upcoming Matches ===
 with tabs[1]:
     st.header("📅 Upcoming Matches")
+    st.subheader("Stay Ahead of the Game")
+    st.caption("See what's next on the pro circuit, and who’s most likely to rise.")
+
     st.write("Here you can display upcoming tennis matches (e.g., from a dataset or API).")
 
 # === Tab: Large UTR Moves ===
 with tabs[2]:
     st.header("📈 Large UTR Moves")
+    st.subheader("Biggest Shifts in Player Ratings")
+    st.caption("Our algorithm tracks the highest-impact UTR swings — who’s peaking, who’s slipping.")
+
     st.write("This tab will highlight matches where players gained or lost a large amount of UTR since the previous week.")
 
     # Load the CSV from your bucket
@@ -274,3 +280,12 @@ with tabs[3]:
     ax.set_title("UTR Matchups by Outcome (R=p1w, B=p2w)")
 
     st.pyplot(fig)
+
+with tabs[4]:
+    st.markdown("""
+    ### What is MatchMind?
+    **MatchMind** is your smart tennis insights assistant.  
+    Powered by OpenAI and match data, it gives fast, intuitive predictions — so you can always know who’s got the edge.
+
+    **Built for players, fans, and data nerds alike.**
+    """)
