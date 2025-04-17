@@ -100,23 +100,56 @@ def execute_tool_call(tool_call, tools_map):
 
 ########### Tools ###############
 # Tool function to check players
-def gather_list_check_existence(player_1, player_2, location, player_list):
-
+def gather_list_check_existence(player_1, player_2, location):
+    """
+    Reads UTR history, finds unique players, formats them as 'FirstName, LastName',
+    and checks if the provided player_1 and player_2 exist in that list.
+    Assumes player_1 and player_2 inputs are in 'FirstName, LastName' format.
+    """
     player_list = []
 
     conn = st.connection('gcs', type=FilesConnection)
-    df = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
+    try:
+        # Read the file
+        df_full = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
-    # Append player list
-    for row in df.itertuples():
-        player_list.append(str(row[1]))    
+        # Ensure required columns exist
+        if 'f_name' not in df_full.columns or 'l_name' not in df_full.columns:
+             st.error("Required columns ('f_name', 'l_name') not found in utr_history.csv")
+             # Return an error message that the agent might understand or pass back
+             return "ERROR: Player data file is missing required columns."
 
-    if player_1 in player_list and player_2 in player_list:
-        # SEND JSON TO BACKEND
+        # Create DataFrame 'df' with unique names (handle potential missing values)
+        df = df_full[['f_name', 'l_name']].dropna().drop_duplicates().reset_index(drop=True)
+
+        # Append player list in "f_name l_name" format
+        for row in df.itertuples(index=False):
+            # Ensure names are strings before joining
+            f_name_str = str(row.f_name)
+            l_name_str = str(row.l_name)
+            # print(f'{row.f_name} {row.l_name}')
+            player_list.append(f"{f_name_str} {l_name_str}") # Combine names with a comma and space
+
+    except Exception as e:
+        st.error(f"Error reading or processing player data: {e}")
+        # Return an error message
+        return f"ERROR: Could not load or process player data. Details: {e}"
+
+    # Check if the provided player names exist in the generated list
+    p1_exists = player_1 in player_list
+    p2_exists = player_2 in player_list
+
+    if p1_exists and p2_exists:
+        # Players found, return JSON
         return_json = json.dumps({"player_1": player_1, "player_2": player_2, "location": location})
         return return_json
     else:
-        return "INVALID_PLAYERS"
+        # One or both players not found, return invalid message
+        missing = []
+        if not p1_exists: missing.append(player_1)
+        if not p2_exists: missing.append(player_2)
+        # Provide feedback indicating the expected format might be the issue if names are missing
+        return f"INVALID_PLAYERS: Could not find {', '.join(missing)}. Please ensure names are entered exactly as 'FirstName, LastName' (case-sensitive) and exist in the available data."
 
 
 # Create agent
@@ -178,14 +211,7 @@ with tabs[0]:
     
         # Display message
         with st.chat_message(role):
-            st.markdown(f"""
-        <div style="background-color:#f8f9fa; border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-            <h4 style="color:#003366;">🎾 Prediction</h4>
-            <pre style="white-space: pre-wrap; font-family: 'Courier New', monospace;">{content}</pre>
-        </div>
-        """,
-        unsafe_allow_html=True
-        )
+            st.markdown(content)
     
     # User input field at the bottom
     if user_query := st.chat_input("Your request:"):
