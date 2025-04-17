@@ -214,10 +214,6 @@ player1_name = st.text_input("Player 1 Name (FirstName, LastName):")
 player2_name = st.text_input("Player 2 Name (FirstName, LastName):")
 location = st.text_input("Match Location:")
 
-playerone_name = st.text_input("Player One Name (FirstName, LastName):")
-playertwo_name = st.text_input("Player Two Name (FirstName, LastName):")
-location_two = st.text_input("Match Location Two:")
-
 if st.button("Get Prediction"):
     if player1_name and player2_name and location:
         user_query = f"{player1_name.strip()}, {player2_name.strip()} at {location.strip()}"
@@ -246,3 +242,8 @@ if st.button("Get Prediction"):
         st.warning("Please enter the names of both players and the match location.")
 
 st.divider()
+
+playerone_name = st.text_input("Player One Name (FirstName, LastName):")
+playertwo_name = st.text_input("Player Two Name (FirstName, LastName):")
+location_two = st.text_input("Match Location Two:")
+
