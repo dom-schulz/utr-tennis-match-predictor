@@ -192,7 +192,7 @@ def set_bg_image(image_url):
         unsafe_allow_html=True
     )
 
-tennis_court_bg_url = "https://stock.adobe.com/search?k=tennis+clipart"
+tennis_court_bg_url = "https://img.freepik.com/premium-vector/two-racket-tennis-ball-clip-art-vector-design-with-white-background_579306-14036.jpg"
 set_bg_image(tennis_court_bg_url)
 # ========== Streamlit UI ==========
 st.title("🎾 Tennis Timmy Predictor 🤖") 
