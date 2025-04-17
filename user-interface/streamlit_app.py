@@ -54,6 +54,7 @@ def function_to_schema(func) -> dict:
 
 # Run full conversation turn
 def run_full_turn(agent, messages):
+    user_query = f"{player1_name}, {player2_name} at {location}"
     num_init_messages = len(messages)
     messages = messages.copy()
 
