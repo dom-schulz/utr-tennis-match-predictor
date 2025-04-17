@@ -63,7 +63,7 @@ def run_full_turn(agent, messages):
         tool_schemas = [function_to_schema(tool) for tool in agent.tools]
         tools_map = {tool.__name__: tool for tool in agent.tools}
 
-        # 1. get openai completion
+        # get openai completion
         response = client.chat.completions.create(
             model=agent.model,
             messages=[{"role": "user", "content": agent.instructions}] + messages,
@@ -75,7 +75,7 @@ def run_full_turn(agent, messages):
         if not message.tool_calls:  # if finished handling tool calls, break
             break
 
-        # 2 handle tool calls
+        # handle tool calls
 
         for tool_call in message.tool_calls:
             result = execute_tool_call(tool_call, tools_map)
@@ -87,7 +87,7 @@ def run_full_turn(agent, messages):
             }
             messages.append(result_message)
 
-    # 3. return new messages
+    # return new messages
     return messages[num_init_messages:]
 
 # Execute tool function
@@ -99,23 +99,58 @@ def execute_tool_call(tool_call, tools_map):
 
 ########### Tools ###############
 # Tool function to check players
-def gather_list_check_existence(player_1, player_2, location, player_list):
-
+def gather_list_check_existence(player_1, player_2, location):
+    """
+    Reads UTR history, finds unique players, formats them as 'FirstName, LastName',
+    and checks if the provided player_1 and player_2 exist in that list.
+    Assumes player_1 and player_2 inputs are in 'FirstName, LastName' format.
+    """
     player_list = []
 
     conn = st.connection('gcs', type=FilesConnection)
-    df = conn.read("project-tennis-test-bucket/sample_names.csv", input_format="csv", ttl=600)
+    try:
+        # Read the file
+        df_full = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
-    # Append player list
-    for row in df.itertuples():
-        player_list.append(str(row[1]))    
+        # Ensure required columns exist
+        if 'f_name' not in df_full.columns or 'l_name' not in df_full.columns:
+             st.error("Required columns ('f_name', 'l_name') not found in utr_history.csv")
+             # Return an error message that the agent might understand or pass back
+             return "ERROR: Player data file is missing required columns."
 
-    if player_1 in player_list and player_2 in player_list:
-        # SEND JSON TO BACKEND
+        # Create DataFrame 'df' with unique names (handle potential missing values)
+        df = df_full[['f_name', 'l_name']].dropna().drop_duplicates().reset_index(drop=True)
+
+        # Append player list in "f_name l_name" format
+        for row in df.itertuples(index=False):
+            # Ensure names are strings before joining
+            f_name_str = str(row.f_name)
+            l_name_str = str(row.l_name)
+            # print(f'{row.f_name} {row.l_name}')
+            player_list.append(f"{f_name_str} {l_name_str}") # Combine names with a comma and space
+
+    except Exception as e:
+        st.error(f"Error reading or processing player data: {e}")
+        # Return an error message
+        return f"ERROR: Could not load or process player data. Details: {e}"
+
+    # Check if the provided player names exist in the generated list
+    p1_exists = player_1 in player_list
+    p2_exists = player_2 in player_list
+
+    if p1_exists and p2_exists:
+        # Players found, return JSON
         return_json = json.dumps({"player_1": player_1, "player_2": player_2, "location": location})
         return return_json
     else:
-        return "INVALID_PLAYERS"
+        # One or both players not found, return invalid message
+        missing = []
+        if not p1_exists: missing.append(player_1)
+        if not p2_exists: missing.append(player_2)
+        # Provide feedback indicating the expected format might be the issue if names are missing
+        return f"INVALID_PLAYERS: Could not find {', '.join(missing)}. Please ensure names are entered exactly as 'FirstName, LastName' (case-sensitive) and exist in the available data."
+
+
 
 
 # Create agent
@@ -145,19 +180,10 @@ get_agent = Agent(name="Get Agent",
 
 
 # ========== Streamlit UI ==========
-st.title("Tennis-Match-Predictor 🤖")
-
-
-
-
-
-
-
-
+st.title("Tennis Timmy 🤖")
 st.write("Enter two player names and a match location to receive a prediction for the match.")
 
-
-# Ensure chat history persists across reruns
+# Ensure chat history persists across rerun
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
