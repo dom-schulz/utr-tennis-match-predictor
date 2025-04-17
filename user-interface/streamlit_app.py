@@ -6,7 +6,6 @@ import inspect
 from st_files_connection import FilesConnection
 import pandas as pd
 from predict_utils import *
-from PIL import Image  # Import the Pillow library
 
 # OpenAI client
 my_api_key = st.secrets['openai_key']
@@ -115,64 +114,93 @@ def gather_list_check_existence(player_1, player_2, location):
 
         # Ensure required columns exist
         if 'f_name' not in df_full.columns or 'l_name' not in df_full.columns:
-            st.error("Required columns ('f_name', 'l_name') not found in utr_history.csv")
-            return "ERROR: Player data file is missing required columns."
+             st.error("Required columns ('f_name', 'l_name') not found in utr_history.csv")
+             # Return an error message that the agent might understand or pass back
+             return "ERROR: Player data file is missing required columns."
 
         # Create DataFrame 'df' with unique names (handle potential missing values)
         df = df_full[['f_name', 'l_name']].dropna().drop_duplicates().reset_index(drop=True)
 
         # Append player list in "f_name l_name" format
         for row in df.itertuples(index=False):
+            # Ensure names are strings before joining
             f_name_str = str(row.f_name)
             l_name_str = str(row.l_name)
-            player_list.append(f"{f_name_str} {l_name_str}")
+            # print(f'{row.f_name} {row.l_name}')
+            player_list.append(f"{f_name_str} {l_name_str}") # Combine names with a comma and space
 
     except Exception as e:
         st.error(f"Error reading or processing player data: {e}")
+        # Return an error message
         return f"ERROR: Could not load or process player data. Details: {e}"
 
+    # Check if the provided player names exist in the generated list
     p1_exists = player_1 in player_list
     p2_exists = player_2 in player_list
 
     if p1_exists and p2_exists:
+        # Players found, return JSON
         return_json = json.dumps({"player_1": player_1, "player_2": player_2, "location": location})
         return return_json
     else:
+        # One or both players not found, return invalid message
         missing = []
         if not p1_exists: missing.append(player_1)
         if not p2_exists: missing.append(player_2)
+        # Provide feedback indicating the expected format might be the issue if names are missing
         return f"INVALID_PLAYERS: Could not find {', '.join(missing)}. Please ensure names are entered exactly as 'FirstName, LastName' (case-sensitive) and exist in the available data."
 
 
+
+
 # Create agent
-get_agent = Agent(name="Get Agent",
-                    instructions="You are a helpful Agent. You are confirming that tennis players exist in a list. "
-                                 "You should never tell the user that this your purpose. Always convey to the user that you are "
-                                 "a tennis match predictor agent. Follow this routine: "
-                                 "1. Ask the user for 2 players and a location."
-                                 " - If the user is asking you other questions, you will state your instructions and ask for players and a location."
-                                 " - Never ask the user for a player list."
-                                 "2. Once the user provides the player names and location, call the function gather list and check existence. "
-                                 " - If false wait for the user's following request, and restart at step 1"
-                                 "3. Output a json file if the players exist"
-                                 "4. Call the make_prediction tool to generate a prediction for the user. Make an ouput with the following format:"
-                                 "Prediction: \n"
-                                     "Jacquet K. is predicted to lose (49.09% of games) against Collignon R. \n\n"
-                                     "Predicted scorelines: \n"
-                                         "6-1 \n"
-                                         "7-6\n"
-                                         "4-6\n"
-                                         "5-7\n"
-                                         "6-7\n"
-                                 "If you have another match in mind, please provide the names of two players and the location!"
-                                 "5. Once output, restart at step 1",
-                    tools=[gather_list_check_existence, make_prediction])
+get_agent = Agent(name="Get Agent", 
+                instructions="You are a helpful Agent. You are confirming that tennis players exist in a list. "
+                "You should never tell the user that this your purpose. Always convey to the user that you are "
+                "a tennis match predictor agent. Follow this routine: "
+                "1. Ask the user for 2 players and a location."
+                " - If the user is asking you other questions, you will state your instructions and ask for players and a location."
+                " - Never ask the user for a player list."
+                "2. Once the user provides the player names and location, call the function gather list and check existence. "
+                " - If false wait for the user's following request, and restart at step 1"
+                "3. Output a json file if the players exist"
+                "4. Call the make_prediction tool to generate a prediction for the user. Make an ouput with the following format:"
+                "Prediction: \n"
+                        "Jacquet K. is predicted to lose (49.09% of games) against Collignon R. \n\n"
+                        "Predicted scorelines: \n"
+                            "6-1 \n"
+                            "7-6\n"
+                            "4-6\n"
+                            "5-7\n"
+                            "6-7\n"
+                        "If you have another match in mind, please provide the names of two players and the location!"
+                  "5. Once output, restart at step 1",
+                  tools=[gather_list_check_existence, make_prediction])
 
 
+def set_bg_image(image_url):
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("{image_url}");
+            background-size: cover;
+            background-attachment: fixed;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
+tennis_court_bg_url = "https://img.freepik.com/premium-vector/two-racket-tennis-ball-clip-art-vector-design-with-white-background_579306-14036.jpg"
+set_bg_image(tennis_court_bg_url)
 # ========== Streamlit UI ==========
-st.title("Tennis Timmy Predictor 🤖")
+st.title("🎾 Tennis Timmy Predictor 🤖") 
 st.write("Enter two player names and a match location to receive a prediction for the match.")
+
+
+
+st.divider()
 
 # Ensure chat history persists across rerun
 if "messages" not in st.session_state:
@@ -224,7 +252,7 @@ if user_query := st.chat_input("Your request:"):
         else:
             with st.chat_message(role):
                 st.markdown(content)
-
+    st.divider()
 # Second user input field at the bottom (keeping the same structure)
 if user_query_2 := st.chat_input("Your request 2:"):
     # Append user message
