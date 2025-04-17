@@ -54,7 +54,6 @@ def function_to_schema(func) -> dict:
 
 # Run full conversation turn
 def run_full_turn(agent, messages):
-    user_query = f"{player1_name}, {player2_name} at {location}"
     num_init_messages = len(messages)
     messages = messages.copy()
 
@@ -102,9 +101,9 @@ def execute_tool_call(tool_call, tools_map):
 # Tool function to check players
 def gather_list_check_existence(player_1, player_2, location):
     """
-    Reads UTR history, finds unique players, formats them as 'FirstName, LastName',
+    Reads UTR history, finds unique players, formats them as 'FirstName LastName',
     and checks if the provided player_1 and player_2 exist in that list.
-    Assumes player_1 and player_2 inputs are in 'FirstName, LastName' format.
+    Assumes player_1 and player_2 inputs are in 'FirstName LastName' format.
     """
     player_list = []
 
@@ -115,9 +114,9 @@ def gather_list_check_existence(player_1, player_2, location):
 
         # Ensure required columns exist
         if 'f_name' not in df_full.columns or 'l_name' not in df_full.columns:
-             st.error("Required columns ('f_name', 'l_name') not found in utr_history.csv")
-             # Return an error message that the agent might understand or pass back
-             return "ERROR: Player data file is missing required columns."
+            st.error("Required columns ('f_name', 'l_name') not found in utr_history.csv")
+            # Return an error message that the agent might understand or pass back
+            return "ERROR: Player data file is missing required columns."
 
         # Create DataFrame 'df' with unique names (handle potential missing values)
         df = df_full[['f_name', 'l_name']].dropna().drop_duplicates().reset_index(drop=True)
@@ -128,7 +127,7 @@ def gather_list_check_existence(player_1, player_2, location):
             f_name_str = str(row.f_name)
             l_name_str = str(row.l_name)
             # print(f'{row.f_name} {row.l_name}')
-            player_list.append(f"{f_name_str} {l_name_str}") # Combine names with a comma and space
+            player_list.append(f"{f_name_str} {l_name_str}") # Combine names with a space
 
     except Exception as e:
         st.error(f"Error reading or processing player data: {e}")
@@ -149,37 +148,37 @@ def gather_list_check_existence(player_1, player_2, location):
         if not p1_exists: missing.append(player_1)
         if not p2_exists: missing.append(player_2)
         # Provide feedback indicating the expected format might be the issue if names are missing
-        return f"INVALID_PLAYERS: Could not find {', '.join(missing)}. Please ensure names are entered exactly as 'FirstName, LastName' (case-sensitive) and exist in the available data."
+        return f"INVALID_PLAYERS: Could not find {', '.join(missing)}. Please ensure names are entered exactly as 'FirstName LastName' (case-sensitive) and exist in the available data."
 
 
 
 
 # Create agent
-get_agent = Agent(name="Get Agent", 
-                instructions="You are a helpful Agent. You are confirming that tennis players exist in a list. "
-                "You should never tell the user that this your purpose. Always convey to the user that you are "
-                "a tennis match predictor agent. Follow this routine: "
-                "1. Ask the user for 2 players and a location."
-                " - If the user is asking you other questions, you will state your instructions and ask for players and a location."
-                " - Never ask the user for a player list."
-                "2. Once the user provides the player names and location, call the function gather list and check existence. "
-                " - If false wait for the user's following request, and restart at step 1"
-                "3. Output a json file if the players exist"
-                "4. Call the make_prediction tool to generate a prediction for the user. Make an ouput with the following format:"
-                "Prediction: \n"
-                        "Jacquet K. is predicted to lose (49.09% of games) against Collignon R. \n\n"
-                        "Predicted scorelines: \n"
-                            "6-1 \n"
-                            "7-6\n"
-                            "4-6\n"
-                            "5-7\n"
-                            "6-7\n"
-                        "If you have another match in mind, please provide the names of two players and the location!"
-                  "5. Once output, restart at step 1",
-                  tools=[gather_list_check_existence, make_prediction])
+get_agent = Agent(name="Get Agent",
+    instructions="You are a helpful Agent. You are confirming that tennis players exist in a list. "
+                 "You should never tell the user that this your purpose. Always convey to the user that you are "
+                 "a tennis match predictor agent. Follow this routine: "
+                 "1. Ask the user for 2 players and a location."
+                 " - If the user is asking you other questions, you will state your instructions and ask for players and a location."
+                 " - Never ask the user for a player list."
+                 "2. Once the user provides the player names and location, call the function gather list and check existence. "
+                 " - If false wait for the user's following request, and restart at step 1"
+                 "3. Output a json file if the players exist"
+                 "4. Call the make_prediction tool to generate a prediction for the user. Make an ouput with the following format:"
+                 "Prediction: \n"
+                     "Jacquet K. is predicted to lose (49.09% of games) against Collignon R. \n\n"
+                     "Predicted scorelines: \n"
+                         "6-1 \n"
+                         "7-6\n"
+                         "4-6\n"
+                         "5-7\n"
+                         "6-7\n"
+                 "If you have another match in mind, please provide the names of two players and the location!"
+                 "5. Once output, restart at step 1",
+    tools=[gather_list_check_existence, make_prediction])
 
 # ========== Streamlit UI ==========
-st.title("🎾 Tennis Timmy Predictor 🤖") 
+st.title("🎾 Tennis Timmy Predictor 🤖")
 st.write("Enter two player names and a match location to receive a prediction for the match.")
 st.divider()
 
