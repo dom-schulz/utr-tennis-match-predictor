@@ -6,7 +6,6 @@ import inspect
 from st_files_connection import FilesConnection
 import pandas as pd
 from predict_utils import *
-import matplotlib.pyplot as plt
 
 # OpenAI client
 my_api_key = st.secrets['openai_key']
@@ -64,7 +63,7 @@ def run_full_turn(agent, messages):
         tool_schemas = [function_to_schema(tool) for tool in agent.tools]
         tools_map = {tool.__name__: tool for tool in agent.tools}
 
-        # 1. get openai completion
+        # get openai completion
         response = client.chat.completions.create(
             model=agent.model,
             messages=[{"role": "user", "content": agent.instructions}] + messages,
@@ -76,7 +75,7 @@ def run_full_turn(agent, messages):
         if not message.tool_calls:  # if finished handling tool calls, break
             break
 
-        # 2 handle tool calls
+        # handle tool calls
 
         for tool_call in message.tool_calls:
             result = execute_tool_call(tool_call, tools_map)
@@ -88,7 +87,7 @@ def run_full_turn(agent, messages):
             }
             messages.append(result_message)
 
-    # 3. return new messages
+    # return new messages
     return messages[num_init_messages:]
 
 # Execute tool function
@@ -102,9 +101,9 @@ def execute_tool_call(tool_call, tools_map):
 # Tool function to check players
 def gather_list_check_existence(player_1, player_2, location):
     """
-    Reads UTR history, finds unique players, formats them as 'FirstName LastName',
+    Reads UTR history, finds unique players, formats them as 'FirstName, LastName',
     and checks if the provided player_1 and player_2 exist in that list.
-    Assumes player_1 and player_2 inputs are in 'FirstName LastName' format.
+    Assumes player_1 and player_2 inputs are in 'FirstName, LastName' format.
     """
     player_list = []
 
@@ -122,12 +121,12 @@ def gather_list_check_existence(player_1, player_2, location):
         # Create DataFrame 'df' with unique names (handle potential missing values)
         df = df_full[['f_name', 'l_name']].dropna().drop_duplicates().reset_index(drop=True)
 
-        # Append player list in "FirstName LastName" format
+        # Append player list in "f_name l_name" format
         for row in df.itertuples(index=False):
             # Ensure names are strings before joining
             f_name_str = str(row.f_name).strip()
             l_name_str = str(row.l_name).strip()
-            player_list.append(f"{f_name_str} {l_name_str}")
+            player_list.append(f"{f_name_str}, {l_name_str}") # Combine names with a comma and space
 
     except Exception as e:
         st.error(f"Error reading or processing player data: {e}")
@@ -135,12 +134,12 @@ def gather_list_check_existence(player_1, player_2, location):
         return f"ERROR: Could not load or process player data. Details: {e}"
 
     # Check if the provided player names exist in the generated list
-    p1_exists = player_1.strip() in player_list
-    p2_exists = player_2.strip() in player_list
+    p1_exists = player_1 in player_list
+    p2_exists = player_2 in player_list
 
     if p1_exists and p2_exists:
         # Players found, return JSON
-        return_json = json.dumps({"player_1": player_1.strip(), "player_2": player_2.strip(), "location": location.strip()})
+        return_json = json.dumps({"player_1": player_1, "player_2": player_2, "location": location})
         return return_json
     else:
         # One or both players not found, return invalid message
@@ -148,7 +147,9 @@ def gather_list_check_existence(player_1, player_2, location):
         if not p1_exists: missing.append(player_1)
         if not p2_exists: missing.append(player_2)
         # Provide feedback indicating the expected format might be the issue if names are missing
-        return f"INVALID_PLAYERS: Could not find {', '.join(missing)}. Please ensure names are entered exactly as 'FirstName LastName' (case-sensitive) and exist in the available data."
+        return f"INVALID_PLAYERS: Could not find {', '.join(missing)}. Please ensure names are entered exactly as 'FirstName, LastName' (case-sensitive) and exist in the available data."
+
+
 
 
 # Create agent
@@ -178,11 +179,10 @@ get_agent = Agent(name="Get Agent",
 
 
 # ========== Streamlit UI ==========
-st.title("Tennis Timmy Match Predictor🤖")
+st.title("Tennis Timmy 🤖")
+st.write("Enter two player names and a match location to receive a prediction for the match.")
 
-st.write("Enter match details to receive a prediction.")
-
-# Ensure chat history persists across reruns
+# Ensure chat history persists across rerun
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -207,59 +207,55 @@ for msg in st.session_state.messages:
 
     # Display message
     with st.chat_message(role):
-        st.markdown(f"""
-        <div style="background-color:#f8f9fa; border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-            <h4 style="color:#003366;">🎾 Prediction</h4>
-            <pre style="white-space: pre-wrap; font-family: 'Courier New', monospace;">{content}</pre>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(content)
 
-# # User input fields
-# player1_name = st.text_input("Player 1 Name (FirstName LastName):")
-# player2_name = st.text_input("Player 2 Name (FirstName LastName):")
-# location = st.text_input("Match Location:")
-# tournament_name = st.text_input("Tournament Name (Optional):") # Added tournament name input
+# User input fields
+player1_name = st.text_input("Player 1 Name (FirstName, LastName):")
+player2_name = st.text_input("Player 2 Name (FirstName, LastName):")
+location = st.text_input("Match Location:")
+tournament_name = st.text_input("Tournament Name (Optional):")
+court_surface = st.text_input("Court Surface (Optional):")
 
-# if st.button("Get Prediction"):
-#     if player1_name and player2_name and location:
-#         user_query = f"{player1_name.strip()}, {player2_name.strip()} at {location.strip()}"
-#         # Append user message
-#         st.session_state.messages.append({"role": "user", "content": user_query})
-#         with st.chat_message("user"):
-#             st.markdown(user_query)
+if st.button("Get Prediction"):
+    if player1_name and player2_name and location:
+        user_query = f"{player1_name.strip()}, {player2_name.strip()} at {location.strip()}"
+        # Append user message
+        st.session_state.messages.append({"role": "user", "content": user_query})
+        with st.chat_message("user"):
+            st.markdown(user_query)
 
-#         # Generate response
-#         new_messages = run_full_turn(get_agent, st.session_state.messages)
+        # Generate response
+        new_messages = run_full_turn(get_agent, st.session_state.messages)
 
-#         # Append new messages to session history without altering prior assistant messages
-#         st.session_state.messages.extend(new_messages)
+        # Append new messages to session history without altering prior assistant messages
+        st.session_state.messages.extend(new_messages)
 
-#         # Display assistant response
-#         for msg in new_messages:
-#             role = msg.role if hasattr(msg, "role") else msg["role"]
-#             content = msg.content if hasattr(msg, "content") else msg["content"]
+        # Display assistant response
+        for msg in new_messages:
+            role = msg.role if hasattr(msg, "role") else msg["role"]
+            content = msg.content if hasattr(msg, "content") else msg["content"]
 
-#             if content is None or role == "tool" or role == "user":
-#                 continue  # Skip None content, tool responses, or user input
-#             else:
-#                 with st.chat_message(role):
-#                     st.markdown(content)
-#     else:
-#         st.warning("Please enter the names of both players and the match location.")
+            if content is None or role == "tool" or role == "user":
+                continue  # Skip None content, tool responses, or user input
+            else:
+                with st.chat_message(role):
+                    st.markdown(content)
+    else:
+        st.warning("Please enter the names of both players and the match location.")
 
-# st.divider()
+st.divider()
 
-# # Keep the chat history display (optional, depending on desired UI)
-# if "messages" in st.session_state:
-#     st.subheader("Chat History:")
-#     for msg in st.session_state.messages:
-#         role = msg.get("role")
-#         content = msg.get("content")
-#         if role == "user":
-#             with st.chat_message("user"):
-#                 st.markdown(content)
-#         elif role == "assistant":
-#             with st.chat_message("assistant"):
-#                 st.markdown(content)
-#         elif role == "tool":
-#             st.markdown(f"**Tool Result:** {content}")
+# Keep the chat history display (optional, depending on desired UI)
+if "messages" in st.session_state:
+    st.subheader("Chat History:")
+    for msg in st.session_state.messages:
+        role = msg.get("role")
+        content = msg.get("content")
+        if role == "user":
+            with st.chat_message("user"):
+                st.markdown(content)
+        elif role == "assistant":
+            with st.chat_message("assistant"):
+                st.markdown(content)
+        elif role == "tool":
+            st.markdown(f"**Tool Result:** {content}")
