@@ -214,52 +214,52 @@ for msg in st.session_state.messages:
         </div>
         """, unsafe_allow_html=True)
 
-# User input fields
-player1_name = st.text_input("Player 1 Name (FirstName LastName):")
-player2_name = st.text_input("Player 2 Name (FirstName LastName):")
-location = st.text_input("Match Location:")
-tournament_name = st.text_input("Tournament Name (Optional):") # Added tournament name input
+# # User input fields
+# player1_name = st.text_input("Player 1 Name (FirstName LastName):")
+# player2_name = st.text_input("Player 2 Name (FirstName LastName):")
+# location = st.text_input("Match Location:")
+# tournament_name = st.text_input("Tournament Name (Optional):") # Added tournament name input
 
-if st.button("Get Prediction"):
-    if player1_name and player2_name and location:
-        user_query = f"{player1_name.strip()}, {player2_name.strip()} at {location.strip()}"
-        # Append user message
-        st.session_state.messages.append({"role": "user", "content": user_query})
-        with st.chat_message("user"):
-            st.markdown(user_query)
+# if st.button("Get Prediction"):
+#     if player1_name and player2_name and location:
+#         user_query = f"{player1_name.strip()}, {player2_name.strip()} at {location.strip()}"
+#         # Append user message
+#         st.session_state.messages.append({"role": "user", "content": user_query})
+#         with st.chat_message("user"):
+#             st.markdown(user_query)
 
-        # Generate response
-        new_messages = run_full_turn(get_agent, st.session_state.messages)
+#         # Generate response
+#         new_messages = run_full_turn(get_agent, st.session_state.messages)
 
-        # Append new messages to session history without altering prior assistant messages
-        st.session_state.messages.extend(new_messages)
+#         # Append new messages to session history without altering prior assistant messages
+#         st.session_state.messages.extend(new_messages)
 
-        # Display assistant response
-        for msg in new_messages:
-            role = msg.role if hasattr(msg, "role") else msg["role"]
-            content = msg.content if hasattr(msg, "content") else msg["content"]
+#         # Display assistant response
+#         for msg in new_messages:
+#             role = msg.role if hasattr(msg, "role") else msg["role"]
+#             content = msg.content if hasattr(msg, "content") else msg["content"]
 
-            if content is None or role == "tool" or role == "user":
-                continue  # Skip None content, tool responses, or user input
-            else:
-                with st.chat_message(role):
-                    st.markdown(content)
-    else:
-        st.warning("Please enter the names of both players and the match location.")
+#             if content is None or role == "tool" or role == "user":
+#                 continue  # Skip None content, tool responses, or user input
+#             else:
+#                 with st.chat_message(role):
+#                     st.markdown(content)
+#     else:
+#         st.warning("Please enter the names of both players and the match location.")
 
-st.divider()
+# st.divider()
 
-# Keep the chat history display (optional, depending on desired UI)
-if "messages" in st.session_state:
-    st.subheader("Chat History:")
-    for msg in st.session_state.messages:
-        role = msg.get("role")
-        content = msg.get("content")
-        if role == "user":
-            with st.chat_message("user"):
-                st.markdown(content)
-        elif role == "assistant":
-            with st.chat_message("assistant"):
-                st.markdown(content)
-        elif role == "tool":
-            st.markdown(f"**Tool Result:** {content}")
+# # Keep the chat history display (optional, depending on desired UI)
+# if "messages" in st.session_state:
+#     st.subheader("Chat History:")
+#     for msg in st.session_state.messages:
+#         role = msg.get("role")
+#         content = msg.get("content")
+#         if role == "user":
+#             with st.chat_message("user"):
+#                 st.markdown(content)
+#         elif role == "assistant":
+#             with st.chat_message("assistant"):
+#                 st.markdown(content)
+#         elif role == "tool":
+#             st.markdown(f"**Tool Result:** {content}")
