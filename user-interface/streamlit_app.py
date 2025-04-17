@@ -146,13 +146,16 @@ get_agent = Agent(name="Get Agent",
 
 
 # ========== Streamlit UI ==========
-st.title("Tennis Match Predictor🤖")
+st.title("UTR Match Predictor Test 🤖")
 
-st.write("Enter two player names and a match location to receive a prediction for the match.")
+tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "UTR Graph", "ℹ️ About"])
+
+with tabs[0]:
+    st.write("Enter two player names and a match location to receive a prediction for the match.")
     
     # Ensure chat history persists across reruns
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
     
     # Display chat history using `st.chat_message`
     for msg in st.session_state.messages:
@@ -208,63 +211,63 @@ if "messages" not in st.session_state:
                 with st.chat_message(role):
                     st.markdown(content)
                     
-# # === Tab: Upcoming Matches ===
-# with tabs[1]:
-#     st.header("📅 Upcoming Matches")
-#     st.write("Here you can display upcoming tennis matches (e.g., from a dataset or API).")
+# === Tab: Upcoming Matches ===
+with tabs[1]:
+    st.header("📅 Upcoming Matches")
+    st.write("Here you can display upcoming tennis matches (e.g., from a dataset or API).")
 
-# # === Tab: Large UTR Moves ===
-# with tabs[2]:
-#     st.header("📈 Large UTR Moves")
-#     st.write("This tab will highlight matches where players gained or lost a large amount of UTR since the previous week.")
+# === Tab: Large UTR Moves ===
+with tabs[2]:
+    st.header("📈 Large UTR Moves")
+    st.write("This tab will highlight matches where players gained or lost a large amount of UTR since the previous week.")
 
-#     # Load the CSV from your bucket
-#     conn = st.connection('gcs', type=FilesConnection)
-#     df = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
+    # Load the CSV from your bucket
+    conn = st.connection('gcs', type=FilesConnection)
+    df = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
-#     # # Show the top few rows
-#     # st.dataframe(df.head(10))
+    # # Show the top few rows
+    # st.dataframe(df.head(10))
 
-#     content = []
-#     prev_name = ''
-#     for i in range(len(df)):
-#         if df['utr'][i] > 13:
-#             curr_name = df['f_name'][i]+' '+df['l_name'][i]
-#             if curr_name != prev_name:
-#                 curr_name = df['f_name'][i]+' '+df['l_name'][i]
-#                 content.append([df['f_name'][i]+' '+df['l_name'][i], df['utr'][i+1], df['utr'][i], 
-#                                 df['utr'][i]-df['utr'][i+1], 100*((df['utr'][i]/df['utr'][i+1])-1)])
-#             prev_name = curr_name
-#     df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
-#     df = df.sort_values(by="UTR % Change", ascending=False)
-#     st.dataframe(df.head(10))
+    content = []
+    prev_name = ''
+    for i in range(len(df)):
+        if df['utr'][i] > 13:
+            curr_name = df['f_name'][i]+' '+df['l_name'][i]
+            if curr_name != prev_name:
+                curr_name = df['f_name'][i]+' '+df['l_name'][i]
+                content.append([df['f_name'][i]+' '+df['l_name'][i], df['utr'][i+1], df['utr'][i], 
+                                df['utr'][i]-df['utr'][i+1], 100*((df['utr'][i]/df['utr'][i+1])-1)])
+            prev_name = curr_name
+    df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
+    df = df.sort_values(by="UTR % Change", ascending=False)
+    st.dataframe(df.head(10))
 
-#     df = df.sort_values(by="UTR % Change", ascending=True)
-#     st.dataframe(df.head(10))
+    df = df.sort_values(by="UTR % Change", ascending=True)
+    st.dataframe(df.head(10))
 
-#     # history = get_player_history(df)
+    # history = get_player_history(df)
 
-#     # content = []
-#     # for player in history.keys():
-#     #     row = {player: history[player]}
+    # content = []
+    # for player in history.keys():
+    #     row = {player: history[player]}
 
-#     # Optionally, sort or filter
-#     # df_sorted = df.sort_values(by="utr_change", ascending=False)
-#     # st.subheader("Top UTR Gains")
-#     # st.dataframe(df_sorted.head(10))
+    # Optionally, sort or filter
+    # df_sorted = df.sort_values(by="utr_change", ascending=False)
+    # st.subheader("Top UTR Gains")
+    # st.dataframe(df_sorted.head(10))
 
-# with tabs[3]:
-#     # Load data from GCS
-#     conn = st.connection('gcs', type=FilesConnection)
-#     df = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
-#     df = df[-100:]
+with tabs[3]:
+    # Load data from GCS
+    conn = st.connection('gcs', type=FilesConnection)
+    df = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
+    df = df[-100:]
 
-#     # Example scatter plot
-#     fig, ax = plt.subplots()
-#     colors = df['p_win'].map({1: 'blue', 0: 'red'})  # Adjust depending on how p_win is encoded
-#     ax.scatter(df['p1_utr'], df['p2_utr'], c=colors)
-#     ax.set_xlabel("Player 1 UTR")
-#     ax.set_ylabel("Player 2 UTR")
-#     ax.set_title("UTR Matchups by Outcome (R=p1w, B=p2w)")
+    # Example scatter plot
+    fig, ax = plt.subplots()
+    colors = df['p_win'].map({1: 'blue', 0: 'red'})  # Adjust depending on how p_win is encoded
+    ax.scatter(df['p1_utr'], df['p2_utr'], c=colors)
+    ax.set_xlabel("Player 1 UTR")
+    ax.set_ylabel("Player 2 UTR")
+    ax.set_title("UTR Matchups by Outcome (R=p1w, B=p2w)")
 
-#     st.pyplot(fig)
+    st.pyplot(fig)
