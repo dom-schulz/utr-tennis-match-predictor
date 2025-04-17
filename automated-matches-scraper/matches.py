@@ -7,9 +7,12 @@ import os
 import logging
 import traceback
 from google.oauth2 import service_account
-
+import sys
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s - %(message)s',
+                    handlers=[logging.StreamHandler(sys.stdout)])
+
 logger = logging.getLogger(__name__)
 
 # Get bucket names from environment variables

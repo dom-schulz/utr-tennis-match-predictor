@@ -118,11 +118,11 @@ def collect_scores(all_scores):
 
 ### Loads The Page ###
 def load_page(driver, url):
-    logger.info(f"Loading page: {url}")
+    # logger.info(f"Loading page: {url}")
     try:
         driver.get(url)
         time.sleep(2)  # Increased from 1 for more reliable loading
-        logger.info(f"Page loaded successfully: {url[:60]}...")
+        # logger.info(f"Page loaded successfully: {url[:60]}...")
         return True
     except Exception as e:
         logger.error(f"Error loading page {url}: {str(e)}")
@@ -132,7 +132,7 @@ def load_page(driver, url):
 
 ### Scrolls The Page ###
 def scroll_page(driver):
-    logger.info("Starting page scroll")
+    # logger.info("Starting page scroll")
     try:
         previous_height = driver.execute_script("return document.body.scrollHeight")
         scroll_count = 0
@@ -144,14 +144,15 @@ def scroll_page(driver):
             new_height = driver.execute_script("return document.body.scrollHeight")
             
             if new_height == previous_height:
-                logger.info(f"Scrolling complete after {scroll_count+1} scrolls")
+                # logger.info(f"Scrolling complete after {scroll_count+1} scrolls")
                 break
                 
             previous_height = new_height
             scroll_count += 1
             
         if scroll_count >= max_scrolls:
-            logger.warning("Reached maximum scroll limit - page may not be fully loaded")
+            # logger.warning("Reached maximum scroll limit - page may not be fully loaded")
+            pass
     except Exception as e:
         logger.error(f"Error during page scrolling: {str(e)}")
         logger.error(traceback.format_exc())
@@ -179,10 +180,11 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
 
     y = 1
     for i in range(len(profile_ids)):
+        logger.info(f'Processing profile {i+1}/{len(profile_ids)}')
         
-        # TESTING Purposes
-        if i == 300:
-            break
+        # # TESTING Purposes
+        # if i == 300:
+        #     break
         
         if i == stop:
             break
@@ -409,7 +411,7 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
 
     for i in range(offset, end_idx):
         try:
-            logger.info(f"Processing profile {i-offset+1}/{end_idx-offset}: {df['f_name'][i]} {df['l_name'][i]}")
+            # logger.info(f"Processing profile {i-offset+1}/{end_idx-offset}: {df['f_name'][i]} {df['l_name'][i]}")
             
             # Check if profile ID is valid
             if pd.isna(df['p_id'][i]) or df['p_id'][i] == '':
@@ -418,11 +420,11 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
                 
             search_url = f"https://app.utrsports.net/profiles/{int(df['p_id'][i])}?t=6"
         except Exception as e:
-            logger.error(f"Error preparing URL for profile at index {i}: {str(e)}")
+            # logger.error(f"Error preparing URL for profile at index {i}: {str(e)}")
             continue
 
         if not load_page(driver, search_url):
-            logger.warning(f"Skipping profile {df['f_name'][i]} {df['l_name'][i]} due to page load failure")
+            # logger.warning(f"Skipping profile {df['f_name'][i]} {df['l_name'][i]} due to page load failure")
             processed_count += 1
             continue
 
@@ -437,36 +439,39 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
                 os.makedirs(screenshot_dir, exist_ok=True)
                 screenshot_path = os.path.join(screenshot_dir, f"debug_screenshot_{df['f_name'][i]}_{df['l_name'][i]}.png")
                 driver.save_screenshot(screenshot_path)
-                logger.info(f"Saved screenshot to {screenshot_path}")
+                # logger.info(f"Saved screenshot to {screenshot_path}")
         except Exception as e:
-            logger.warning(f"Could not save screenshot: {str(e)}")
+            # logger.warning(f"Could not save screenshot: {str(e)}")
+            pass
             # Screenshot failure is non-critical, continue processing
 
         # Look for "Show all" button
         show_all_found = False
         try:
-            logger.info("Looking for 'Show all' button")
+            # logger.info("Looking for 'Show all' button")
             time.sleep(1)
             show_all = driver.find_element(By.LINK_TEXT, 'Show all')
             show_all.click()
-            logger.info("Clicked 'Show all' button")
+            # logger.info("Clicked 'Show all' button")
             show_all_found = True
         except Exception as e:
-            logger.warning(f"First attempt to find 'Show all' button failed: {str(e)}")
+            # logger.warning(f"First attempt to find 'Show all' button failed: {str(e)}")
+            pass
             
             try:
                 # Try again with a longer wait
-                logger.info("Making second attempt to find 'Show all' button")
+                # logger.info("Making second attempt to find 'Show all' button")
                 time.sleep(3)
                 show_all = driver.find_element(By.LINK_TEXT, 'Show all')
                 show_all.click()
-                logger.info("Clicked 'Show all' button on second attempt")
+                # logger.info("Clicked 'Show all' button on second attempt")
                 show_all_found = True
             except Exception as e2:
-                logger.error(f"Could not find 'Show all' button: {str(e2)}")
-                logger.error(f"Debug info - Current URL: {driver.current_url}")
-                logger.error(f"Page title: {driver.title}")
-                
+                # logger.error(f"Could not find 'Show all' button: {str(e2)}")
+                # logger.error(f"Debug info - Current URL: {driver.current_url}")
+                # logger.error(f"Page title: {driver.title}")
+                pass
+            
                 # Check if we're still logged in
                 if "Sign In" in driver.page_source or "Log In" in driver.page_source:
                     logger.error("Session appears to have expired, attempting to log in again")
@@ -485,18 +490,19 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
             scroll_page(driver)
 
         # Now that the page is rendered, parse the page with BeautifulSoup
-        logger.info("Parsing page content with BeautifulSoup")
+        # logger.info("Parsing page content with BeautifulSoup")
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
         # Debug page content
         if "UTR History" not in driver.page_source:
-            logger.warning("UTR History section might be missing from the page")
+            # logger.warning("UTR History section might be missing from the page")
+            pass
         
         # Find the UTR history container
         container = soup.find("div", class_="newStatsTabContent__section__1TQzL p0 bg-transparent")
         
         if not container:
-            logger.warning(f"UTR history container not found for {df['f_name'][i]} {df['l_name'][i]}")
+            # logger.warning(f"UTR history container not found for {df['f_name'][i]} {df['l_name'][i]}")
             processed_count += 1
             continue
             
