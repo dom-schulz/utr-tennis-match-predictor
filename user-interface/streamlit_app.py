@@ -102,6 +102,10 @@ def execute_tool_call(tool_call, tools_map):
 # Tool function to check players
 def gather_list_check_existence(player_1, player_2, location, player_list):
 
+
+
+
+
     player_list = []
 
     conn = st.connection('gcs', type=FilesConnection)
@@ -113,10 +117,40 @@ def gather_list_check_existence(player_1, player_2, location, player_list):
 
     if player_1 in player_list and player_2 in player_list:
         # SEND JSON TO BACKEND
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         return_json = json.dumps({"player_1": player_1, "player_2": player_2, "location": location})
         return return_json
     else:
         return "INVALID_PLAYERS"
+
+
+
+
+
+
+
 
 
 # Create agent
@@ -164,6 +198,10 @@ with tabs[0]:
                 content = msg.get("content")
                 role = "user"
             elif msg['role'] == "tool":  # Tool calls don't produce message to output
+
+
+
+
                 continue
             else:  # Error, produce role
                 raise ValueError(f"Invalid dictionary role: {msg['role']}")
@@ -176,32 +214,9 @@ with tabs[0]:
             else:  # Error, produce role
                 raise ValueError(f"Invalid ChatCompletionMessage role: {msg['role']}")
     
-# Ensure chat history persists across reruns
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-# Display chat history using `st.chat_message`
-for msg in st.session_state.messages:
-    if isinstance(msg, dict):  # If dict message type
-        if msg['role'] == "user":  # User messages produce message to output
-            content = msg.get("content")
-            role = "user"
-        elif msg['role'] == "tool":  # Tool calls don't produce message to output
-            continue
-        else:  # Error, produce role
-            raise ValueError(f"Invalid dictionary role: {msg['role']}")
-    else:  # Handles ChatCompletionMessage object
-        if msg.role == "assistant":
-            content = msg.content
-            role = "assistant"
-            if content is None:  # Skip displaying None content
-                continue
-        else:  # Error, produce role
-            raise ValueError(f"Invalid ChatCompletionMessage role: {msg['role']}")
-
-    # Display message
-    with st.chat_message(role):
-        st.markdown(f"""
+        # Display message
+        with st.chat_message(role):
+            st.markdown(f"""
         <div style="background-color:#f8f9fa; border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
             <h4 style="color:#003366;">🎾 Prediction</h4>
             <pre style="white-space: pre-wrap; font-family: 'Courier New', monospace;">{content}</pre>
@@ -209,30 +224,63 @@ for msg in st.session_state.messages:
         """,
         unsafe_allow_html=True
         )
+    
+    # User input field at the bottom
+    if user_query := st.chat_input("Your request:"):
+        # Append user message
+        st.session_state.messages.append({"role": "user", "content": user_query})
+        with st.chat_message("user"):
+            st.markdown(user_query)
+    
+        # Generate response
+        new_messages = run_full_turn(get_agent, st.session_state.messages)
+    
+        # Append new messages to session history without altering prior assistant messages
+        st.session_state.messages.extend(new_messages)
+    
+        # Display assistant response
+        for msg in new_messages:
+            role = msg.role if hasattr(msg, "role") else msg["role"]
+            content = msg.content if hasattr(msg, "content") else msg["content"]
+    
+            if content is None or role == "tool" or role == "user":
+                continue  # Skip None content, tool responses, or user input
+            else:
+                with st.chat_message(role):
+                    st.markdown(content)
+        # User input field at the bottom
+    
+    if user_query_two := st.chat_input("Request 2:"):
 
-# User input field at the bottom
-if user_query_two := st.chat_input("Request 2:"):
-    # Append user message
-    st.session_state.messages.append({"role": "user", "content": user_query_two}) # Use user_query_two here
-    with st.chat_message("user"):
-        st.markdown(user_query_two) # Use user_query_two here
 
-    # Generate response
-    messages = run_full_turn(get_agent, st.session_state.messages)
 
-    # Append new messages to session history without altering prior assistant messages
-    st.session_state.messages.extend(messages)
 
-    # Display assistant response
-    for msg in messages:
-        role = msg.role if hasattr(msg, "role") else msg["role"]
-        content = msg.content if hasattr(msg, "content") else msg["content"]
 
-        if content is None or role == "tool" or role == "user":
-            continue  # Skip None content, tool responses, or user input
-        else:
-            with st.chat_message(role):
-                st.markdown(content)
+
+
+
+
+        # Append user message
+        st.session_state.messages.append({"role": "user", "content": user_query})
+        with st.chat_message("user"):
+            st.markdown(user_query)
+    
+        # Generate response
+        messages = run_full_turn(get_agent, st.session_state.messages)
+    
+        # Append new messages to session history without altering prior assistant messages
+        st.session_state.messages.extend(messages)
+    
+        # Display assistant response
+        for msg in messages:
+            role = msg.role if hasattr(msg, "role") else msg["role"]
+            content = msg.content if hasattr(msg, "content") else msg["content"]
+    
+            if content is None or role == "tool" or role == "user":
+                continue  # Skip None content, tool responses, or user input
+            else:
+                with st.chat_message(role):
+                    st.markdown(content)
                     
 # === Tab: Upcoming Matches ===
 with tabs[1]:
