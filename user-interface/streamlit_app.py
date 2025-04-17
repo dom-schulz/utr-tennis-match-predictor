@@ -174,15 +174,6 @@ get_agent = Agent(name="Get Agent",
 st.title("Tennis Timmy Predictor 🤖")
 st.write("Enter two player names and a match location to receive a prediction for the match.")
 
-# Display the local image
-try:
-    image = Image.open("C:/Users/geoff/OneDrive/Desktop/download.jpg")  # Use forward slashes or raw string
-    st.image(image, caption="Your Local Image", use_column_width=True)
-except FileNotFoundError:
-    st.error(f"Error: Image not found at C:/Users/geoff/OneDrive/Desktop/download.jpg")
-except Exception as e:
-    st.error(f"An error occurred while loading the image: {e}")
-
 # Ensure chat history persists across rerun
 if "messages" not in st.session_state:
     st.session_state.messages = []
