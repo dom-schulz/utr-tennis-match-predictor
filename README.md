@@ -24,7 +24,6 @@ Both scrapers have near identical logic/structure. For more details, see the [UT
 
 
 ### [Streamlit App](https://github.com/dom-schulz/utr-tennis-match-predictor/tree/main/user-interface)
-THIS IS CURRENTLY BEING WORKED ON IN MAIN AND MAY NOT WORK (4/15)
 
 The Streamlit app serves as the user interface for the tennis match prediction system. It allows users to:
 
@@ -37,7 +36,7 @@ The app is currently a functional prototype and will receive significant updates
 #### Sample Chat Inputs
 Try these player names:
 ```
-Carlos Alcaraz Daniil Medvedev Seattle
+Medvedev D. Alcaraz C. Seattle
 ```
 
 For more details, see the [Streamlit App Documentation](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/user-interface/README.md).

@@ -422,7 +422,6 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
     success_count = 0
 
     for i in range(offset, end_idx):
-        
         try:
             logger.info(f"Processing profile {i-offset+1}/{end_idx-offset}: {df['f_name'][i]} {df['l_name'][i]}")
             
@@ -437,7 +436,7 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
             continue
 
         if not load_page(driver, search_url):
-            # logger.warning(f"Skipping profile {df['f_name'][i]} {df['l_name'][i]} due to page load failure")
+            logger.warning(f"Skipping profile {df['f_name'][i]} {df['l_name'][i]} due to page load failure")
             processed_count += 1
             continue
 

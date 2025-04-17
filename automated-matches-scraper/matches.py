@@ -7,12 +7,9 @@ import os
 import logging
 import traceback
 from google.oauth2 import service_account
-import sys
-# Set up logging
-logging.basicConfig(level=logging.INFO, 
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    handlers=[logging.StreamHandler(sys.stdout)])
 
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Get bucket names from environment variables
@@ -62,7 +59,6 @@ def get_player_history(utr_history):
             history[utr_history['f_name'][i]+' '+utr_history['l_name'][i]] = [[utr_history['utr'][i], utr_history['date'][i]]]
         else:
             history[utr_history['f_name'][i]+' '+utr_history['l_name'][i]].append([utr_history['utr'][i], utr_history['date'][i]])
-
     return history
 
 try:
@@ -88,18 +84,7 @@ try:
     profile_ids = download_csv_from_gcs(utr_bucket, PROFILE_ID_FILE)
     utr_history = download_csv_from_gcs(utr_bucket, UTR_HISTORY_FILE)
     prev_matches = download_csv_from_gcs(matches_bucket, MATCHES_OUTPUT_FILE)
-    
-    
-    
-    # Ensure all profile ids are in utr_history (must check first and last name existence)
-    profile_ids = profile_ids[profile_ids['f_name'].isin(utr_history['f_name']) & profile_ids['l_name'].isin(utr_history['l_name'])]
-    
-    # Ensure all names in prev_matches (cols p1 and p2) are in utr_history (cols f_name and l_name). 
-    # p1 and p2 are strings with full names, f name and l name are separated by a space    
-    prev_matches = prev_matches[prev_matches['p1'].isin(utr_history['f_name']+' '+utr_history['l_name'])]
-    prev_matches = prev_matches[prev_matches['p2'].isin(utr_history['f_name']+' '+utr_history['l_name'])]
 
-    
     # Process UTR history exactly as in original
     utr_history = get_player_history(utr_history)
 
@@ -109,7 +94,6 @@ try:
     
     # Write the header row first
     writer.writerow(['date', 'p1', 'p2', 'p1_id', 'p2_id', 'p1_utr', 'p2_utr', 'tournament_category', 'score', 'winner'])
-    
 
     # Run scraping exactly as in original
     scrape_player_matches(profile_ids, utr_history, prev_matches, email, password, offset=0, stop=-1, writer=writer)

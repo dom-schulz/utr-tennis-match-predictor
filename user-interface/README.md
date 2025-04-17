@@ -1,6 +1,4 @@
-# Tennis Match Predictor - Streamlit Interface
-
-## This is currently being worked on as of 4/15
+# Tennis Match Predictor - Streamlit Interface (3/6/25)
 
 ## Interface Overview
 
@@ -14,7 +12,7 @@ You can access the app at: [Tennis Predictor App](https://utr-tennis-match-predi
 
 If you want to test the app with sample inputs, try these player names and location:
 ```
-Carlos Alcaraz Daniil Medvedev Seattle
+Medvedev D. Alcaraz C. Seattle
 ```
 
 **Note**: If the app becomes unresponsive, look for the "Rerun" button in the upper right corner of the interface to restart it.
