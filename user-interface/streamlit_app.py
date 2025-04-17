@@ -1,4 +1,4 @@
-import streamlit as st
+mport streamlit as st
 from openai import OpenAI
 from pydantic import BaseModel
 import json
@@ -145,11 +145,8 @@ get_agent = Agent(name="Get Agent",
 
 
 # ========== Streamlit UI ==========
-st.title("Tennis-Match-Predictor 🤖")
+st.title("Test-Geoff 🤖")
 st.write("Enter two player names and a match location to receive a prediction for the match.")
-
-
-
 
 # Ensure chat history persists across reruns
 if "messages" not in st.session_state:
@@ -184,7 +181,7 @@ if user_query := st.chat_input("Your request:"):
     st.session_state.messages.append({"role": "user", "content": user_query})
     with st.chat_message("user"):
         st.markdown(user_query)
-
+        
     # Generate response
     new_messages = run_full_turn(get_agent, st.session_state.messages)
 
