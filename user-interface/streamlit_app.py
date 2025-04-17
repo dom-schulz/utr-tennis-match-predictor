@@ -179,9 +179,28 @@ get_agent = Agent(name="Get Agent",
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ========== Streamlit UI ==========
-st.title("Tennis Predictor 🤖")
+st.title("🎾 Tennis Timmy Predictor 🤖") 
 st.write("Enter two player names and a match location to receive a prediction for the match.")
+
+
+
+st.divider()
 
 # Ensure chat history persists across rerun
 if "messages" not in st.session_state:
@@ -230,6 +249,30 @@ if user_query := st.chat_input("Your request:"):
 
         if content is None or role == "tool" or role == "user":
             continue  # Skip None content, tool responses, or user input
+        else:
+            with st.chat_message(role):
+                st.markdown(content)
+    st.divider()
+# Second user input field at the bottom (keeping the same structure)
+if user_query_2 := st.chat_input("Your request 2:"):
+    # Append user message
+    st.session_state.messages.append({"role": "user", "content": user_query_2})
+    with st.chat_message("user"):
+        st.markdown(user_query_2)
+
+    # Generate response for the second input (you might need different logic here)
+    new_messages_2 = run_full_turn(get_agent, st.session_state.messages)
+
+    # Append new messages to session history
+    st.session_state.messages.extend(new_messages_2)
+
+    # Display assistant response for the second input
+    for msg in new_messages_2:
+        role = msg.role if hasattr(msg, "role") else msg["role"]
+        content = msg.content if hasattr(msg, "content") else msg["content"]
+
+        if content is None or role == "tool" or role == "user":
+            continue
         else:
             with st.chat_message(role):
                 st.markdown(content)
