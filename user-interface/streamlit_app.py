@@ -151,6 +151,9 @@ st.title("UTR Match Predictor Test 🤖")
 tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "UTR Graph", "ℹ️ About"])
 
 with tabs[0]:
+    st.subheader("AI-Powered Match Outcome Predictor")
+    st.caption("Leverage player data and win percentages to simulate match outcomes in seconds.")
+
     st.write("Enter two player names and a match location to receive a prediction for the match.")
     
     # Ensure chat history persists across reruns
