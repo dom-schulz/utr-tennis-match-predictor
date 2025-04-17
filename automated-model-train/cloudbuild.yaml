@@ -1,0 +1,12 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-west1-docker.pkg.dev/cpsc324-project-452600/model-train-repo/model-train-image:latest'
+      - '.'
+    dir: 'automated-model-train'
+images:
+  - 'us-west1-docker.pkg.dev/cpsc324-project-452600/model-train-repo/model-train-image:latest'
+options:
+  logging: CLOUD_LOGGING_ONLY
