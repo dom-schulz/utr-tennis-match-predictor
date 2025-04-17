@@ -146,6 +146,14 @@ get_agent = Agent(name="Get Agent",
 
 # ========== Streamlit UI ==========
 st.title("Tennis-Match-Predictor 🤖")
+# Set custom page background color
+st.markdown("""
+    <style>
+        body {
+            background-color: #ADD8E6;
+        }
+    </style>
+""", unsafe_allow_html=True)
 st.write("Enter two player names and a match location to receive a prediction for the match.")
 
 
