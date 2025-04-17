@@ -234,29 +234,29 @@ with tabs[0]:
                 with st.chat_message(role):
                     st.markdown(content)
 
-    # User input field at the bottom for a second request
-    if user_query_two := st.chat_input("Request 2 (Optional):"):
-        # Append user message
-        st.session_state.messages.append({"role": "user", "content": user_query_two}) # Use user_query_two
-        with st.chat_message("user"):
-            st.markdown(user_query_two) # Use user_query_two
+    # # User input field at the bottom for a second request
+    # if user_query_two := st.chat_input("Request 2 (Optional):"):
+    #     # Append user message
+    #     st.session_state.messages.append({"role": "user", "content": user_query_two}) # Use user_query_two
+    #     with st.chat_message("user"):
+    #         st.markdown(user_query_two) # Use user_query_two
 
-        # Generate response
-        new_messages_two = run_full_turn(get_agent, st.session_state.messages)
+    #     # Generate response
+    #     new_messages_two = run_full_turn(get_agent, st.session_state.messages)
 
-        # Append new messages to session history
-        st.session_state.messages.extend(new_messages_two)
+    #     # Append new messages to session history
+    #     st.session_state.messages.extend(new_messages_two)
 
-        # Display assistant response for the second request
-        for msg in new_messages_two:
-            role = msg.role if hasattr(msg, "role") else msg["role"]
-            content = msg.content if hasattr(msg, "content") else msg["content"]
+    #     # Display assistant response for the second request
+    #     for msg in new_messages_two:
+    #         role = msg.role if hasattr(msg, "role") else msg["role"]
+    #         content = msg.content if hasattr(msg, "content") else msg["content"]
 
-            if content is None or role == "tool" or role == "user":
-                continue
-            else:
-                with st.chat_message(role):
-                    st.markdown(content)
+    #         if content is None or role == "tool" or role == "user":
+    #             continue
+    #         else:
+    #             with st.chat_message(role):
+    #                 st.markdown(content)
 
 # === Tab: Upcoming Matches ===
 with tabs[1]:
