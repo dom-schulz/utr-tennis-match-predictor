@@ -194,7 +194,7 @@ def set_bg_image(image_url):
         unsafe_allow_html=True
     )
 
-tennis_court_bg_url = "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.istockphoto.com%2Fillustrations%2Ftennis-court&psig=AOvVaw0lVhJj0KLkLhRKgLmDqxld&ust=1744951115859000&source=images&cd=vfe&opi=89978449&ved=0CBkQjhxqFwoTCOiW6tKf3owDFQAAAAAdAAAAABAJ"
+tennis_court_bg_url = "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.vectorstock.com%2Froyalty-free-vector%2Ftennis-court-vector-1354750&psig=AOvVaw0lVhJj0KLkLhRKgLmDqxld&ust=1744951115859000&source=images&cd=vfe&opi=89978449&ved=0CBYQjRxqFwoTCOiW6tKf3owDFQAAAAAdAAAAABAY"
 set_bg_image(tennis_court_bg_url)
 st.title("🎾 Tennis Timmy Predictor 🤖") 
 st.write("Enter two player names and a match location to receive a prediction for the match.")
