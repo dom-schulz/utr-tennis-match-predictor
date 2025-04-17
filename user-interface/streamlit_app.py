@@ -243,18 +243,3 @@ if st.button("Get Prediction"):
         st.warning("Please enter the names of both players and the match location.")
 
 st.divider()
-
-# Keep the chat history display (optional, depending on desired UI)
-if "messages" in st.session_state:
-    st.subheader("Chat History:")
-    for msg in st.session_state.messages:
-        role = msg.get("role")
-        content = msg.get("content")
-        if role == "user":
-            with st.chat_message("user"):
-                st.markdown(content)
-        elif role == "assistant":
-            with st.chat_message("assistant"):
-                st.markdown(content)
-        elif role == "tool":
-            st.markdown(f"**Tool Result:** {content}")
