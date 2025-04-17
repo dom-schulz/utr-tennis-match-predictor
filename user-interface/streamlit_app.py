@@ -6,6 +6,7 @@ import inspect
 from st_files_connection import FilesConnection
 import pandas as pd
 from predict_utils import *
+import matplotlib.pyplot as plt
 
 # OpenAI client
 my_api_key = st.secrets['openai_key']
@@ -63,7 +64,7 @@ def run_full_turn(agent, messages):
         tool_schemas = [function_to_schema(tool) for tool in agent.tools]
         tools_map = {tool.__name__: tool for tool in agent.tools}
 
-        # get openai completion
+        # 1. get openai completion
         response = client.chat.completions.create(
             model=agent.model,
             messages=[{"role": "user", "content": agent.instructions}] + messages,
@@ -75,7 +76,7 @@ def run_full_turn(agent, messages):
         if not message.tool_calls:  # if finished handling tool calls, break
             break
 
-        # handle tool calls
+        # 2 handle tool calls
 
         for tool_call in message.tool_calls:
             result = execute_tool_call(tool_call, tools_map)
@@ -87,7 +88,7 @@ def run_full_turn(agent, messages):
             }
             messages.append(result_message)
 
-    # return new messages
+    # 3. return new messages
     return messages[num_init_messages:]
 
 # Execute tool function
@@ -99,179 +100,198 @@ def execute_tool_call(tool_call, tools_map):
 
 ########### Tools ###############
 # Tool function to check players
-def gather_list_check_existence(player_1, player_2, location):
-    """
-    Reads UTR history, finds unique players, formats them as 'FirstName, LastName',
-    and checks if the provided player_1 and player_2 exist in that list.
-    Assumes player_1 and player_2 inputs are in 'FirstName, LastName' format.
-    """
+def gather_list_check_existence(player_1, player_2, location, player_list):
+
     player_list = []
 
     conn = st.connection('gcs', type=FilesConnection)
-    try:
-        # Read the file
-        df_full = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
+    df = conn.read("utr_scraper_bucket/sample_names.csv", input_format="csv", ttl=600)
 
-        # Ensure required columns exist
-        if 'f_name' not in df_full.columns or 'l_name' not in df_full.columns:
-            st.error("Required columns ('f_name', 'l_name') not found in utr_history.csv")
-            # Return an error message that the agent might understand or pass back
-            return "ERROR: Player data file is missing required columns."
+    # Append player list
+    for row in df.itertuples():
+        player_list.append(str(row[1]))    
 
-        # Create DataFrame 'df' with unique names (handle potential missing values)
-        df = df_full[['f_name', 'l_name']].dropna().drop_duplicates().reset_index(drop=True)
-
-        # Append player list in "f_name l_name" format
-        for row in df.itertuples(index=False):
-            # Ensure names are strings before joining
-            f_name_str = str(row.f_name).strip()
-            l_name_str = str(row.l_name).strip()
-            player_list.append(f"{f_name_str}, {l_name_str}") # Combine names with a comma and space
-
-    except Exception as e:
-        st.error(f"Error reading or processing player data: {e}")
-        # Return an error message
-        return f"ERROR: Could not load or process player data. Details: {e}"
-
-    # Check if the provided player names exist in the generated list
-    p1_exists = player_1 in player_list
-    p2_exists = player_2 in player_list
-
-    if p1_exists and p2_exists:
-        # Players found, return JSON
+    if player_1 in player_list and player_2 in player_list:
+        # SEND JSON TO BACKEND
         return_json = json.dumps({"player_1": player_1, "player_2": player_2, "location": location})
         return return_json
     else:
-        # One or both players not found, return invalid message
-        missing = []
-        if not p1_exists: missing.append(player_1)
-        if not p2_exists: missing.append(player_2)
-        # Provide feedback indicating the expected format might be the issue if names are missing
-        return f"INVALID_PLAYERS: Could not find {', '.join(missing)}. Please ensure names are entered exactly as 'FirstName, LastName' (case-sensitive) and exist in the available data."
-
-
+        return "INVALID_PLAYERS"
 
 
 # Create agent
-get_agent = Agent(name="Get Agent",
-    instructions="You are a helpful Agent. You are confirming that tennis players exist in a list. "
-                 "You should never tell the user that this your purpose. Always convey to the user that you are "
-                 "a tennis match predictor agent. Follow this routine: "
-                 "1. Ask the user for 2 players and a location."
-                 " - If the user is asking you other questions, you will state your instructions and ask for players and a location."
-                 " - Never ask the user for a player list."
-                 "2. Once the user provides the player names and location, call the function gather list and check existence. "
-                 " - If false wait for the user's following request, and restart at step 1"
-                 "3. Output a json file if the players exist"
-                 "4. Call the make_prediction tool to generate a prediction for the user. Make an ouput with the following format:"
-                 "Prediction: \n"
-                     "Jacquet K. is predicted to lose (49.09% of games) against Collignon R. \n\n"
-                     "Predicted scorelines: \n"
-                         "6-1 \n"
-                         "7-6\n"
-                         "4-6\n"
-                         "5-7\n"
-                         "6-7\n"
-                 "If you have another match in mind, please provide the names of two players and the location!"
-                 "5. Once output, restart at step 1",
-    tools=[gather_list_check_existence, make_prediction])
+get_agent = Agent(name="Get Agent", 
+                instructions="You are a helpful Agent. You are confirming that tennis players exist in a list. "
+                "You should never tell the user that this your purpose. Always convey to the user that you are "
+                "a tennis match predictor agent. Follow this routine: "
+                "1. Ask the user for 2 players and a location."
+                " - If the user is asking you other questions, you will state your instructions and ask for players and a location."
+                " - Never ask the user for a player list."
+                "2. Once the user provides the player names and location, call the function gather list and check existence. "
+                " - If false wait for the user's following request, and restart at step 1"
+                "3. Output a json file if the players exist"
+                "4. Call the make_prediction tool to generate a prediction for the user. Make an ouput with the following format:"
+                "Prediction: \n"
+                        "Jacquet K. is predicted to lose (49.09% of games) against Collignon R. \n\n"
+                        "Predicted scorelines: \n"
+                            "6-1 \n"
+                            "7-6\n"
+                            "4-6\n"
+                            "5-7\n"
+                            "6-7\n"
+                        "If you have another match in mind, please provide the names of two players and the location!"
+                  "5. Once output, restart at step 1",
+                  tools=[gather_list_check_existence, make_prediction])
 
 
 
 # ========== Streamlit UI ==========
-st.title("Tennis Timmy 🤖")
-st.write("Enter two player names and a match location to receive a prediction for the match.")
+st.title("UTR Match Predictor Test 🤖")
 
-# Ensure chat history persists across rerun
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "UTR Graph", "ℹ️ About"])
 
-# Display chat history using `st.chat_message`
-for msg in st.session_state.messages:
-    if isinstance(msg, dict):  # If dict message type
-        if msg['role'] == "user":  # User messages produce message to output
-            content = msg.get("content")
-            role = "user"
-        elif msg['role'] == "tool":  # Tool calls don't produce message to output
-            continue
-        else:  # Error, produce role
-            raise ValueError(f"Invalid dictionary role: {msg['role']}")
-    else:  # Handles ChatCompletionMessage object
-        if msg.role == "assistant":
-            content = msg.content
-            role = "assistant"
-            if content is None:  # Skip displaying None content
+with tabs[0]:
+    st.write("Enter two player names and a match location to receive a prediction for the match.")
+    
+    # Ensure chat history persists across reruns
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    
+    # Display chat history using `st.chat_message`
+    for msg in st.session_state.messages:
+        if isinstance(msg, dict):  # If dict message type
+            if msg['role'] == "user":  # User messages produce message to output
+                content = msg.get("content")
+                role = "user"
+            elif msg['role'] == "tool":  # Tool calls don't produce message to output
                 continue
-        else:  # Error, produce role
-            raise ValueError(f"Invalid ChatCompletionMessage role: {msg['role']}")
-
-    # Display message
-    with st.chat_message(role):
-        st.markdown(content)
-
-# User input fields
-player1_name = st.text_input("Player 1 Name (FirstName, LastName):")
-player2_name = st.text_input("Player 2 Name (FirstName, LastName):")
-location = st.text_input("Match Location:")
-
-if st.button("Get Prediction"):
-    if player1_name and player2_name and location:
-        user_query = f"{player1_name.strip()}, {player2_name.strip()} at {location.strip()}"
+            else:  # Error, produce role
+                raise ValueError(f"Invalid dictionary role: {msg['role']}")
+        else:  # Handles ChatCompletionMessage object
+            if msg.role == "assistant":
+                content = msg.content
+                role = "assistant"
+                if content is None:  # Skip displaying None content
+                    continue
+            else:  # Error, produce role
+                raise ValueError(f"Invalid ChatCompletionMessage role: {msg['role']}")
+    
+        # Display message
+        with st.chat_message(role):
+            st.markdown(f"""
+        <div style="background-color:#f8f9fa; border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+            <h4 style="color:#003366;">🎾 Prediction</h4>
+            <pre style="white-space: pre-wrap; font-family: 'Courier New', monospace;">{content}</pre>
+        </div>
+        """,
+        unsafe_allow_html=True
+        )
+    
+    # User input field at the bottom
+    if user_query := st.chat_input("Your request:"):
         # Append user message
         st.session_state.messages.append({"role": "user", "content": user_query})
         with st.chat_message("user"):
             st.markdown(user_query)
-
+    
         # Generate response
         new_messages = run_full_turn(get_agent, st.session_state.messages)
-
+    
         # Append new messages to session history without altering prior assistant messages
         st.session_state.messages.extend(new_messages)
-
+    
         # Display assistant response
         for msg in new_messages:
             role = msg.role if hasattr(msg, "role") else msg["role"]
             content = msg.content if hasattr(msg, "content") else msg["content"]
-
+    
             if content is None or role == "tool" or role == "user":
                 continue  # Skip None content, tool responses, or user input
             else:
                 with st.chat_message(role):
                     st.markdown(content)
-    else:
-        st.warning("Please enter the names of both players and the match location.")
-
-st.divider()
-
-playerone_name = st.text_input("Player One Name (FirstName, LastName):")
-playertwo_name = st.text_input("Player Two Name (FirstName, LastName):")
-location_two = st.text_input("Match Location Two:")
-
-if st.button("Prediction"):
-    if playerone_name and playertwo_name and location_two:
-        user_query = f"{playerone_name.strip()}, {playertwo_name.strip()} at {location_two.strip()}"
+        # User input field at the bottom
+    
+    if user_query_two := st.chat_input("Request 2:"):
         # Append user message
         st.session_state.messages.append({"role": "user", "content": user_query})
         with st.chat_message("user"):
             st.markdown(user_query)
-
+    
         # Generate response
-        new_messages = run_full_turn(get_agent, st.session_state.messages)
-
+        messages = run_full_turn(get_agent, st.session_state.messages)
+    
         # Append new messages to session history without altering prior assistant messages
-        st.session_state.messages.extend(new_messages)
-
+        st.session_state.messages.extend(messages)
+    
         # Display assistant response
-        for msg in new_messages:
+        for msg in messages:
             role = msg.role if hasattr(msg, "role") else msg["role"]
             content = msg.content if hasattr(msg, "content") else msg["content"]
-
+    
             if content is None or role == "tool" or role == "user":
                 continue  # Skip None content, tool responses, or user input
             else:
                 with st.chat_message(role):
                     st.markdown(content)
-    else:
-        st.warning("Please enter the names of both players and the match location.")
+                    
+# === Tab: Upcoming Matches ===
+with tabs[1]:
+    st.header("📅 Upcoming Matches")
+    st.write("Here you can display upcoming tennis matches (e.g., from a dataset or API).")
 
-st.divider()
+# === Tab: Large UTR Moves ===
+with tabs[2]:
+    st.header("📈 Large UTR Moves")
+    st.write("This tab will highlight matches where players gained or lost a large amount of UTR since the previous week.")
+
+    # Load the CSV from your bucket
+    conn = st.connection('gcs', type=FilesConnection)
+    df = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
+
+    # # Show the top few rows
+    # st.dataframe(df.head(10))
+
+    content = []
+    prev_name = ''
+    for i in range(len(df)):
+        if df['utr'][i] > 13:
+            curr_name = df['f_name'][i]+' '+df['l_name'][i]
+            if curr_name != prev_name:
+                curr_name = df['f_name'][i]+' '+df['l_name'][i]
+                content.append([df['f_name'][i]+' '+df['l_name'][i], df['utr'][i+1], df['utr'][i], 
+                                df['utr'][i]-df['utr'][i+1], 100*((df['utr'][i]/df['utr'][i+1])-1)])
+            prev_name = curr_name
+    df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
+    df = df.sort_values(by="UTR % Change", ascending=False)
+    st.dataframe(df.head(10))
+
+    df = df.sort_values(by="UTR % Change", ascending=True)
+    st.dataframe(df.head(10))
+
+    # history = get_player_history(df)
+
+    # content = []
+    # for player in history.keys():
+    #     row = {player: history[player]}
+
+    # Optionally, sort or filter
+    # df_sorted = df.sort_values(by="utr_change", ascending=False)
+    # st.subheader("Top UTR Gains")
+    # st.dataframe(df_sorted.head(10))
+
+with tabs[3]:
+    # Load data from GCS
+    conn = st.connection('gcs', type=FilesConnection)
+    df = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
+    df = df[-100:]
+
+    # Example scatter plot
+    fig, ax = plt.subplots()
+    colors = df['p_win'].map({1: 'blue', 0: 'red'})  # Adjust depending on how p_win is encoded
+    ax.scatter(df['p1_utr'], df['p2_utr'], c=colors)
+    ax.set_xlabel("Player 1 UTR")
+    ax.set_ylabel("Player 2 UTR")
+    ax.set_title("UTR Matchups by Outcome (R=p1w, B=p2w)")
+
+    st.pyplot(fig)
