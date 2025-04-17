@@ -146,12 +146,9 @@ get_agent = Agent(name="Get Agent",
 
 
 # ========== Streamlit UI ==========
-st.title("UTR Match Predictor Test 🤖")
+st.title("Tennis Timmy Match Predictor🤖")
 
-tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "UTR Graph", "ℹ️ About"])
-
-with tabs[0]:
-    st.write("Enter two player names and a match location to receive a prediction for the match.")
+st.write("Enter two player names and a match location to receive a prediction for the match.")
     
     # Ensure chat history persists across reruns
     if "messages" not in st.session_state:
