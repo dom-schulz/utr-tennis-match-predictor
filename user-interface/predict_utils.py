@@ -174,9 +174,11 @@ def get_score(players, player_profiles, model):
 
 def make_prediction(player_1, player_2, location):
 
-    # Convert players to the desired format
-    formatted_player_1 = player_1.split()[1] + ' ' + player_1.split()[0][0] + '.'
-    formatted_player_2 = player_2.split()[1] + ' ' + player_2.split()[0][0] + '.'
+    # formatted_player_1 = player_1.split()[1] + ' ' + player_1.split()[0][0] + '.'
+    # formatted_player_2 = player_2.split()[1] + ' ' + player_2.split()[0][0] + '.'
+    p1 = player_1
+    p2 = player_2
+    ps = [p1, p2]
     
     # get data to fit to model    
     conn = st.connection('gcs', type=FilesConnection)
