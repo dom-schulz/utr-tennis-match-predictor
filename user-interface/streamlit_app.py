@@ -105,7 +105,7 @@ def gather_list_check_existence(player_1, player_2, location, player_list):
     player_list = []
 
     conn = st.connection('gcs', type=FilesConnection)
-    df = conn.read("utr_scraper_bucket/sample_names.csv", input_format="csv", ttl=600)
+    df = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
     # Append player list
     for row in df.itertuples():
