@@ -177,28 +177,9 @@ get_agent = Agent(name="Get Agent",
                   "5. Once output, restart at step 1",
                   tools=[gather_list_check_existence, make_prediction])
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # ========== Streamlit UI ==========
 st.title("🎾 Tennis Timmy Predictor 🤖") 
 st.write("Enter two player names and a match location to receive a prediction for the match.")
-
-
 
 st.divider()
 
