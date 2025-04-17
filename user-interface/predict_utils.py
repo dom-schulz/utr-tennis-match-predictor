@@ -112,7 +112,7 @@ def get_player_history(utr_history):
 
     for i in range(len(utr_history)):
         if utr_history['f_name'][i] + " " + utr_history['l_name'][i] not in history:
-            history[utr_history['player_name'][i]] = {
+            history[utr_history['f_name'][i] + " " + utr_history['l_name'][i]] = {
                 'utr': utr_history['utr'][i]
             }
     print(f'history: {history}')
