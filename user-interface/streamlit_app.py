@@ -178,13 +178,10 @@ get_agent = Agent(name="Get Agent",
                   tools=[gather_list_check_existence, make_prediction])
 
 
+
 # ========== Streamlit UI ==========
-st.title("🎾 Tennis Timmy Predictor 🤖") 
+st.title("Tennis Timmy Predictor 🤖")
 st.write("Enter two player names and a match location to receive a prediction for the match.")
-
-
-
-st.divider()
 
 # Ensure chat history persists across rerun
 if "messages" not in st.session_state:
@@ -236,7 +233,7 @@ if user_query := st.chat_input("Your request:"):
         else:
             with st.chat_message(role):
                 st.markdown(content)
-    st.divider()
+
 # Second user input field at the bottom (keeping the same structure)
 if user_query_2 := st.chat_input("Your request 2:"):
     # Append user message
