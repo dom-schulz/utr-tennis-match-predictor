@@ -107,12 +107,11 @@ def get_player_profiles(data, history, p1, p2):
      
      return player_profiles
 
-
 def get_player_history(utr_history):
     history = {}
 
     for i in range(len(utr_history)):
-        if utr_history['player_name'][i] not in history:
+        if utr_history['f_name'][i] + " " + utr_history['l_name'][i] not in history:
             history[utr_history['player_name'][i]] = {
                 'utr': utr_history['utr'][i]
             }
