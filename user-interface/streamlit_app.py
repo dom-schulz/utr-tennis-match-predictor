@@ -6,7 +6,6 @@ import inspect
 from st_files_connection import FilesConnection
 import pandas as pd
 from predict_utils import *
-import matplotlib.pyplot as plt
 
 # OpenAI client
 my_api_key = st.secrets['openai_key']
@@ -64,7 +63,7 @@ def run_full_turn(agent, messages):
         tool_schemas = [function_to_schema(tool) for tool in agent.tools]
         tools_map = {tool.__name__: tool for tool in agent.tools}
 
-        # 1. get openai completion
+        # get openai completion
         response = client.chat.completions.create(
             model=agent.model,
             messages=[{"role": "user", "content": agent.instructions}] + messages,
@@ -76,7 +75,7 @@ def run_full_turn(agent, messages):
         if not message.tool_calls:  # if finished handling tool calls, break
             break
 
-        # 2 handle tool calls
+        # handle tool calls
 
         for tool_call in message.tool_calls:
             result = execute_tool_call(tool_call, tools_map)
@@ -88,7 +87,7 @@ def run_full_turn(agent, messages):
             }
             messages.append(result_message)
 
-    # 3. return new messages
+    # return new messages
     return messages[num_init_messages:]
 
 # Execute tool function
@@ -152,6 +151,8 @@ def gather_list_check_existence(player_1, player_2, location):
         return f"INVALID_PLAYERS: Could not find {', '.join(missing)}. Please ensure names are entered exactly as 'FirstName, LastName' (case-sensitive) and exist in the available data."
 
 
+
+
 # Create agent
 get_agent = Agent(name="Get Agent", 
                 instructions="You are a helpful Agent. You are confirming that tennis players exist in a list. "
@@ -179,121 +180,56 @@ get_agent = Agent(name="Get Agent",
 
 
 # ========== Streamlit UI ==========
-st.title("UTR Match Predictor Test 🤖")
+st.title("Tennis Timmy 🤖")
+st.write("Enter two player names and a match location to receive a prediction for the match.")
 
-tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "UTR Graph", "ℹ️ About"])
+# Ensure chat history persists across rerun
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-with tabs[0]:
-    st.write("Enter two player names and a match location to receive a prediction for the match.")
-    
-    # Ensure chat history persists across reruns
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    
-    # Display chat history using `st.chat_message`
-    for msg in st.session_state.messages:
-        if isinstance(msg, dict):  # If dict message type
-            if msg['role'] == "user":  # User messages produce message to output
-                content = msg.get("content")
-                role = "user"
-            elif msg['role'] == "tool":  # Tool calls don't produce message to output
+# Display chat history using `st.chat_message`
+for msg in st.session_state.messages:
+    if isinstance(msg, dict):  # If dict message type
+        if msg['role'] == "user":  # User messages produce message to output
+            content = msg.get("content")
+            role = "user"
+        elif msg['role'] == "tool":  # Tool calls don't produce message to output
+            continue
+        else:  # Error, produce role
+            raise ValueError(f"Invalid dictionary role: {msg['role']}")
+    else:  # Handles ChatCompletionMessage object
+        if msg.role == "assistant":
+            content = msg.content
+            role = "assistant"
+            if content is None:  # Skip displaying None content
                 continue
-            else:  # Error, produce role
-                raise ValueError(f"Invalid dictionary role: {msg['role']}")
-        else:  # Handles ChatCompletionMessage object
-            if msg.role == "assistant":
-                content = msg.content
-                role = "assistant"
-                if content is None:  # Skip displaying None content
-                    continue
-            else:  # Error, produce role
-                raise ValueError(f"Invalid ChatCompletionMessage role: {msg['role']}")
-    
-        # Display message
-        with st.chat_message(role):
-            st.markdown(content)
-    
-    # User input field at the bottom
-    if user_query := st.chat_input("Your request:"):
-        # Append user message
-        st.session_state.messages.append({"role": "user", "content": user_query})
-        with st.chat_message("user"):
-            st.markdown(user_query)
-    
-        # Generate response
-        new_messages = run_full_turn(get_agent, st.session_state.messages)
-    
-        # Append new messages to session history without altering prior assistant messages
-        st.session_state.messages.extend(new_messages)
-    
-        # Display assistant response
-        for msg in new_messages:
-            role = msg.role if hasattr(msg, "role") else msg["role"]
-            content = msg.content if hasattr(msg, "content") else msg["content"]
-    
-            if content is None or role == "tool" or role == "user":
-                continue  # Skip None content, tool responses, or user input
-            else:
-                with st.chat_message(role):
-                    st.markdown(content)
-                    
-# === Tab: Upcoming Matches ===
-with tabs[1]:
-    st.header("📅 Upcoming Matches")
-    st.write("Here you can display upcoming tennis matches (e.g., from a dataset or API).")
+        else:  # Error, produce role
+            raise ValueError(f"Invalid ChatCompletionMessage role: {msg['role']}")
 
-# === Tab: Large UTR Moves ===
-with tabs[2]:
-    st.header("📈 Large UTR Moves")
-    st.write("This tab will highlight matches where players gained or lost a large amount of UTR since the previous week.")
+    # Display message
+    with st.chat_message(role):
+        st.markdown(content)
 
-    # Load the CSV from your bucket
-    conn = st.connection('gcs', type=FilesConnection)
-    df = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
+# User input field at the bottom
+if user_query := st.chat_input("Your request:"):
+    # Append user message
+    st.session_state.messages.append({"role": "user", "content": user_query})
+    with st.chat_message("user"):
+        st.markdown(user_query)
 
-    # # Show the top few rows
-    # st.dataframe(df.head(10))
+    # Generate response
+    new_messages = run_full_turn(get_agent, st.session_state.messages)
 
-    content = []
-    prev_name = ''
-    for i in range(len(df)):
-        if df['utr'][i] > 13:
-            curr_name = df['f_name'][i]+' '+df['l_name'][i]
-            if curr_name != prev_name:
-                curr_name = df['f_name'][i]+' '+df['l_name'][i]
-                content.append([df['f_name'][i]+' '+df['l_name'][i], df['utr'][i+1], df['utr'][i], 
-                                df['utr'][i]-df['utr'][i+1], 100*((df['utr'][i]/df['utr'][i+1])-1)])
-            prev_name = curr_name
-    df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
-    df = df.sort_values(by="UTR % Change", ascending=False)
-    st.dataframe(df.head(10))
+    # Append new messages to session history without altering prior assistant messages
+    st.session_state.messages.extend(new_messages)
 
-    df = df.sort_values(by="UTR % Change", ascending=True)
-    st.dataframe(df.head(10))
+    # Display assistant response
+    for msg in new_messages:
+        role = msg.role if hasattr(msg, "role") else msg["role"]
+        content = msg.content if hasattr(msg, "content") else msg["content"]
 
-    # history = get_player_history(df)
-
-    # content = []
-    # for player in history.keys():
-    #     row = {player: history[player]}
-
-    # Optionally, sort or filter
-    # df_sorted = df.sort_values(by="utr_change", ascending=False)
-    # st.subheader("Top UTR Gains")
-    # st.dataframe(df_sorted.head(10))
-
-with tabs[3]:
-    # Load data from GCS
-    conn = st.connection('gcs', type=FilesConnection)
-    df = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
-    df = df[-100:]
-
-    # Example scatter plot
-    fig, ax = plt.subplots()
-    colors = df['p_win'].map({1: 'blue', 0: 'red'})  # Adjust depending on how p_win is encoded
-    ax.scatter(df['p1_utr'], df['p2_utr'], c=colors)
-    ax.set_xlabel("Player 1 UTR")
-    ax.set_ylabel("Player 2 UTR")
-    ax.set_title("UTR Matchups by Outcome (R=p1w, B=p2w)")
-
-    st.pyplot(fig)
+        if content is None or role == "tool" or role == "user":
+            continue  # Skip None content, tool responses, or user input
+        else:
+            with st.chat_message(role):
+                st.markdown(content)
