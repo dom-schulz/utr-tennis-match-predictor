@@ -178,22 +178,7 @@ get_agent = Agent(name="Get Agent",
                   tools=[gather_list_check_existence, make_prediction])
 
 
-def set_bg_image(image_url):
-    st.markdown(
-        f"""
-        <style>
-        .stApp {{
-            background-image: url("{image_url}");
-            background-size: cover;
-            background-attachment: fixed;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
 
-tennis_court_bg_url = "https://t4.ftcdn.net/jpg/03/66/76/89/360_F_366768939_OlWaxKMSVafGpXEfJoDSrrplwVeKXwmm.jpg"
-set_bg_image(tennis_court_bg_url)
 # ========== Streamlit UI ==========
 st.title("🎾 Tennis Timmy Predictor 🤖") 
 st.write("Enter two player names and a match location to receive a prediction for the match.")
