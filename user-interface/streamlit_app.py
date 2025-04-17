@@ -185,7 +185,6 @@ st.write("Enter two player names and a match location to receive a prediction fo
 
 
 
-st.divider()
 
 # Ensure chat history persists across rerun
 if "messages" not in st.session_state:
@@ -261,4 +260,3 @@ if user_query_2 := st.chat_input("Your request 2:"):
         else:
             with st.chat_message(role):
                 st.markdown(content)
-
