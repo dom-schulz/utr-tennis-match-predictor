@@ -213,8 +213,7 @@ for msg in st.session_state.messages:
 player1_name = st.text_input("Player 1 Name (FirstName, LastName):")
 player2_name = st.text_input("Player 2 Name (FirstName, LastName):")
 location = st.text_input("Match Location:")
-tournament_name = st.text_input("Tournament Name (Optional):")
-court_surface = st.text_input("Court Surface (Optional):")
+
 
 if st.button("Get Prediction"):
     if player1_name and player2_name and location:
