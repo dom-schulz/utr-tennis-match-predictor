@@ -216,7 +216,7 @@ location = st.text_input("Match Location:")
 
 playerone_name = st.text_input("Player One Name (FirstName, LastName):")
 playertwo_name = st.text_input("Player Two Name (FirstName, LastName):")
-location_two = st.text_input("Match Location:")
+location_two = st.text_input("Match Location Two:")
 
 if st.button("Get Prediction"):
     if player1_name and player2_name and location:
