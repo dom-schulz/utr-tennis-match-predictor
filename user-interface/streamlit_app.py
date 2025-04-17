@@ -214,6 +214,9 @@ player1_name = st.text_input("Player 1 Name (FirstName, LastName):")
 player2_name = st.text_input("Player 2 Name (FirstName, LastName):")
 location = st.text_input("Match Location:")
 
+playerone_name = st.text_input("Player 1 Name (FirstName, LastName):")
+playertwo_name = st.text_input("Player 2 Name (FirstName, LastName):")
+location_two = st.text_input("Match Location:")
 
 if st.button("Get Prediction"):
     if player1_name and player2_name and location:
@@ -231,6 +234,33 @@ if st.button("Get Prediction"):
 
         # Display assistant response
         for msg in new_messages:
+            role = msg.role if hasattr(msg, "role") else msg["role"]
+            content = msg.content if hasattr(msg, "content") else msg["content"]
+
+            if content is None or role == "tool" or role == "user":
+                continue  # Skip None content, tool responses, or user input
+            else:
+                with st.chat_message(role):
+                    st.markdown(content)
+    else:
+        st.warning("Please enter the names of both players and the match location.")
+
+if st.button("Get Prediction"):
+    if playerone_name and playertwo_name and location_two:
+        user_query = f"{playerone_name.strip()}, {playertwo_name.strip()} at {location_two.strip()}"
+        # Append user message
+        st.session_state.messages.append({"role": "user", "content": user_query})
+        with st.chat_message("user"):
+            st.markdown(user_query)
+
+        # Generate response
+        new_messages_two = run_full_turn(get_agent, st.session_state.messages)
+
+        # Append new messages to session history without altering prior assistant messages
+        st.session_state.messages.extend(new_messages_two)
+
+        # Display assistant response
+        for msg in new_messages_two:
             role = msg.role if hasattr(msg, "role") else msg["role"]
             content = msg.content if hasattr(msg, "content") else msg["content"]
 
