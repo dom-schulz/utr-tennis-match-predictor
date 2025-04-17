@@ -148,6 +148,9 @@ get_agent = Agent(name="Get Agent",
 st.title("Test-Geoff 🤖")
 st.write("Enter two player names and a match location to receive a prediction for the match.")
 
+tab1, tab2, tab3 = st.tabs(["💬 Chat", "📋 Player Data", "ℹ️ About"])
+
+
 # Ensure chat history persists across reruns
 if "messages" not in st.session_state:
     st.session_state.messages = []
