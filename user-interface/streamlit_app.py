@@ -144,55 +144,64 @@ get_agent = Agent(name="Get Agent",
                   tools=[gather_list_check_existence, make_prediction])
 
 # ======== Streamlit Theme ======== #
-st.markdown("""
-<style>
-/* Hide the built-in sidebar toggle button */
-[data-testid="collapsedControl"] {
-    visibility: hidden;
-}
+# Session state to track sidebar open/closed
+if "sidebar_open" not in st.session_state:
+    st.session_state.sidebar_open = False
 
-/* Sidebar custom background and animation */
-section[data-testid="stSidebar"] {
-    background-color: #1a2b4c !important;  /* Custom dark blue */
-    transition: all 0.4s ease-in-out;
-    z-index: 999;
-}
+# Button to toggle sidebar
+if st.button("🔧 Open Tools & Insights"):
+    st.session_state.sidebar_open = not st.session_state.sidebar_open
 
-/* Shrink sidebar width (simulate closed state initially) */
-section[data-testid="stSidebar"] > div {
-    width: 0px;
-    overflow: hidden;
-    transition: width 0.4s ease-in-out;
-}
+# Conditionally apply expanded style
+if st.session_state.sidebar_open:
+    st.markdown("""
+    <style>
+    /* Hide the built-in sidebar toggle button */
+    [data-testid="collapsedControl"] {
+        visibility: hidden;
+    }
 
-/* Add overlay effect */
-section[data-testid="stSidebar"]::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.4); /* darken background */
-    z-index: -1;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
+    /* Sidebar custom background and animation */
+    section[data-testid="stSidebar"] {
+        background-color: #1a2b4c !important;  /* Custom dark blue */
+        transition: all 0.4s ease-in-out;
+        z-index: 999;
+    }
 
-/* Show sidebar when a certain class is added */
-.sidebar-expanded section[data-testid="stSidebar"] > div {
-    width: 280px;  /* Full sidebar width */
-    overflow: auto;
-}
+    /* Shrink sidebar width (simulate closed state initially) */
+    section[data-testid="stSidebar"] > div {
+        width: 0px;
+        overflow: hidden;
+        transition: width 0.4s ease-in-out;
+    }
 
-/* Show overlay when sidebar expands */
-.sidebar-expanded section[data-testid="stSidebar"]::before {
-    opacity: 1;
-    z-index: 998;
-}
-</style>
-""", unsafe_allow_html=True)
+    /* Add overlay effect */
+    section[data-testid="stSidebar"]::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.4); /* darken background */
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
 
+    /* Show sidebar when a certain class is added */
+    .sidebar-expanded section[data-testid="stSidebar"] > div {
+        width: 280px;  /* Full sidebar width */
+        overflow: auto;
+    }
+
+    /* Show overlay when sidebar expands */
+    .sidebar-expanded section[data-testid="stSidebar"]::before {
+        opacity: 1;
+        z-index: 998;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # ========== Streamlit UI ==========
 st.title("UTR Match Predictor Test 🤖")
