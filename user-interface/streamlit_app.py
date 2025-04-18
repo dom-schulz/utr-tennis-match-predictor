@@ -357,7 +357,7 @@ with tabs[3]:
     # Load data from GCS
     conn = st.connection('gcs', type=FilesConnection)
     df1 = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
-    df2 = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", intput_format="csv", ttl=600)
+    df2 = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
 
     history = get_player_history(df1)
     player_df = get_player_profiles(df2, history)
