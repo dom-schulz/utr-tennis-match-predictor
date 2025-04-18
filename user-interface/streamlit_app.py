@@ -7,6 +7,7 @@ from st_files_connection import FilesConnection
 import pandas as pd
 from predict_utils import *
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 # OpenAI client
 my_api_key = st.secrets['openai_key']
