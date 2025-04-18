@@ -325,7 +325,7 @@ with tabs[3]:
     # Load data from GCS
     conn = st.connection('gcs', type=FilesConnection)
     df = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
-    df = df[-100:]
+    df = df[-20:]
 
     # Example scatter plot
     fig, ax = plt.subplots()
