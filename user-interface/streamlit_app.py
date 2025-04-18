@@ -355,22 +355,22 @@ with tabs[3]:
     # Load data from GCS
     conn = st.connection('gcs', type=FilesConnection)
     df = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
-    df = df[-40:]
+    # df = df[-40:]
 
-    # Example scatter plot
-    fig, ax = plt.subplots()
-    colors = df['p_win'].map({1: 'blue', 0: 'red'})  # Adjust depending on how p_win is encoded
-    ax.scatter(df['p1_utr'], df['p2_utr'], c=colors)
-    ax.set_xlabel("Player 1 UTR")
-    ax.set_ylabel("Player 2 UTR")
-    ax.set_title("UTR Matchups by Outcome (R=p1w, B=p2w)")
+    # # Example scatter plot
+    # fig, ax = plt.subplots()
+    # colors = df['p_win'].map({1: 'blue', 0: 'red'})  # Adjust depending on how p_win is encoded
+    # ax.scatter(df['p1_utr'], df['p2_utr'], c=colors)
+    # ax.set_xlabel("Player 1 UTR")
+    # ax.set_ylabel("Player 2 UTR")
+    # ax.set_title("UTR Matchups by Outcome (R=p1w, B=p2w)")
 
-    # Add a custom legend
-    red_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=10, label='Player 1 Win')
-    blue_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='blue', markersize=10, label='Player 2 Win')
-    ax.legend(handles=[blue_patch, red_patch], loc='upper left', fontsize=12)
+    # # Add a custom legend
+    # red_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=10, label='Player 1 Win')
+    # blue_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='blue', markersize=10, label='Player 2 Win')
+    # ax.legend(handles=[blue_patch, red_patch], loc='upper left', fontsize=12)
 
-    st.pyplot(fig)
+    # st.pyplot(fig)
 
 with tabs[4]:
     st.markdown("""
