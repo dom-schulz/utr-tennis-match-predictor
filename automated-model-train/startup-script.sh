@@ -25,13 +25,13 @@ UTR_PASSWORD=$(gcloud secrets versions access latest --secret="utr-password")
 # Define constants
 PROJECT_ID="cpsc324-project-452600"
 REGION="us-west1"
-REPO_NAME="model-train-repo"
-IMAGE_NAME="model-train-image"
+REPO_NAME="matches-scraper-repo"
+IMAGE_NAME="matches-scraper-image"
 DOCKER_IMAGE_TAG="latest"
-CONTAINER_NAME="model-train"
-MODEL_BUCKET_NAME="utr-model-training-bucket"
-UTR_BUCKET_NAME="utr_scraper_bucket"
+CONTAINER_NAME="matches-scraper"
 MATCHES_BUCKET_NAME="matches-scraper-bucket"
+UTR_BUCKET_NAME="utr_scraper_bucket"
+
 # Pull the latest Docker image
 sudo docker pull us-west1-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${DOCKER_IMAGE_TAG}
 
@@ -45,9 +45,8 @@ sudo docker run -d --name ${CONTAINER_NAME} \
     -e UTR_EMAIL="${UTR_EMAIL}" \
     -e UTR_PASSWORD="${UTR_PASSWORD}" \
     -e GOOGLE_CLOUD_PROJECT="${PROJECT_ID}" \
-    -e GCS_MODEL_BUCKET_NAME="${MODEL_BUCKET_NAME}" \
-    -e GCS_UTR_BUCKET_NAME="${UTR_BUCKET_NAME}" \
     -e GCS_MATCHES_BUCKET_NAME="${MATCHES_BUCKET_NAME}" \
+    -e GCS_UTR_BUCKET_NAME="${UTR_BUCKET_NAME}" \
     us-west1-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${DOCKER_IMAGE_TAG}
 
 # Output container logs
@@ -74,7 +73,7 @@ log_message "Starting monitor for container ${CONTAINER_NAME} on instance $INSTA
 
 # Default sleep time in seconds
 SLEEP_TIME=60
-MAX_RUNTIME_HOURS=2  # Safety measure: max runtime 2 hours
+MAX_RUNTIME_HOURS=10  # Safety measure: max runtime 10 hours
 
 # Get start time in seconds
 START_TIME=$(date +%s)
