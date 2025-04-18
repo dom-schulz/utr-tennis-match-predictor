@@ -336,8 +336,8 @@ with tabs[3]:
     ax.set_title("UTR Matchups by Outcome (R=p1w, B=p2w)")
 
     # Add a custom legend
-    blue_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='blue', markersize=10, label='Player 1 Win')
-    red_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=10, label='Player 2 Win')
+    blue_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='blue', markersize=10, label='Player 2 Win')
+    red_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=10, label='Player 1 Win')
     ax.legend(handles=[blue_patch, red_patch], loc='upper left', fontsize=12)
 
     st.pyplot(fig)
