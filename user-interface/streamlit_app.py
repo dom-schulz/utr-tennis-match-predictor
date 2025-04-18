@@ -152,11 +152,11 @@ st.markdown("""
     visibility: hidden;
 }
 
-/* Shrink sidebar width (simulate closed state initially) */
-section[data-testid="stSidebar"] > div {
-    width: 0px;
-    overflow: hidden;
-    transition: width 0.4s ease-in-out;
+/* Sidebar custom background and animation */
+section[data-testid="stSidebar"] {
+    background-color: #1a2b4c !important;  /* Custom dark blue */
+    transition: all 0.4s ease-in-out;
+    z-index: 999;
 }
 
 /* Add overlay effect */
