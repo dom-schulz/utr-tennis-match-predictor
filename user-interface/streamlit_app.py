@@ -143,7 +143,33 @@ get_agent = Agent(name="Get Agent",
                   "5. Once output, restart at step 1",
                   tools=[gather_list_check_existence, make_prediction])
 
-
+# ======== Streamlit Theme ======== #
+st.markdown("""
+    <style>
+    /* Custom color theme */
+    .main {
+        background-color: #f7f9fc;
+    }
+    h1, h2, h3 {
+        color: #1a2b4c;
+    }
+    .block-container {
+        padding-top: 2rem;
+    }
+    /* Cards or sections */
+    .stTabs [data-baseweb="tab"] {
+        background-color: #e6eef9;
+        color: #0f1e3d;
+        font-weight: 600;
+        border-radius: 8px;
+        margin-right: 5px;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #1a2b4c;
+        color: white;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # ========== Streamlit UI ==========
 st.title("UTR Match Predictor Test 🤖")
@@ -155,7 +181,7 @@ with st.sidebar:
     st.markdown("🚧 Tournament Tracker *(coming soon)*")
     st.markdown("🚧 Surface Win Rates *(coming soon)*")
 
-st.button("Create Custom Player Profile (Coming Soon)", disabled=True)
+# st.button("Create Custom Player Profile (Coming Soon)", disabled=True)
 
 tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "UTR Graph", "ℹ️ About"])
 
