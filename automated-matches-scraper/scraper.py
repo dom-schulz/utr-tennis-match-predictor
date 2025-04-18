@@ -182,8 +182,9 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
     for i in range(len(profile_ids)):
         logger.info(f'Processing profile {i+1}/{len(profile_ids)}')
         
-        # # TESTING Purposes
-        # if i == 300:
+        # TESTING Purposes
+        # if i == 65:
+        #     logger.info(f'Profile Number Limit Reached')
         #     break
         
         if i == stop:

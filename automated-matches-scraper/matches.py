@@ -67,9 +67,8 @@ def get_player_history(utr_history):
     return history
 
 try:
-    # Initialize GCS client using default credentials for GCP or explicit file if provided
-    # This handles both GCP VM (no explicit credentials needed) and local development
-    # logger.info("Initializing GCS client...")
+    # # Initialize GCS client using default credentials for GCP or explicit file if provided
+    logger.info("Initializing GCS client...")
     # client = storage.Client.from_service_account_json("credentials.json")
     
     # if client:
@@ -111,8 +110,7 @@ try:
     writer = csv.writer(new_matches_buffer)
     
     # Write the header row first
-    writer.writerow(['date', 'p1', 'p2', 'p1_id', 'p2_id', 'p1_utr', 'p2_utr', 'tournament_category', 'score', 'winner'])
-    
+    writer.writerow(['tournament','date','series','court','surface','round','best_of','p1','p1_utr','p2','p2_utr','winner','p1_games','p2_games','score','p_win'])
 
     # Run scraping exactly as in original
     scrape_player_matches(profile_ids, utr_history, prev_matches, email, password, offset=0, stop=-1, writer=writer)
@@ -127,14 +125,21 @@ try:
     
     if len(matches) > 0:
         # Check if required columns exist
-        required_cols = ['date', 'p1', 'p2']
+        required_cols = ['date', 'p1', 'p2', 'winner']
         missing_cols = [col for col in required_cols if col not in matches.columns]
         
         if missing_cols:
             logger.error(f"Missing required columns: {missing_cols}")
             raise KeyError(f"Missing required columns: {missing_cols}")
             
-        matches.drop_duplicates(subset=['date','p1','p2'], inplace=True)
+        matches.drop_duplicates(subset=['date','p1','p2','winner'], inplace=True)
+        
+        # print prev matches columns and matches columns
+        logger.info(f"Prev Matches Columns: {prev_matches.columns.tolist()}")
+        logger.info(f"Matches Columns: {matches.columns.tolist()}")
+        
+        # combine prev_matches and matches
+        matches = pd.concat([prev_matches, matches])
         
         # Upload to GCS (equivalent to original to_csv)
         upload_df_to_gcs(matches, matches_bucket, MATCHES_OUTPUT_FILE)
