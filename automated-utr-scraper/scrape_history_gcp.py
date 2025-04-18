@@ -29,8 +29,8 @@ LOCAL_PROFILE_FILE = "profile_id.csv"  # profile file bundled with the Docker im
 email = os.getenv("UTR_EMAIL")
 password = os.getenv("UTR_PASSWORD")
 
-# Initialize GCS client with credentials file, for local testing
-client = storage.Client.from_service_account_json("credentials.json")
+# Initialize GCS client ### Use credentials file for local testing
+client = storage.Client()
 
 bucket = client.bucket(BUCKET_NAME)
 upload_blob = bucket.blob(UPLOAD_FILE_NAME)
