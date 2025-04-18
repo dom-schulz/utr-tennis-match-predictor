@@ -159,13 +159,6 @@ section[data-testid="stSidebar"] {
     z-index: 999;
 }
 
-/* Shrink sidebar width (simulate closed state initially) */
-section[data-testid="stSidebar"] > div {
-    width: 0px;
-    overflow: hidden;
-    transition: width 0.4s ease-in-out;
-}
-
 /* Add overlay effect */
 section[data-testid="stSidebar"]::before {
     content: "";
