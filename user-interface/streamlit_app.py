@@ -244,8 +244,8 @@ with tabs[2]:
     # df = df.sort_values(by="UTR % Change", ascending=False)
     # st.dataframe(df.head(10))
 
-    # df = df.sort_values(by="UTR % Change", ascending=True)
-    # st.dataframe(df.head(10))
+    '''# df = df.sort_values(by="UTR % Change", ascending=True)
+    # st.dataframe(df.head(10))'''
 
     # history = get_player_history(df)
 
