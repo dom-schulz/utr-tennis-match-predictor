@@ -71,33 +71,32 @@ class LogitRegression(LinearRegression):
 
         return profile
 
-def get_player_profiles(data, history, p1, p2):
+def get_player_profiles(data, history):
     player_profiles = {}
 
     for i in range(len(data)):
         for player, opponent in [(data['p1'][i], data['p2'][i]), (data['p2'][i], data['p1'][i])]:
-            if player == p1 or player == p2:
-                utr_diff = data['p1_utr'][i] - data['p2_utr'][i] if data['p1'][i] == player else data['p2_utr'][i] - data['p1_utr'][i]
-                # print(f'history: {history}')
-                if player not in player_profiles:
-                    player_profiles[player] = {
-                        "win_vs_lower": [],
-                        "win_vs_higher": [],
-                        "recent10": [],
-                        "utr": history[player]['utr']
-                    }
-                
-                # Record win rates vs higher/lower-rated opponents
-                if utr_diff > 0:  # Player faced a lower-rated opponent
-                    player_profiles[player]["win_vs_lower"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
-                else:  # Player faced a higher-rated opponent
-                    player_profiles[player]["win_vs_higher"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
-                
-                if len(player_profiles[player]["recent10"]) < 10:
-                    player_profiles[player]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
-                else:
-                    player_profiles[player]["recent10"] = player_profiles[player]["recent10"][1:]
-                    player_profiles[player]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
+            utr_diff = data['p1_utr'][i] - data['p2_utr'][i] if data['p1'][i] == player else data['p2_utr'][i] - data['p1_utr'][i]
+            # print(f'history: {history}')
+            if player not in player_profiles:
+                player_profiles[player] = {
+                    "win_vs_lower": [],
+                    "win_vs_higher": [],
+                    "recent10": [],
+                    "utr": history[player]['utr']
+                }
+            
+            # Record win rates vs higher/lower-rated opponents
+            if utr_diff > 0:  # Player faced a lower-rated opponent
+                player_profiles[player]["win_vs_lower"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
+            else:  # Player faced a higher-rated opponent
+                player_profiles[player]["win_vs_higher"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
+            
+            if len(player_profiles[player]["recent10"]) < 10:
+                player_profiles[player]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
+            else:
+                player_profiles[player]["recent10"] = player_profiles[player]["recent10"][1:]
+                player_profiles[player]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
 
     for player in player_profiles:
         profile = player_profiles[player]

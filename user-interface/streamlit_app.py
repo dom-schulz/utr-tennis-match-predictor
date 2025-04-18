@@ -241,7 +241,7 @@ with st.sidebar:
 
 # st.button("Create Custom Player Profile (Coming Soon)", disabled=True)
 
-tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "UTR Graph", "ℹ️ About", "📣 Feedback"])
+tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "🎾 Player Metrics", "ℹ️ About", "📣 Feedback"])
 
 with tabs[0]:
     st.subheader("AI-Powered Match Outcome Predictor")
@@ -352,8 +352,45 @@ with tabs[2]:
     # st.dataframe(df_sorted.head(10))
 
 with tabs[3]:
+    st.header("🎾 Player Metrics")
+
     # Load data from GCS
     conn = st.connection('gcs', type=FilesConnection)
+    df1 = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
+    df2 = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", intput_format="csv", ttl=600)
+
+    history = get_player_history(df1)
+    player_df = get_player_profiles(df2, history)
+
+    # player_name = st.text_input("Enter player name:", "")
+    # if player_name:
+    #     try:
+    #         if player_df.empty:
+    #             st.warning("No data found for this player.")
+    #         else:
+    #             # Display basic stats
+    #             current_utr = player_df['utr'].iloc[-1]
+    #             winrate = (player_df['won'].sum() / len(player_df)) * 100
+
+    #             st.metric("Current UTR", f"{current_utr:.2f}")
+    #             st.metric("Winrate", f"{winrate:.1f}%")
+
+    #             # Line chart of UTR over time
+    #             st.subheader("UTR Over Time")
+    #             fig, ax = plt.subplots()
+    #             ax.plot(player_df['date'], player_df['utr'], marker='o')
+    #             ax.set_xlabel("Date")
+    #             ax.set_ylabel("UTR")
+    #             ax.set_title(f"{player_name}'s UTR Trend")
+    #             st.pyplot(fig)
+
+    #             # Show last 5 matches
+    #             st.subheader("Recent Matches")
+    #             st.dataframe(player_df.sort_values('date', ascending=False).head(5))
+
+    #     except Exception as e:
+    #         st.error(f"Failed to load player data: {e}")
+
     # df = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
     # df = df[-40:]
 
