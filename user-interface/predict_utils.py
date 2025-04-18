@@ -110,8 +110,8 @@ def get_player_history(utr_history):
     history = {}
 
     for i in range(len(utr_history)):
-        if utr_history['l_name'][i]+' '+utr_history['f_name'][i][0]+'.' not in history:
-            history[utr_history['l_name'][i]+' '+utr_history['f_name'][i][0]+'.'] = {
+        if utr_history['first_name'][i]+' '+utr_history['last_name'][i][0] not in history:
+            history[utr_history['first_name'][i]+' '+utr_history['last_name'][i][0]] = {
                 'utr': utr_history['utr'][i]
             }
 
