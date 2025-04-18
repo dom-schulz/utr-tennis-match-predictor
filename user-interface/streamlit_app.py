@@ -192,7 +192,7 @@ st.image("images/utrsymbol.png")
 st.markdown(
     """
     <div style="display: flex; align-items: center;">
-        <img src="logo.png" width="100">
+        <img src="logo.png" width="10">
     </div>
     """,
     unsafe_allow_html=True,
