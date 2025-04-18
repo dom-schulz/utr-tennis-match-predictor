@@ -423,10 +423,6 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
 
     for i in range(offset, end_idx):
         
-        ### For local testing
-        if i == 15:
-            break
-        
         try:
             logger.info(f"Processing profile {i-offset+1}/{end_idx-offset}: {df['f_name'][i]} {df['l_name'][i]}")
             
