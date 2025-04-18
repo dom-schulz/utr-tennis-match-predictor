@@ -187,6 +187,17 @@ get_agent = Agent(name="Get Agent",
 # </style>
 # """, unsafe_allow_html=True)
 
+st.image("images/utrsymbol.png")
+
+st.markdown(
+    """
+    <div style="display: flex; align-items: center;">
+        <img src="logo.png" width="100">
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 # ========== Streamlit UI ==========
 st.title("UTR Match Predictor Test 🤖")
