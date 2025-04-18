@@ -78,8 +78,7 @@ def get_player_profiles(data, history):
         for player, opponent in [(data['p1'][i], data['p2'][i]), (data['p2'][i], data['p1'][i])]:
             utr_diff = data['p1_utr'][i] - data['p2_utr'][i] if data['p1'][i] == player else data['p2_utr'][i] - data['p1_utr'][i]
             # print(f'history: {history}')
-            print(player)
-            if player not in player_profiles:
+            if player not in player_profiles and player in history:
                 player_profiles[player] = {
                     "win_vs_lower": [],
                     "win_vs_higher": [],
