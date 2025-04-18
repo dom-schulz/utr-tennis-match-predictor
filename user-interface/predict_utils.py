@@ -77,13 +77,17 @@ def get_player_profiles(data, history):
     for i in range(len(data)):
         for player, opponent in [(data['p1'][i], data['p2'][i]), (data['p2'][i], data['p1'][i])]:
             utr_diff = data['p1_utr'][i] - data['p2_utr'][i] if data['p1'][i] == player else data['p2_utr'][i] - data['p1_utr'][i]
-            # print(f'history: {history}')
+            
             if player not in player_profiles and player in history:
                 player_profiles[player] = {
                     "win_vs_lower": [],
+                    "wvl_utr": [],
                     "win_vs_higher": [],
+                    "wvh_utr": [],
                     "recent10": [],
-                    "utr": history[player]['utr']
+                    "r10_utr": [],
+                    "utr": history[player]['utr'],
+                    "h2h": {}
                 }
             elif player not in player_profiles:
                 player_profiles[player] = {
@@ -96,25 +100,73 @@ def get_player_profiles(data, history):
                     "utr": data['p1_utr'][i] if data['p1'][i] == player else data['p2_utr'][i],
                     "h2h": {}
                 }
+
+            if opponent not in player_profiles and opponent in history:
+                player_profiles[opponent] = {
+                    "win_vs_lower": [],
+                    "wvl_utr": [],
+                    "win_vs_higher": [],
+                    "wvh_utr": [],
+                    "recent10": [],
+                    "r10_utr": [],
+                    "utr": history[opponent]['utr'],
+                    "h2h": {}
+                }
+            elif opponent not in player_profiles:
+                player_profiles[opponent] = {
+                    "win_vs_lower": [],
+                    "wvl_utr": [],
+                    "win_vs_higher": [],
+                    "wvh_utr": [],
+                    "recent10": [],
+                    "r10_utr": [],
+                    "utr": data['p1_utr'][i] if data['p1'][i] == opponent else data['p2_utr'][i],
+                    "h2h": {}
+                }
+
+            if opponent not in player_profiles[player]['h2h']:
+                player_profiles[player]['h2h'][opponent] = [0,0,1,1]
+
+            if player not in player_profiles[opponent]['h2h']:
+                player_profiles[opponent]['h2h'][player] = [0,0,1,1]
+
+            if data['winner'][i] == player:
+                player_profiles[player]['h2h'][opponent][0] += 1
+                player_profiles[player]['h2h'][opponent][1] += 1
+                player_profiles[opponent]['h2h'][player][1] += 1
+            else:
+                player_profiles[player]['h2h'][opponent][1] += 1
+                player_profiles[opponent]['h2h'][player][0] += 1
+                player_profiles[opponent]['h2h'][player][1] += 1
             
             # Record win rates vs higher/lower-rated opponents
             if utr_diff > 0:  # Player faced a lower-rated opponent
                 player_profiles[player]["win_vs_lower"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
+                player_profiles[player]["wvl_utr"].append(data["p2_utr"][i] if data["p1"][i] == player else data["p1_utr"][i])
+
             else:  # Player faced a higher-rated opponent
                 player_profiles[player]["win_vs_higher"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
-            
+                player_profiles[player]["wvh_utr"].append(data["p2_utr"][i] if data["p1"][i] == player else data["p1_utr"][i])
+
             if len(player_profiles[player]["recent10"]) < 10:
                 player_profiles[player]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
             else:
                 player_profiles[player]["recent10"] = player_profiles[player]["recent10"][1:]
                 player_profiles[player]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == player else data["p_win"][i] == 0)
 
+            if len(player_profiles[opponent]["recent10"]) < 10:
+                player_profiles[opponent]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == opponent else data["p_win"][i] == 0)
+            else:
+                player_profiles[opponent]["recent10"] = player_profiles[opponent]["recent10"][1:]
+                player_profiles[opponent]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == opponent else data["p_win"][i] == 0)
+
     for player in player_profiles:
         profile = player_profiles[player]
-        profile["win_vs_lower"] = np.mean(profile["win_vs_lower"]) if len(profile["win_vs_lower"]) > 0 else 0.5
-        profile["win_vs_higher"] = np.mean(profile["win_vs_higher"]) if len(profile["win_vs_higher"]) > 0 else 0.5
+        profile["win_vs_lower"] = np.mean(profile["win_vs_lower"]) if len(profile["win_vs_lower"]) > 0 else 0
+        profile["win_vs_higher"] = np.mean(profile["win_vs_higher"]) if len(profile["win_vs_higher"]) > 0 else 0
         profile["recent10"] = np.mean(profile["recent10"]) if len(profile["recent10"]) > 0 else 0
-    
+        profile['wvl_utr'] = np.mean(profile['wvl_utr']) if len(profile['wvl_utr']) > 0 else 0
+        profile['wvh_utr'] = np.mean(profile['wvh_utr']) if len(profile['wvh_utr']) > 0 else 0
     return player_profiles
 
 def get_player_history(utr_history):
