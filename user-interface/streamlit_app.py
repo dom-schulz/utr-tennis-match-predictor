@@ -161,8 +161,6 @@ st.markdown("""
         background-color: #e6eef9;
         color: #0f1e3d;
         font-weight: 600;
-        border-radius: 8px;
-        margin-right: 5px;
     }
     .stTabs [aria-selected="true"] {
         background-color: #1a2b4c;
