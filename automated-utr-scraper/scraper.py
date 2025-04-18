@@ -423,6 +423,10 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
 
     for i in range(offset, end_idx):
         
+        ### For local testing
+        if i == 15:
+            break
+        
         try:
             logger.info(f"Processing profile {i-offset+1}/{end_idx-offset}: {df['f_name'][i]} {df['l_name'][i]}")
             
@@ -554,10 +558,10 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
     logger.info(f"Closing Chrome driver after scraping UTR history. Processed {processed_count} profiles with {success_count} successful extractions.")
     driver.quit()
     
-    # Create DataFrame from collected data
-    if not data_rows:
-        logger.warning("No UTR history data was collected!")
-        return pd.DataFrame(columns=['first_name', 'last_name', 'date', 'utr'])
+    # # Create DataFrame from collected data
+    # if not data_rows:
+    #     logger.warning("No UTR history data was collected!")
+    #     return pd.DataFrame(columns=['first_name', 'last_name', 'date', 'utr'])
         
     df_result = pd.DataFrame(data_rows, columns=['first_name', 'last_name', 'date', 'utr'])
     logger.info(f"Created DataFrame with {len(df_result)} total UTR records")

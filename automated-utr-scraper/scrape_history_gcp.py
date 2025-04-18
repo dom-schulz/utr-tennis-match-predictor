@@ -29,8 +29,9 @@ LOCAL_PROFILE_FILE = "profile_id.csv"  # profile file bundled with the Docker im
 email = os.getenv("UTR_EMAIL")
 password = os.getenv("UTR_PASSWORD")
 
-# Initialize GCS client
-client = storage.Client() 
+# Initialize GCS client with credentials file, for local testing
+client = storage.Client.from_service_account_json("credentials.json")
+
 bucket = client.bucket(BUCKET_NAME)
 upload_blob = bucket.blob(UPLOAD_FILE_NAME)
 
@@ -157,6 +158,23 @@ def flush_logs():
         except Exception as e:
             logger.error(f"Error flushing logs to GCS: {str(e)}")
 
+def download_csv_from_gcs(log_traceback, bucket, file_path):
+    """Downloads a CSV from GCS and returns a pandas DataFrame."""
+    
+    logger = log_traceback[0]
+    traceback = log_traceback[1]
+    
+    try:
+        blob = bucket.blob(file_path)
+        data = blob.download_as_string()
+        df = pd.read_csv(io.BytesIO(data))
+        logger.info(f"Successfully downloaded and read {file_path}")
+        return df
+    except Exception as e:
+        logger.error(f"Error downloading or reading CSV from GCS: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise
+
 
 
 ########## Run the scraper ##########
@@ -181,26 +199,16 @@ if not email or not password:
     save_logs_to_gcs("UTR credentials not found in environment variables")
     exit(1)
 
+logger_traceback = [logger, traceback]
+
 # Read the local CSV file bundled with the Docker image
-try:
-    # Check if file exists
-    if not os.path.exists(LOCAL_PROFILE_FILE):
-        logger.error(f"Profile file {LOCAL_PROFILE_FILE} not found in Docker image")
-        save_logs_to_gcs(f"Profile file {LOCAL_PROFILE_FILE} not found in Docker image")
-        exit(1)
-    
-    logger.info(f"Found profile file: {LOCAL_PROFILE_FILE}")
-    file_size = os.path.getsize(LOCAL_PROFILE_FILE)
-    logger.info(f"Profile file size: {file_size} bytes")
-    
-    # # Log file content for debugging
-    # with open(LOCAL_PROFILE_FILE, 'r') as f:
-    #     content = f.read()
-    #     logger.info(f"Profile file content:\n{content}")
-    #     save_logs_to_gcs(f"Profile file contains {content.count(chr(10))+1} lines")
-        
+try:        
     # Read the CSV file
-    profile_ids = pd.read_csv(LOCAL_PROFILE_FILE)
+    profile_ids = download_csv_from_gcs(logger_traceback, bucket, LOCAL_PROFILE_FILE)
+    
+    # Log read in file
+    logger.info(f"Successfully read {len(profile_ids)} profiles from local file")
+    save_logs_to_gcs(f"Successfully read {len(profile_ids)} profiles from local file")
     
     # Convert p_id column to integer, handling NaN designation
     if 'p_id' in profile_ids.columns:
