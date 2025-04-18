@@ -181,14 +181,7 @@ with tabs[0]:
     
         # Display message
         with st.chat_message(role):
-            st.markdown(f"""
-        <div style="background-color:#f8f9fa; border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-            <h4 style="color:#003366;">🎾 Prediction</h4>
-            <pre style="white-space: pre-wrap; font-family: 'Courier New', monospace;">{content}</pre>
-        </div>
-        """,
-        unsafe_allow_html=True
-        )
+            st.markdown(content)
     
     # User input field at the bottom
     if user_query := st.chat_input("Your request:"):
@@ -237,22 +230,22 @@ with tabs[2]:
     # # Show the top few rows
     # st.dataframe(df.head(10))
 
-    content = []
-    prev_name = ''
-    for i in range(len(df)):
-        if df['utr'][i] > 13:
-            curr_name = df['f_name'][i]+' '+df['l_name'][i]
-            if curr_name != prev_name:
-                curr_name = df['f_name'][i]+' '+df['l_name'][i]
-                content.append([df['f_name'][i]+' '+df['l_name'][i], df['utr'][i+1], df['utr'][i], 
-                                df['utr'][i]-df['utr'][i+1], 100*((df['utr'][i]/df['utr'][i+1])-1)])
-            prev_name = curr_name
-    df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
-    df = df.sort_values(by="UTR % Change", ascending=False)
-    st.dataframe(df.head(10))
+    # content = []
+    # prev_name = ''
+    # for i in range(len(df)):
+    #     if df['utr'][i] > 13:
+    #         curr_name = df['f_name'][i]+' '+df['l_name'][i]
+    #         if curr_name != prev_name:
+    #             curr_name = df['f_name'][i]+' '+df['l_name'][i]
+    #             content.append([df['f_name'][i]+' '+df['l_name'][i], df['utr'][i+1], df['utr'][i], 
+    #                             df['utr'][i]-df['utr'][i+1], 100*((df['utr'][i]/df['utr'][i+1])-1)])
+    #         prev_name = curr_name
+    # df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
+    # df = df.sort_values(by="UTR % Change", ascending=False)
+    # st.dataframe(df.head(10))
 
-    df = df.sort_values(by="UTR % Change", ascending=True)
-    st.dataframe(df.head(10))
+    # df = df.sort_values(by="UTR % Change", ascending=True)
+    # st.dataframe(df.head(10))
 
     # history = get_player_history(df)
 
