@@ -187,12 +187,12 @@ get_agent = Agent(name="Get Agent",
 # </style>
 # """, unsafe_allow_html=True)
 
-st.image("images/utrsymbol.png")
+st.image("images/utrsymbol.png", width=50)
 
 st.markdown(
     """
     <div style="display: flex; align-items: center;">
-        <img src="logo.png" width="10">
+        <img src="logo.png">
     </div>
     """,
     unsafe_allow_html=True,
