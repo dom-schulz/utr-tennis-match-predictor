@@ -353,7 +353,7 @@ with tabs[2]:
 
 with tabs[3]:
     # Load data from GCS
-    # conn = st.connection('gcs', type=FilesConnection)
+    conn = st.connection('gcs', type=FilesConnection)
     # df = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
     # df = df[-40:]
 
