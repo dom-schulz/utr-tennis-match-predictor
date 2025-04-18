@@ -85,6 +85,17 @@ def get_player_profiles(data, history):
                     "recent10": [],
                     "utr": history[player]['utr']
                 }
+            elif player not in player_profiles:
+                player_profiles[player] = {
+                    "win_vs_lower": [],
+                    "wvl_utr": [],
+                    "win_vs_higher": [],
+                    "wvh_utr": [],
+                    "recent10": [],
+                    "r10_utr": [],
+                    "utr": data['p1_utr'][i] if data['p1'][i] == player else data['p2_utr'][i],
+                    "h2h": {}
+                }
             
             # Record win rates vs higher/lower-rated opponents
             if utr_diff > 0:  # Player faced a lower-rated opponent
