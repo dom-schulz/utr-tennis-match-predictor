@@ -75,7 +75,7 @@ def get_player_profiles(data, history):
     player_profiles = {}
 
     for i in range(len(data)):
-        try:
+        # try:
             for player, opponent in [(data['p1'][i], data['p2'][i]), (data['p2'][i], data['p1'][i])]:
                 utr_diff = data['p1_utr'][i] - data['p2_utr'][i] if data['p1'][i] == player else data['p2_utr'][i] - data['p1_utr'][i]
                 
@@ -160,8 +160,8 @@ def get_player_profiles(data, history):
                 else:
                     player_profiles[opponent]["recent10"] = player_profiles[opponent]["recent10"][1:]
                     player_profiles[opponent]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == opponent else data["p_win"][i] == 0)
-        except:
-            continue # player/opponent not in profiles
+        # except:
+        #     continue # player/opponent not in profiles
 
     for player in player_profiles:
         profile = player_profiles[player]
