@@ -144,30 +144,30 @@ get_agent = Agent(name="Get Agent",
                   tools=[gather_list_check_existence, make_prediction])
 
 # ======== Streamlit Theme ======== #
-st.markdown("""
-    <style>
-    /* Custom color theme */
-    .main {
-        background-color: #f7f9fc;
-    }
-    h1, h2, h3 {
-        color: #1a2b4c;
-    }
-    .block-container {
-        padding-top: 2rem;
-    }
-    /* Cards or sections */
-    .stTabs [data-baseweb="tab"] {
-        background-color: #e6eef9;
-        color: #0f1e3d;
-        font-weight: 600;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #1a2b4c;
-        color: white;
-    }
-    </style>
-""", unsafe_allow_html=True)
+# st.markdown("""
+#     <style>
+#     /* Custom color theme */
+#     .main {
+#         background-color: #f7f9fc;
+#     }
+#     h1, h2, h3 {
+#         color: #1a2b4c;
+#     }
+#     .block-container {
+#         padding-top: 2rem;
+#     }
+#     /* Cards or sections */
+#     .stTabs [data-baseweb="tab"] {
+#         background-color: #e6eef9;
+#         color: #0f1e3d;
+#         font-weight: 600;
+#     }
+#     .stTabs [aria-selected="true"] {
+#         background-color: #1a2b4c;
+#         color: white;
+#     }
+#     </style>
+# """, unsafe_allow_html=True)
 
 # ========== Streamlit UI ==========
 st.title("UTR Match Predictor Test 🤖")
