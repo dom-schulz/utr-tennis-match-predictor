@@ -230,11 +230,11 @@ get_agent = Agent(name="Get Agent",
 
 
 # ========== Streamlit UI ==========
-st.title("UTR Match Predictor Test 🤖")
+st.title("UTR Matchh Predictor 🎾")
 
 with st.sidebar:
     st.header("🔧 Tools & Insights")
-    st.markdown("✅ Player Comparison")
+    st.markdown("✅ Player Metrics")
     st.markdown("✅ Match Prediction")
     st.markdown("🚧 Tournament Tracker *(coming soon)*")
     st.markdown("🚧 Surface Win Rates *(coming soon)*")
