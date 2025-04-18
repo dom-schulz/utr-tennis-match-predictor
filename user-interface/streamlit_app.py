@@ -155,6 +155,8 @@ with st.sidebar:
     st.markdown("🚧 Tournament Tracker *(coming soon)*")
     st.markdown("🚧 Surface Win Rates *(coming soon)*")
 
+st.button("Create Custom Player Profile (Coming Soon)", disabled=True)
+
 tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "UTR Graph", "ℹ️ About"])
 
 with tabs[0]:
