@@ -166,20 +166,6 @@ section[data-testid="stSidebar"] > div {
     transition: width 0.4s ease-in-out;
 }
 
-/* Add overlay effect */
-section[data-testid="stSidebar"]::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.4); /* darken background */
-    z-index: -1;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
 /* Show sidebar when a certain class is added */
 .sidebar-expanded section[data-testid="stSidebar"] > div {
     width: 280px;  /* Full sidebar width */
