@@ -481,6 +481,7 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
                         load_page(driver, search_url)
                     except:
                         logger.error("Re-login attempt failed")
+                        pass
                 
                 processed_count += 1
                 continue

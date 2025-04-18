@@ -57,7 +57,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code into the container
 COPY matches.py scraper.py ./
-# COPY credentials.json ./     ### uncomment for local testing
+# COPY credentials.json ./
 
 # Verify Chrome installation
 RUN which google-chrome-stable

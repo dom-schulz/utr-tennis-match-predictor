@@ -8,6 +8,7 @@ import logging
 import traceback
 from google.oauth2 import service_account
 import sys
+
 # Set up logging
 logging.basicConfig(level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -58,10 +59,10 @@ def upload_df_to_gcs(df, bucket, file_path):
 def get_player_history(utr_history):
     history = {}
     for i in range(len(utr_history)):
-        if utr_history['f_name'][i]+' '+utr_history['l_name'][i] not in history.keys():
-            history[utr_history['f_name'][i]+' '+utr_history['l_name'][i]] = [[utr_history['utr'][i], utr_history['date'][i]]]
+        if utr_history['first_name'][i]+' '+utr_history['last_name'][i] not in history.keys():
+            history[utr_history['first_name'][i]+' '+utr_history['last_name'][i]] = [[utr_history['utr'][i], utr_history['date'][i]]]
         else:
-            history[utr_history['f_name'][i]+' '+utr_history['l_name'][i]].append([utr_history['utr'][i], utr_history['date'][i]])
+            history[utr_history['first_name'][i]+' '+utr_history['last_name'][i]].append([utr_history['utr'][i], utr_history['date'][i]])
 
     return history
 
@@ -69,13 +70,11 @@ try:
     # Initialize GCS client using default credentials for GCP or explicit file if provided
     # This handles both GCP VM (no explicit credentials needed) and local development
     logger.info("Initializing GCS client...")
-    creds_file = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+    client = storage.Client.from_service_account_json("credentials.json")
     
-    if creds_file:
+    if client:
         # Use explicit credentials from file (for local development)
-        logger.info(f"Using credentials from file: {creds_file}")
-        credentials = service_account.Credentials.from_service_account_file(creds_file)
-        client = storage.Client(credentials=credentials)
+        logger.info(f"Using credentials from file: 'credentials.json'")
     else:
         # Use default credentials (for GCP VM/Cloud Run)
         logger.info("Using default GCP credentials")
@@ -89,15 +88,18 @@ try:
     utr_history = download_csv_from_gcs(utr_bucket, UTR_HISTORY_FILE)
     prev_matches = download_csv_from_gcs(matches_bucket, MATCHES_OUTPUT_FILE)
     
-    
+    # print row count of three read in dfs 
+    logger.info(f"Profile IDs: {len(profile_ids)}")
+    logger.info(f"UTR History: {len(utr_history)}")
+    logger.info(f"Previous Matches: {len(prev_matches)}")
     
     # Ensure all profile ids are in utr_history (must check first and last name existence)
-    profile_ids = profile_ids[profile_ids['f_name'].isin(utr_history['f_name']) & profile_ids['l_name'].isin(utr_history['l_name'])]
+    profile_ids = profile_ids[profile_ids['f_name'].isin(utr_history['first_name']) & profile_ids['l_name'].isin(utr_history['last_name'])]
     
     # Ensure all names in prev_matches (cols p1 and p2) are in utr_history (cols f_name and l_name). 
     # p1 and p2 are strings with full names, f name and l name are separated by a space    
-    prev_matches = prev_matches[prev_matches['p1'].isin(utr_history['f_name']+' '+utr_history['l_name'])]
-    prev_matches = prev_matches[prev_matches['p2'].isin(utr_history['f_name']+' '+utr_history['l_name'])]
+    prev_matches = prev_matches[prev_matches['p1'].isin(utr_history['first_name']+' '+utr_history['last_name'])]
+    prev_matches = prev_matches[prev_matches['p2'].isin(utr_history['first_name']+' '+utr_history['last_name'])]
 
     
     # Process UTR history exactly as in original
