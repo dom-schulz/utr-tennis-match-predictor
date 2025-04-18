@@ -145,47 +145,47 @@ get_agent = Agent(name="Get Agent",
 
 # ======== Streamlit Theme ======== #
 
-st.markdown("""
-<style>
-/* Hide the built-in sidebar toggle button */
-[data-testid="collapsedControl"] {
-    visibility: hidden;
-}
+# st.markdown("""
+# <style>
+# /* Hide the built-in sidebar toggle button */
+# [data-testid="collapsedControl"] {
+#     visibility: hidden;
+# }
 
-/* Sidebar custom background and animation */
-section[data-testid="stSidebar"] {
-    background-color: #FFFFFF !important;  /* Custom dark blue */
-    transition: all 0.4s ease-in-out;
-    z-index: 999;
-}
+# /* Sidebar custom background and animation */
+# section[data-testid="stSidebar"] {
+#     background-color: #FFFFFF !important;  /* Custom dark blue */
+#     transition: all 0.4s ease-in-out;
+#     z-index: 999;
+# }
 
-/* Add overlay effect */
-section[data-testid="stSidebar"]::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.4); /* darken background */
-    z-index: -1;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
+# /* Add overlay effect */
+# section[data-testid="stSidebar"]::before {
+#     content: "";
+#     position: fixed;
+#     top: 0;
+#     left: 0;
+#     width: 100vw;
+#     height: 100vh;
+#     background: rgba(0, 0, 0, 0.4); /* darken background */
+#     z-index: -1;
+#     opacity: 0;
+#     transition: opacity 0.3s ease;
+# }
 
-/* Show sidebar when a certain class is added */
-.sidebar-expanded section[data-testid="stSidebar"] > div {
-    width: 280px;  /* Full sidebar width */
-    overflow: auto;
-}
+# /* Show sidebar when a certain class is added */
+# .sidebar-expanded section[data-testid="stSidebar"] > div {
+#     width: 280px;  /* Full sidebar width */
+#     overflow: auto;
+# }
 
-/* Show overlay when sidebar expands */
-.sidebar-expanded section[data-testid="stSidebar"]::before {
-    opacity: 1;
-    z-index: 998;
-}
-</style>
-""", unsafe_allow_html=True)
+# /* Show overlay when sidebar expands */
+# .sidebar-expanded section[data-testid="stSidebar"]::before {
+#     opacity: 1;
+#     z-index: 998;
+# }
+# </style>
+# """, unsafe_allow_html=True)
 
 
 # ========== Streamlit UI ==========
