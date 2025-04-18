@@ -145,8 +145,8 @@ get_agent = Agent(name="Get Agent",
 
 # ======== Streamlit Theme ======== #
 
-# st.markdown("""
-# <style>
+st.markdown("""
+<style>
 # /* Hide the built-in sidebar toggle button */
 # [data-testid="collapsedControl"] {
 #     visibility: hidden;
@@ -154,7 +154,7 @@ get_agent = Agent(name="Get Agent",
 
 # /* Sidebar custom background and animation */
 # section[data-testid="stSidebar"] {
-#     background-color: #1a2b4c !important;  /* Custom dark blue */
+#     background-color: #FFFFFF !important;  /* Custom dark blue */
 #     transition: all 0.4s ease-in-out;
 #     z-index: 999;
 # }
