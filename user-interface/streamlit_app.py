@@ -148,6 +148,13 @@ get_agent = Agent(name="Get Agent",
 # ========== Streamlit UI ==========
 st.title("UTR Match Predictor Test 🤖")
 
+with st.sidebar:
+    st.header("🔧 Tools & Insights")
+    st.markdown("✅ Player Comparison")
+    st.markdown("✅ Match Prediction")
+    st.markdown("🚧 Tournament Tracker *(coming soon)*")
+    st.markdown("🚧 Surface Win Rates *(coming soon)*")
+
 tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "UTR Graph", "ℹ️ About"])
 
 with tabs[0]:
