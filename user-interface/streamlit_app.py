@@ -329,7 +329,7 @@ with tabs[2]:
         if df['utr'][i] > 13:
             curr_name = df['first_name'][i]+' '+df['last_name'][i]
             if curr_name != prev_name:
-                curr_name = df['f_name'][i]+' '+df['l_name'][i]
+                curr_name = df['first_name'][i]+' '+df['last_name'][i]
                 content.append([df['first_name'][i]+' '+df['last_name'][i], df['utr'][i+1], df['utr'][i], 
                                 df['utr'][i]-df['utr'][i+1], 100*((df['utr'][i]/df['utr'][i+1])-1)])
             prev_name = curr_name
