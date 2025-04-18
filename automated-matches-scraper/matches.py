@@ -69,16 +69,17 @@ def get_player_history(utr_history):
 try:
     # Initialize GCS client using default credentials for GCP or explicit file if provided
     # This handles both GCP VM (no explicit credentials needed) and local development
-    logger.info("Initializing GCS client...")
-    client = storage.Client.from_service_account_json("credentials.json")
+    # logger.info("Initializing GCS client...")
+    # client = storage.Client.from_service_account_json("credentials.json")
     
-    if client:
-        # Use explicit credentials from file (for local development)
-        logger.info(f"Using credentials from file: 'credentials.json'")
-    else:
-        # Use default credentials (for GCP VM/Cloud Run)
-        logger.info("Using default GCP credentials")
-        client = storage.Client()
+    # if client:
+    #     # Use explicit credentials from file (for local development)
+    #     logger.info(f"Using credentials from file: 'credentials.json'")
+    # else:
+    
+    # Use default credentials (for GCP VM)
+    logger.info("Using default GCP credentials")
+    client = storage.Client()
     
     matches_bucket = client.bucket(MATCHES_BUCKET_NAME)
     utr_bucket = client.bucket(UTR_BUCKET_NAME)
