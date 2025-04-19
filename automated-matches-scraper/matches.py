@@ -69,12 +69,12 @@ def get_player_history(utr_history):
 try:
     # # Initialize GCS client using default credentials for GCP or explicit file if provided
     logger.info("Initializing GCS client...")
+    
     # client = storage.Client.from_service_account_json("credentials.json")
     
     # if client:
     #     # Use explicit credentials from file (for local development)
     #     logger.info(f"Using credentials from file: 'credentials.json'")
-    # else:
     
     # Use default credentials (for GCP VM)
     logger.info("Using default GCP credentials")
@@ -98,9 +98,17 @@ try:
     
     # Ensure all names in prev_matches (cols p1 and p2) are in utr_history (cols f_name and l_name). 
     # p1 and p2 are strings with full names, f name and l name are separated by a space    
-    prev_matches = prev_matches[prev_matches['p1'].isin(utr_history['first_name']+' '+utr_history['last_name'])]
-    prev_matches = prev_matches[prev_matches['p2'].isin(utr_history['first_name']+' '+utr_history['last_name'])]
+    # Create full name column once
+    utr_history['full_name'] = utr_history['first_name'].str.strip() + ' ' + utr_history['last_name'].str.strip()
 
+    # Filter prev_matches by whether p1 and p2 are in full_name list
+    prev_matches = prev_matches[
+        prev_matches['p1'].isin(utr_history['full_name']) &
+        prev_matches['p2'].isin(utr_history['full_name'])
+    ]
+
+    # print length of prev_matches
+    logger.info(f"Prev Matches post filtering: {len(prev_matches)}")
     
     # Process UTR history exactly as in original
     utr_history = get_player_history(utr_history)
@@ -134,15 +142,36 @@ try:
             
         matches.drop_duplicates(subset=['date','p1','p2','winner'], inplace=True)
         
-        # print prev matches columns and matches columns
+        # print prev matches columns and matches columns, and row count
         logger.info(f"Prev Matches Columns: {prev_matches.columns.tolist()}")
         logger.info(f"Matches Columns: {matches.columns.tolist()}")
+        logger.info(f"Prev Matches Row Count: {len(prev_matches)}")
+        logger.info(f"Matches Row Count: {len(matches)}")
+                
+        # gcs write matches and prev_matches to csv
+        upload_df_to_gcs(matches, matches_bucket, "matches.csv")
+        upload_df_to_gcs(prev_matches, matches_bucket, "prev_matches.csv")
         
-        # combine prev_matches and matches
-        matches = pd.concat([prev_matches, matches])
+        ##### Make sure prev_matches rows are not already in matches
         
+        # Convert prev_matches to list of its rows
+        prev_match_rows = prev_matches.values.tolist()
+        initial_prev_match_row_count = len(prev_match_rows)
+
+        # initialize append matches as empty dataframe with same columns as matches
+        append_matches = pd.DataFrame(columns=matches.columns)
+
+        for index, row in matches.iterrows():
+            row_as_list = row.values.tolist() # convert current row to list
+
+            if row_as_list not in prev_match_rows:
+                # logger.info(f"Appending Match: {row_as_list}")
+                prev_matches = pd.concat([prev_matches, pd.DataFrame([row])], ignore_index=True)
+                
         # Upload to GCS (equivalent to original to_csv)
-        upload_df_to_gcs(matches, matches_bucket, MATCHES_OUTPUT_FILE)
+        upload_df_to_gcs(prev_matches, matches_bucket, MATCHES_OUTPUT_FILE)
+        
+        logger.info(f"Matches added: {len(prev_matches)-initial_prev_match_row_count}")
     else:
         logger.warning("No new matches found in the scraping process")
 

@@ -178,20 +178,21 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
 
     sign_in(driver, url, email, password)
 
-    y = 1
+    ## TESTING Purposes
+    # limit = 14
+    # logger.info(f'Processing {limit+1} profiles')
+
+        
     for i in range(len(profile_ids)):
         logger.info(f'Processing profile {i+1}/{len(profile_ids)}')
         
         # TESTING Purposes
-        # if i == 65:
+        # if i == limit:
         #     logger.info(f'Profile Number Limit Reached')
         #     break
         
-        if i == stop:
-            break
-        # if i % round(len(profile_ids)/100) == 0:
-        #     print(f'Scraping..... {y}%')
-        #     y += 1
+        # if i == stop:
+        #     break
 
         try:
             search_url = f"https://app.utrsports.net/profiles/{round(profile_ids['p_id'][i+offset])}"
@@ -369,8 +370,6 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
     # Close the driver
     driver.quit()
 ###
-
-
 
 
 ### Get UTR History ###
