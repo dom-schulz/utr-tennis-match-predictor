@@ -176,7 +176,14 @@ def find_winner(score):
         pred_winner = 'p2'
     return pred_winner
 
-def predict(model, p1, p2, player_profiles, best_of=3):
+def predict(p1, p2, location, best_of=3):
+    data = pd.read_csv('atp_utr_tennis_matches.csv')
+    utr_history = pd.read_csv('utr_history.csv')
+    model = joblib.load('model.sav')
+
+    history = get_player_history(utr_history)
+    player_profiles = get_player_profiles(data, history)
+
     prop = get_prop(model, p1, p2, player_profiles)
     score = create_score(prop, best_of)
 
