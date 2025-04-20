@@ -360,7 +360,7 @@ with tabs[3]:
     df2 = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
 
     history = get_player_history(df1)
-    player_df = get_player_profiles(df2, history)
+    player_df = get_player_profiles_general(df2, history)
 
     # player_name = st.text_input("Enter player name:", "")
     # if player_name:
