@@ -119,36 +119,6 @@ def gather_list_check_existence(player_1, player_2, location, player_list):
     else:
         return "INVALID_PLAYERS"
 
-########## Feedback Function ###########
-def collect_feedback():
-    st.header("💬 We Value Your Feedback!")
-    
-    # # Create a form to collect feedback
-    # with st.form(key="feedback_form"):
-    #     # Collect feedback from users
-    #     rating = st.slider("How would you rate your experience?", min_value=1, max_value=5)
-    #     comments = st.text_area("Any comments or suggestions?", height=150)
-        
-    #     # Submit button
-    #     submit_button = st.form_submit_button(label="Submit Feedback")
-        
-    #     if submit_button:
-    #         # Store the feedback (could also save to a file, database, etc.)
-    #         feedback_data = {
-    #             "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-    #             "rating": rating,
-    #             "comments": comments
-    #         }
-            
-    #         # Optionally, save the feedback to a CSV or database
-    #         feedback_df = pd.DataFrame([feedback_data])
-    #         feedback_df.to_csv("feedback.csv", mode="a", header=False, index=False)
-            
-    #         # Display thank you message
-    #         st.success("Thank you for your feedback!")
-    #         st.write("We'll review your comments to improve our platform.")
-
-
 # Create agent
 get_agent = Agent(name="Get Agent", 
                 instructions="You are a helpful Agent. You are confirming that tennis players exist in a list. "
@@ -172,62 +142,6 @@ get_agent = Agent(name="Get Agent",
                         "If you have another match in mind, please provide the names of two players and the location!"
                   "5. Once output, restart at step 1",
                   tools=[gather_list_check_existence, make_prediction])
-
-# ======== Streamlit Theme ======== #
-
-# st.markdown("""
-# <style>
-# /* Hide the built-in sidebar toggle button */
-# [data-testid="collapsedControl"] {
-#     visibility: hidden;
-# }
-
-# /* Sidebar custom background and animation */
-# section[data-testid="stSidebar"] {
-#     background-color: #FFFFFF !important;  /* Custom dark blue */
-#     transition: all 0.4s ease-in-out;
-#     z-index: 999;
-# }
-
-# /* Add overlay effect */
-# section[data-testid="stSidebar"]::before {
-#     content: "";
-#     position: fixed;
-#     top: 0;
-#     left: 0;
-#     width: 100vw;
-#     height: 100vh;
-#     background: rgba(0, 0, 0, 0.4); /* darken background */
-#     z-index: -1;
-#     opacity: 0;
-#     transition: opacity 0.3s ease;
-# }
-
-# /* Show sidebar when a certain class is added */
-# .sidebar-expanded section[data-testid="stSidebar"] > div {
-#     width: 280px;  /* Full sidebar width */
-#     overflow: auto;
-# }
-
-# /* Show overlay when sidebar expands */
-# .sidebar-expanded section[data-testid="stSidebar"]::before {
-#     opacity: 1;
-#     z-index: 998;
-# }
-# </style>
-# """, unsafe_allow_html=True)
-
-# st.image("images/utrsymbol.png", width=50)
-
-# st.markdown(
-#     """
-#     <div style="display: flex; align-items: center;">
-#         <img src="logo.png">
-#     </div>
-#     """,
-#     unsafe_allow_html=True,
-# )
-
 
 # ========== Streamlit UI ==========
 st.title("UTR Match Predictor 🎾")
@@ -408,4 +322,33 @@ with tabs[4]:
     """)
 
 with tabs[5]:
+    ########## Feedback Function ###########
+def collect_feedback():
+    st.header("💬 We Value Your Feedback!")
+    
+    # # Create a form to collect feedback
+    # with st.form(key="feedback_form"):
+    #     # Collect feedback from users
+    #     rating = st.slider("How would you rate your experience?", min_value=1, max_value=5)
+    #     comments = st.text_area("Any comments or suggestions?", height=150)
+        
+    #     # Submit button
+    #     submit_button = st.form_submit_button(label="Submit Feedback")
+        
+    #     if submit_button:
+    #         # Store the feedback (could also save to a file, database, etc.)
+    #         feedback_data = {
+    #             "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+    #             "rating": rating,
+    #             "comments": comments
+    #         }
+            
+    #         # Optionally, save the feedback to a CSV or database
+    #         feedback_df = pd.DataFrame([feedback_data])
+    #         feedback_df.to_csv("feedback.csv", mode="a", header=False, index=False)
+            
+    #         # Display thank you message
+    #         st.success("Thank you for your feedback!")
+    #         st.write("We'll review your comments to improve our platform.")
+
     collect_feedback()
