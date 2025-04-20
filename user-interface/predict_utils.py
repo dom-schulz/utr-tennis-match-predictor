@@ -177,8 +177,10 @@ def find_winner(score):
     return pred_winner
 
 def predict(p1, p2, location, best_of=3):
-    data = pd.read_csv('atp_utr_tennis_matches.csv')
-    utr_history = pd.read_csv('utr_history.csv')
+    conn = st.connection('gcs', type=FilesConnection)
+    data = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
+    utr_history = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
+
     model = joblib.load('model.sav')
 
     history = get_player_history(utr_history)
