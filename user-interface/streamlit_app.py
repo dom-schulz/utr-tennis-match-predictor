@@ -322,10 +322,10 @@ with tabs[4]:
     """)
 
 with tabs[5]:
-    ########## Feedback Function ###########
-def collect_feedback():
     st.header("💬 We Value Your Feedback!")
-    
+    ########## Feedback Function ###########
+    def collect_feedback():
+        pass
     # # Create a form to collect feedback
     # with st.form(key="feedback_form"):
     #     # Collect feedback from users
