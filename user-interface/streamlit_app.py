@@ -361,54 +361,42 @@ with tabs[3]:
 
     history = get_player_history(df1)
     player_df = get_player_profiles_general(df2, history)
-    st.markdown(player_df['Alcaraz C.'])
 
-    # player_name = st.text_input("Enter player name:", "")
-    # if player_name:
-    #     try:
-    #         if player_df.empty:
-    #             st.warning("No data found for this player.")
-    #         else:
-    #             # Display basic stats
-    #             current_utr = player_df['utr'].iloc[-1]
-    #             winrate = (player_df['won'].sum() / len(player_df)) * 100
+    # Player selection
+    st.subheader("Compare Two Players")
+    player_names = sorted(player_df.keys())
+    col1, col2 = st.columns(2)
 
-    #             st.metric("Current UTR", f"{current_utr:.2f}")
-    #             st.metric("Winrate", f"{winrate:.1f}%")
+    with col1:
+        player1 = st.selectbox("Player 1", player_names, key="player1")
 
-    #             # Line chart of UTR over time
-    #             st.subheader("UTR Over Time")
-    #             fig, ax = plt.subplots()
-    #             ax.plot(player_df['date'], player_df['utr'], marker='o')
-    #             ax.set_xlabel("Date")
-    #             ax.set_ylabel("UTR")
-    #             ax.set_title(f"{player_name}'s UTR Trend")
-    #             st.pyplot(fig)
+    with col2:
+        player2 = st.selectbox("Player 2", player_names, key="player2")
 
-    #             # Show last 5 matches
-    #             st.subheader("Recent Matches")
-    #             st.dataframe(player_df.sort_values('date', ascending=False).head(5))
+    def display_player_metrics(player_name):
+        profile = player_df[player_name]
+        utr_history = history.get(player_name, {}).get("utr", [])
+        dates = history.get(player_name, {}).get("date", [])
 
-    #     except Exception as e:
-    #         st.error(f"Failed to load player data: {e}")
+        st.markdown(f"### {player_name}")
+        st.metric("Current UTR", round(profile.get("utr", 0), 2))
+        st.metric("Win Rate", f"{round(profile.get("winrate", 0) * 100, 2)}%")
+        st.metric("Matches Played", profile.get("matches", 0))
 
-    # df = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
-    # df = df[-40:]
+        if utr_history and dates:
+            chart_df = pd.DataFrame({
+                "Date": pd.to_datetime(dates),
+                "UTR": utr_history
+            }).sort_values("Date")
+            st.line_chart(chart_df.set_index("Date"))
 
-    # # Example scatter plot
-    # fig, ax = plt.subplots()
-    # colors = df['p_win'].map({1: 'blue', 0: 'red'})  # Adjust depending on how p_win is encoded
-    # ax.scatter(df['p1_utr'], df['p2_utr'], c=colors)
-    # ax.set_xlabel("Player 1 UTR")
-    # ax.set_ylabel("Player 2 UTR")
-    # ax.set_title("UTR Matchups by Outcome (R=p1w, B=p2w)")
+    st.divider()
 
-    # # Add a custom legend
-    # red_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=10, label='Player 1 Win')
-    # blue_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='blue', markersize=10, label='Player 2 Win')
-    # ax.legend(handles=[blue_patch, red_patch], loc='upper left', fontsize=12)
-
-    # st.pyplot(fig)
+    col1, col2 = st.columns(2)
+    with col1:
+        display_player_metrics(player1)
+    with col2:
+        display_player_metrics(player2)
 
 with tabs[4]:
     st.markdown("""
