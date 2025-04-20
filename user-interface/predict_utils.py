@@ -8,6 +8,9 @@ import torch
 import torch.nn as nn
 from st_files_connection import FilesConnection
 import streamlit as st
+import joblib
+from google.cloud import storage
+import os
 
 class TennisPredictor(nn.Module):
     def __init__(self, input_size):
@@ -419,12 +422,31 @@ def get_player_history(utr_history):
 
     return history
 
+def download_model_from_gcs(bucket_name, source_blob_name, destination_file_name):
+    """Download a joblib model file from a GCS bucket to the local filesystem."""
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(source_blob_name)
+    blob.download_to_filename(destination_file_name)
+    # print(f"Downloaded {source_blob_name} to {destination_file_name}")
+
+def load_model():
+    bucket_name = "utr-model-training-bucket"              # 🔁 replace with your GCS bucket
+    source_blob_name = "model.sav"                # 🔁 path in bucket
+    local_path = "/model/model.sav"                 # safe temp location in Streamlit
+
+    download_model_from_gcs(bucket_name, source_blob_name, local_path)
+    model = joblib.load(local_path)
+    return model
+
 def make_prediction(p1, p2, location, best_of=3):
     conn = st.connection('gcs', type=FilesConnection)
     data = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
     utr_history = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
-    model = joblib.load('model.sav')
+    # model = joblib.load('model.sav')
+
+    model = load_model()
 
     history = get_player_history(utr_history)
     player_profiles = get_player_profiles(data, history)
