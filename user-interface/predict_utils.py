@@ -230,7 +230,6 @@ def get_player_profiles(data, history, p1, p2):
                         "win_vs_higher": [],
                         "wvh_utr": [],
                         "recent10": [],
-                        "r10_utr": [],
                         "utr": history[player]['utr'],
                         "h2h": {}
                     }
@@ -241,7 +240,6 @@ def get_player_profiles(data, history, p1, p2):
                         "win_vs_higher": [],
                         "wvh_utr": [],
                         "recent10": [],
-                        "r10_utr": [],
                         "utr": data['p1_utr'][i] if data['p1'][i] == player else data['p2_utr'][i],
                         "h2h": {}
                     }
@@ -253,7 +251,6 @@ def get_player_profiles(data, history, p1, p2):
                         "win_vs_higher": [],
                         "wvh_utr": [],
                         "recent10": [],
-                        "r10_utr": [],
                         "utr": history[opponent]['utr'],
                         "h2h": {}
                     }
@@ -264,7 +261,6 @@ def get_player_profiles(data, history, p1, p2):
                         "win_vs_higher": [],
                         "wvh_utr": [],
                         "recent10": [],
-                        "r10_utr": [],
                         "utr": data['p1_utr'][i] if data['p1'][i] == opponent else data['p2_utr'][i],
                         "h2h": {}
                     }
@@ -330,7 +326,6 @@ def get_player_profiles_general(data, history):
                     "win_vs_higher": [],
                     "wvh_utr": [],
                     "recent10": [],
-                    "r10_utr": [],
                     "utr": history[player]['utr'],
                     "h2h": {}
                 }
@@ -341,7 +336,6 @@ def get_player_profiles_general(data, history):
                     "win_vs_higher": [],
                     "wvh_utr": [],
                     "recent10": [],
-                    "r10_utr": [],
                     "utr": data['p1_utr'][i] if data['p1'][i] == player else data['p2_utr'][i],
                     "h2h": {}
                 }
@@ -353,7 +347,6 @@ def get_player_profiles_general(data, history):
                     "win_vs_higher": [],
                     "wvh_utr": [],
                     "recent10": [],
-                    "r10_utr": [],
                     "utr": history[opponent]['utr'],
                     "h2h": {}
                 }
@@ -364,7 +357,6 @@ def get_player_profiles_general(data, history):
                     "win_vs_higher": [],
                     "wvh_utr": [],
                     "recent10": [],
-                    "r10_utr": [],
                     "utr": data['p1_utr'][i] if data['p1'][i] == opponent else data['p2_utr'][i],
                     "h2h": {}
                 }

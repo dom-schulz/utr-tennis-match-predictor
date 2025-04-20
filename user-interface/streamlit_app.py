@@ -287,15 +287,16 @@ with tabs[3]:
     with col2:
         player2 = st.selectbox("Player 2", player_names, key="player2")
 
-    def display_player_metrics(player_name):
-        profile = player_df[player_name]
-        utr_history = history.get(player_name, {}).get("utr", [])
-        dates = history.get(player_name, {}).get("date", [])
+    def display_player_metrics(player1, player2):
+        profile = player_df[player1]
+        utr_history = history.get(player1, {}).get("utr", [])
+        dates = history.get(player1, {}).get("date", [])
 
-        st.markdown(f"### {player_name}")
+        st.markdown(f"### {player1}")
         st.metric("Current UTR", round(profile.get("utr", 0), 2))
-        st.metric("Win Rate", f"{round(profile.get("winrate", 0) * 100, 2)}%")
-        st.metric("Matches Played", profile.get("matches", 0))
+        st.metric("Win Rate Vs. Lower UTRs", f"{round(profile.get("win_vs_lower", 0) * 100, 2)}%")
+        st.metric("Win Rate Vs. Higher UTRs", f"{round(profile.get("win_vs_higher", 0) * 100, 2)}%")
+        st.metric("Head-To-Head Winrate", f"{round(100 * (profile.get("h2h", player2, 0) / profile.get("h2h", player2, 1)), 2)}%")
 
         if utr_history and dates:
             chart_df = pd.DataFrame({
@@ -308,9 +309,9 @@ with tabs[3]:
 
     col1, col2 = st.columns(2)
     with col1:
-        display_player_metrics(player1)
+        display_player_metrics(player1, player2)
     with col2:
-        display_player_metrics(player2)
+        display_player_metrics(player2, player1)
 
 with tabs[4]:
     st.markdown("""
