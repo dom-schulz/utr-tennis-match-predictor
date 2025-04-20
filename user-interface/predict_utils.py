@@ -176,7 +176,7 @@ def find_winner(score):
         pred_winner = 'p2'
     return pred_winner
 
-def predict(p1, p2, location, best_of=3):
+def make_prediction(p1, p2, location, best_of=3):
     conn = st.connection('gcs', type=FilesConnection)
     data = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
     utr_history = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
@@ -427,43 +427,41 @@ def get_player_history(utr_history):
 
     return history
 
-def make_prediction(player_1, player_2, location):
-    # get data to fit to model    
+def make_prediction(p1, p2, location, best_of=3):
     conn = st.connection('gcs', type=FilesConnection)
     data = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
-    conn = st.connection('gcs', type=FilesConnection)
     utr_history = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
-    x = np.empty(1)
-    for i in range(len(data)):
-        x = np.append(x, data['p1_utr'][i]-data['p2_utr'][i])
+    model = joblib.load('model.sav')
 
-    x = x.reshape(-1,1)
-
-    p = np.tanh(x) / 2 + 0.5
-    model = LogitRegression()
-    model.fit(0.9*x, p)
-
-    p1 = player_1 # "Medvedev D."
-    p2 = player_2 # "Alcaraz C."
-    ps = [p1, p2]
     history = get_player_history(utr_history)
-    player_profiles = get_player_profiles(data, history, ps[0], ps[1])
+    player_profiles = get_player_profiles(data, history)
 
-    score, p1_win, game_prop = get_score(ps, player_profiles, model)
-    
-    output_prediction = ""
-    
-    if p1_win:
-        output_prediction = f'{p1} is predicted to win ({100*game_prop}% of games) against {p2}: '
+    prop = get_prop(model, p1, p2, player_profiles)
+    score = create_score(prop, best_of)
+
+    pred_winner = find_winner(score)
+    if prop >= 0.5:
+        true_winner = 'p1'
     else:
-        output_prediction = f'{p1} is predicted to lose ({100*(1-game_prop)}% of games) against {p2}:  '
+        true_winner = 'p2'
+
+    while true_winner != pred_winner:
+        score = create_score(prop, best_of)
+        pred_winner = find_winner(score)
+
+    prediction = ""
+
+    if true_winner == 'p1':
+        prediction += f'{p1} is predicted to win against {p2} ({round(100*prop, 2)}% Probability): '
+    else:
+        prediction += f'{p1} is predicted to lose against {p2} ({round(100*(1-prop), 2)}% Probability): '
     for i in range(len(score)):
         if i % 4 == 0 and int(score[i]) > int(score[i+2]):
-            output_prediction += Fore.GREEN + score[i]
+            prediction += score[i]
         elif i % 4 == 0 and int(score[i]) < int(score[i+2]):
-            output_prediction += Fore.RED + score[i]
+            prediction += score[i]
         else:
-            output_prediction += score[i]
-    
-    return output_prediction
+            prediction += score[i]
+
+    return prediction
