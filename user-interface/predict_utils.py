@@ -197,7 +197,21 @@ def predict(p1, p2, location, best_of=3):
         score = create_score(prop, best_of)
         pred_winner = find_winner(score)
 
-    return true_winner, score, round(100*prop, 2)
+    prediction = ""
+
+    if true_winner == 'p1':
+        prediction += f'{p1} is predicted to win against {p2} ({round(100*prop, 2)}% Probability): '
+    else:
+        prediction += f'{p1} is predicted to lose against {p2} ({round(100*(1-prop), 2)}% Probability): '
+    for i in range(len(score)):
+        if i % 4 == 0 and int(score[i]) > int(score[i+2]):
+            prediction += score[i]
+        elif i % 4 == 0 and int(score[i]) < int(score[i+2]):
+            prediction += score[i]
+        else:
+            prediction += score[i]
+
+    return prediction
 
 def get_player_profiles(data, history, p1, p2):
     player_profiles = {}
