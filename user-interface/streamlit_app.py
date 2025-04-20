@@ -361,6 +361,7 @@ with tabs[3]:
 
     history = get_player_history(df1)
     player_df = get_player_profiles_general(df2, history)
+    st.markdown(player_df)
 
     # player_name = st.text_input("Enter player name:", "")
     # if player_name:
