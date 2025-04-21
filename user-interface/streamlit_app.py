@@ -296,8 +296,10 @@ with tabs[3]:
         st.metric("Current UTR", round(profile.get("utr", 0), 2))
         st.metric("Win Rate Vs. Lower UTRs", f"{round(profile.get("win_vs_lower", 0) * 100, 2)}%")
         st.metric("Win Rate Vs. Higher UTRs", f"{round(profile.get("win_vs_higher", 0) * 100, 2)}%")
-        st.metric("Head-To-Head (W-L)", f"{profile.get("h2h")[player2][0]} - {profile.get("h2h")[player2][1]-profile.get("h2h")[player2][0]}")
-
+        try:
+            st.metric("Head-To-Head (W-L)", f"{profile.get("h2h")[player2][0]} - {profile.get("h2h")[player2][1]-profile.get("h2h")[player2][0]}")
+        except:
+            st.metric("Head-To-Head (W-L)", "0 - 0")
         if utr_history and dates:
             chart_df = pd.DataFrame({
                 "Date": pd.to_datetime(dates),
