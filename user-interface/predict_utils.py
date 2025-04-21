@@ -487,7 +487,7 @@ def make_prediction(p1, p2, location, best_of=3):
     model = load_model()
 
     history = get_player_history(utr_history)
-    player_profiles = get_player_profiles(data, history)
+    player_profiles = get_player_profiles(data, history, p1, p2)
 
     prop = get_prop(model, p1, p2, player_profiles)
     score = create_score(prop, best_of)
