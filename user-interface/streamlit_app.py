@@ -296,6 +296,7 @@ with tabs[3]:
         st.metric("Current UTR", round(profile.get("utr", 0), 2))
         st.metric("Win Rate Vs. Lower UTRs", f"{round(profile.get("win_vs_lower", 0) * 100, 2)}%")
         st.metric("Win Rate Vs. Higher UTRs", f"{round(profile.get("win_vs_higher", 0) * 100, 2)}%")
+        st.metric("Win Rate Last 10 Matches", f"{round(profile.get("recent10", 0) * 100, 2)}%")
         try:
             st.metric("Head-To-Head (W-L)", f"{profile.get("h2h")[player2][0]} - {profile.get("h2h")[player2][1]-profile.get("h2h")[player2][0]}")
         except:
