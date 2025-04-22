@@ -235,7 +235,7 @@ def get_player_profiles(data, history, p1, p2):
                     "wvh_utr": [],
                     "recent10": [],
                     "r10_utr": [],
-                    "utr": history[player]['utr'],
+                    "utr": history[player]['utr'][0],
                     "h2h": {}
                 }
             elif player not in player_profiles:
@@ -258,7 +258,7 @@ def get_player_profiles(data, history, p1, p2):
                     "wvh_utr": [],
                     "recent10": [],
                     "r10_utr": [],
-                    "utr": history[opponent]['utr'],
+                    "utr": history[opponent]['utr'][0],
                     "h2h": {}
                 }
             elif opponent not in player_profiles:
@@ -350,7 +350,7 @@ def get_player_profiles_general(data, history):
                 "wvh_utr": [],
                 "recent10": [],
                 "r10_utr": [],
-                "utr": history[player]['utr'],
+                "utr": history[player]['utr'][0],
                 "h2h": {}
             }
         elif player not in player_profiles:
@@ -373,7 +373,7 @@ def get_player_profiles_general(data, history):
                 "wvh_utr": [],
                 "recent10": [],
                 "r10_utr": [],
-                "utr": history[opponent]['utr'],
+                "utr": history[opponent]['utr'][0],
                 "h2h": {}
             }
         elif opponent not in player_profiles:
@@ -455,9 +455,12 @@ def get_player_history(utr_history):
     for i in range(len(utr_history)):
         if utr_history['first_name'][i]+' '+utr_history['last_name'][i] not in history:
             history[utr_history['first_name'][i]+' '+utr_history['last_name'][i]] = {
-                'utr': utr_history['utr'][i],
-                'date': utr_history['date'][i]
+                'utr': [utr_history['utr'][i]],
+                'date': [utr_history['date'][i]]
             }
+        else:
+            history[utr_history['first_name'][i]+' '+utr_history['last_name'][i]]['utr'].append(utr_history['utr'][i])
+            history[utr_history['first_name'][i]+' '+utr_history['last_name'][i]]['date'].append(utr_history['date'][i])
 
     return history
 
