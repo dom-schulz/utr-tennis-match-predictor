@@ -301,7 +301,8 @@ with tabs[3]:
                 st.metric("Head-To-Head (W-L)", f"{profile.get("h2h")[player2][0]} - {profile.get("h2h")[player2][1]-profile.get("h2h")[player2][0]}")
             except:
                 st.metric("Head-To-Head (W-L)", "0 - 0")
-            utrs = history[player1]["utr"]
+            utrs = history[player1].get("utr", 0)
+            dates = history[player1].get("date", 0)
 
     st.divider()
 
