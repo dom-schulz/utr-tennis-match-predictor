@@ -289,25 +289,26 @@ with tabs[3]:
         player2 = st.selectbox("Player 2", player_names, key="player2")
 
     def display_player_metrics(player1, player2):
-        profile = player_df[player1]
-        utr_history = history.get(player1, {}).get("utr", [])
-        dates = history.get(player1, {}).get("date", [])
+        if player1 != "" and player2 != "":
+            profile = player_df[player1]
+            utr_history = history.get(player1, {}).get("utr", [])
+            dates = history.get(player1, {}).get("date", [])
 
-        st.markdown(f"### {player1}")
-        st.metric("Current UTR", round(profile.get("utr", 0), 2))
-        st.metric("Win Rate Vs. Lower UTRs", f"{round(profile.get("win_vs_lower", 0) * 100, 2)}%")
-        st.metric("Win Rate Vs. Higher UTRs", f"{round(profile.get("win_vs_higher", 0) * 100, 2)}%")
-        st.metric("Win Rate Last 10 Matches", f"{round(profile.get("recent10", 0) * 100, 2)}%")
-        try:
-            st.metric("Head-To-Head (W-L)", f"{profile.get("h2h")[player2][0]} - {profile.get("h2h")[player2][1]-profile.get("h2h")[player2][0]}")
-        except:
-            st.metric("Head-To-Head (W-L)", "0 - 0")
-        if utr_history and dates:
-            chart_df = pd.DataFrame({
-                "Date": pd.to_datetime(dates),
-                "UTR": utr_history
-            }).sort_values("Date")
-            st.line_chart(chart_df.set_index("Date"))
+            st.markdown(f"### {player1}")
+            st.metric("Current UTR", round(profile.get("utr", 0), 2))
+            st.metric("Win Rate Vs. Lower UTRs", f"{round(profile.get("win_vs_lower", 0) * 100, 2)}%")
+            st.metric("Win Rate Vs. Higher UTRs", f"{round(profile.get("win_vs_higher", 0) * 100, 2)}%")
+            st.metric("Win Rate Last 10 Matches", f"{round(profile.get("recent10", 0) * 100, 2)}%")
+            try:
+                st.metric("Head-To-Head (W-L)", f"{profile.get("h2h")[player2][0]} - {profile.get("h2h")[player2][1]-profile.get("h2h")[player2][0]}")
+            except:
+                st.metric("Head-To-Head (W-L)", "0 - 0")
+            if utr_history and dates:
+                chart_df = pd.DataFrame({
+                    "Date": pd.to_datetime(dates),
+                    "UTR": utr_history
+                }).sort_values("Date")
+                st.line_chart(chart_df.set_index("Date"))
 
     st.divider()
 
