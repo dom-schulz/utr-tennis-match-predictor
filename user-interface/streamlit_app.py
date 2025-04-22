@@ -314,7 +314,7 @@ with tabs[3]:
 
                 st.pyplot(fig)
         except:
-            continue
+            pass
 
     st.divider()
 
