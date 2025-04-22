@@ -145,7 +145,7 @@ get_agent = Agent(name="Get Agent",
                   tools=[gather_list_check_existence, make_prediction])
 
 # ========== Streamlit UI ==========
-st.title("UTR Match Predictor1 🎾")
+st.title("UTR Match Predictor 🎾")
 
 with st.sidebar:
     st.header("🔧 Tools & Insights")
@@ -156,7 +156,7 @@ with st.sidebar:
 
 # st.button("Create Custom Player Profile (Coming Soon)", disabled=True)
 
-tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "🎾 Player Metrics", "ℹ️ About", "📣 Feedback"])
+tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "🎾 Player Metrics", "ℹ️ About"])
 
 with tabs[0]:
     st.subheader("AI-Powered Match Outcome Predictor")
@@ -346,38 +346,7 @@ with tabs[4]:
     """)
 
     st.markdown("💬 We Value Your Feedback!")
-    def collect_feedback():
-        pass
-    # # Create a form to collect feedback
-    # with st.form(key="feedback_form"):
-    #     # Collect feedback from users
-    #     rating = st.slider("How would you rate your experience?", min_value=1, max_value=5)
-    #     comments = st.text_area("Any comments or suggestions?", height=150)
-        
-    #     # Submit button
-    #     submit_button = st.form_submit_button(label="Submit Feedback")
-        
-    #     if submit_button:
-    #         # Store the feedback (could also save to a file, database, etc.)
-    #         feedback_data = {
-    #             "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-    #             "rating": rating,
-    #             "comments": comments
-    #         }
-            
-    #         # Optionally, save the feedback to a CSV or database
-    #         feedback_df = pd.DataFrame([feedback_data])
-    #         feedback_df.to_csv("feedback.csv", mode="a", header=False, index=False)
-            
-    #         # Display thank you message
-    #         st.success("Thank you for your feedback!")
-    #         st.write("We'll review your comments to improve our platform.")
-
-    collect_feedback()
-
-with tabs[5]:
-    st.header("💬 We Value Your Feedback!")
-    ########## Feedback Function ###########
+    ### Feedback Function ###
     def collect_feedback():
         pass
     # # Create a form to collect feedback
