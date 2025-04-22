@@ -279,7 +279,7 @@ with tabs[3]:
 
     # Player selection
     st.subheader("Compare Two Players")
-    player_names = sorted(player_df.keys())
+    player_names = [""] + sorted(player_df.keys())
     col1, col2 = st.columns(2)
 
     with col1:
