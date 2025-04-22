@@ -235,9 +235,6 @@ with tabs[2]:
     conn = st.connection('gcs', type=FilesConnection)
     df = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
-    # # Show the top few rows
-    # st.dataframe(df.head(10))
-
     content = []
     prev_name = ''
     for i in range(len(df)):
@@ -254,17 +251,6 @@ with tabs[2]:
 
     df = df.sort_values(by="UTR % Change", ascending=True)
     st.dataframe(df.head(10))
-
-    # history = get_player_history(df)
-
-    # content = []
-    # for player in history.keys():
-    #     row = {player: history[player]}
-
-    # Optionally, sort or filter
-    # df_sorted = df.sort_values(by="utr_change", ascending=False)
-    # st.subheader("Top UTR Gains")
-    # st.dataframe(df_sorted.head(10))
 
 with tabs[3]:
     st.header("🎾 Player Metrics")
