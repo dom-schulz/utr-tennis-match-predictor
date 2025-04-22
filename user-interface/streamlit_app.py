@@ -223,6 +223,8 @@ with tabs[1]:
 
     st.write("Here you can display upcoming tennis matches (e.g., from a dataset or API).")
 
+    st.markdown("*** Coming Soon ***")
+
 # === Tab: Large UTR Moves ===
 with tabs[2]:
     st.header("📈 Large UTR Moves")
