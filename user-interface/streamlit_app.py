@@ -288,11 +288,11 @@ with tabs[3]:
     with col2:
         player2 = st.selectbox("Player 2", player_names, key="player2")
 
-    def display_player_metrics(player1, player2):
+    def display_player_metrics(player1, player2, history):
         if player1 != "" and player2 != "":
             profile = player_df[player1]
-            utr_history = history.get(player1, {}).get("utr", [])
-            dates = history.get(player1, {}).get("date", [])
+            # utr_history = history.get(player1, {}).get("utr", [])
+            # dates = history.get(player1, {}).get("date", [])
 
             st.markdown(f"### {player1}")
             st.metric("Current UTR", profile.get("utr", 0))
@@ -303,20 +303,20 @@ with tabs[3]:
                 st.metric("Head-To-Head (W-L)", f"{profile.get("h2h")[player2][0]} - {profile.get("h2h")[player2][1]-profile.get("h2h")[player2][0]}")
             except:
                 st.metric("Head-To-Head (W-L)", "0 - 0")
-            if utr_history and dates:
-                chart_df = pd.DataFrame({
-                    "Date": pd.to_datetime(dates),
-                    "UTR": utr_history
-                }).sort_values("Date")
-                st.line_chart(chart_df.set_index("Date"))
+            # if utr_history and dates:
+            #     chart_df = pd.DataFrame({
+            #         "Date": pd.to_datetime(dates),
+            #         "UTR": utr_history
+            #     }).sort_values("Date")
+            #     st.line_chart(chart_df.set_index("Date"))
 
     st.divider()
 
     col1, col2 = st.columns(2)
     with col1:
-        display_player_metrics(player1, player2)
+        display_player_metrics(player1, player2, history)
     with col2:
-        display_player_metrics(player2, player1)
+        display_player_metrics(player2, player1, history)
 
 with tabs[4]:
     st.markdown("""
