@@ -352,7 +352,7 @@ with tabs[4]:
     # # Create a form to collect feedback
     # with st.form(key="feedback_form"):
     #     # Collect feedback from users
-    #     rating = st.slider("How would you rate your experience?", min_value=1, max_value=5)
+    #     rating = st.slider("How would you rate your experience?", min_value=1, max_value=10)
     #     comments = st.text_area("Any comments or suggestions?", height=150)
         
     #     # Submit button
