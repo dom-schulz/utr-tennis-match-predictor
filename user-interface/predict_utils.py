@@ -9,7 +9,7 @@ import torch.nn as nn
 from st_files_connection import FilesConnection
 import streamlit as st
 import joblib
-# from google.cloud import storage
+from google.cloud import storage
 import os
 
 class TennisPredictor(nn.Module):
