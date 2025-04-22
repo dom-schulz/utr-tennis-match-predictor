@@ -475,7 +475,7 @@ def download_model_from_gcs(bucket_name, source_blob_name, destination_file_name
 def load_model():
     bucket_name = "utr-model-training-bucket"              # 🔁 replace with your GCS bucket
     source_blob_name = "model.sav"                # 🔁 path in bucket
-    local_path = "/model/model.sav"                 # safe temp location in Streamlit
+    local_path = "/model.sav"                 # safe temp location in Streamlit
 
     download_model_from_gcs(bucket_name, source_blob_name, local_path)
     model = joblib.load(local_path)
