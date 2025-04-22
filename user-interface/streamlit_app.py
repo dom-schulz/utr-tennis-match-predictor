@@ -308,6 +308,31 @@ with tabs[3]:
 
                 st.pyplot(fig)
 
+    def display_graph(player1, player2, history):
+        # Plot both UTR histories
+        utrs1 = history[player1].get("utr", [])
+        dates1 = history[player1].get("date", [])
+        utrs2 = history[player2].get("utr", [])
+        dates2 = history[player2].get("date", [])
+
+        if utrs1 and dates1 and utrs2 and dates2:
+            df1 = pd.DataFrame({"Date": pd.to_datetime(dates1), "UTR": utrs1, "Player": player1})
+            df2 = pd.DataFrame({"Date": pd.to_datetime(dates2), "UTR": utrs2, "Player": player2})
+            df_plot = pd.concat([df1, df2]).sort_values("Date")
+
+            fig, ax = plt.subplots()
+            for name, group in df_plot.groupby("Player"):
+                ax.plot(group["Date"], group["UTR"], label=name)  # No marker
+
+            ax.set_title("UTR Over Time")
+            ax.set_xlabel("Date")
+            ax.set_ylabel("UTR")
+            ax.legend()
+            ax.grid(True)
+            fig.autofmt_xdate()
+
+            st.pyplot(fig)
+
     st.divider()
 
     col1, col2 = st.columns(2)
@@ -315,6 +340,10 @@ with tabs[3]:
         display_player_metrics(player1, player2, history)
     with col2:
         display_player_metrics(player2, player1, history)
+
+    st.divider()
+
+    display_graph(player1, player2, history)
 
 with tabs[4]:
     st.markdown("""
