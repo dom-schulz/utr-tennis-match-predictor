@@ -288,23 +288,25 @@ with tabs[3]:
             except:
                 st.metric("Head-To-Head (W-L)", "0 - 0")
             utrs = history[player1].get("utr", [])
+            st.markdown(utrs)
             dates = history[player1].get("date", [])
+            st.markdown(dates)
 
-            if utrs and dates:
-                df_plot = pd.DataFrame({
-                    "Date": pd.to_datetime(dates),
-                    "UTR": utrs
-                }).sort_values("Date")
+            # if utrs and dates:
+            #     df_plot = pd.DataFrame({
+            #         "Date": pd.to_datetime(dates),
+            #         "UTR": utrs
+            #     }).sort_values("Date")
 
-                fig, ax = plt.subplots()
-                ax.plot(df_plot["Date"], df_plot["UTR"], marker='o', linestyle='-')
-                ax.set_title(f"{player1}'s UTR Over Time")
-                ax.set_xlabel("Date")
-                ax.set_ylabel("UTR")
-                ax.grid(True)
-                fig.autofmt_xdate()
+            #     fig, ax = plt.subplots()
+            #     ax.plot(df_plot["Date"], df_plot["UTR"], marker='o', linestyle='-')
+            #     ax.set_title(f"{player1}'s UTR Over Time")
+            #     ax.set_xlabel("Date")
+            #     ax.set_ylabel("UTR")
+            #     ax.grid(True)
+            #     fig.autofmt_xdate()
 
-                st.pyplot(fig)
+            #     st.pyplot(fig)
 
     st.divider()
 
