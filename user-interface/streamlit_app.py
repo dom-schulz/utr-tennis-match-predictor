@@ -295,7 +295,7 @@ with tabs[3]:
             dates = history.get(player1, {}).get("date", [])
 
             st.markdown(f"### {player1}")
-            st.metric("Current UTR", round(profile.get("utr", 0), 2))
+            st.metric("Current UTR", profile.get("utr", 0))
             st.metric("Win Rate Vs. Lower UTRs", f"{round(profile.get("win_vs_lower", 0) * 100, 2)}%")
             st.metric("Win Rate Vs. Higher UTRs", f"{round(profile.get("win_vs_higher", 0) * 100, 2)}%")
             st.metric("Win Rate Last 10 Matches", f"{round(profile.get("recent10", 0) * 100, 2)}%")
