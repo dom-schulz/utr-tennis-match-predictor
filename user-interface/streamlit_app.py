@@ -291,8 +291,6 @@ with tabs[3]:
     def display_player_metrics(player1, player2, history):
         if player1 != "" and player2 != "":
             profile = player_df[player1]
-            # utr_history = history.get(player1, {}).get("utr", [])
-            # dates = history.get(player1, {}).get("date", [])
 
             st.markdown(f"### {player1}")
             st.metric("Current UTR", profile.get("utr", 0))
@@ -303,12 +301,7 @@ with tabs[3]:
                 st.metric("Head-To-Head (W-L)", f"{profile.get("h2h")[player2][0]} - {profile.get("h2h")[player2][1]-profile.get("h2h")[player2][0]}")
             except:
                 st.metric("Head-To-Head (W-L)", "0 - 0")
-            # if utr_history and dates:
-            #     chart_df = pd.DataFrame({
-            #         "Date": pd.to_datetime(dates),
-            #         "UTR": utr_history
-            #     }).sort_values("Date")
-            #     st.line_chart(chart_df.set_index("Date"))
+            utrs = history[player1]["utr"]
 
     st.divider()
 
