@@ -149,8 +149,6 @@ st.title("UTR Match Predictor 🎾")
 
 with st.sidebar:
     st.header("🔧 Tools & Insights")
-    st.markdown("✅ Player Metrics")
-    st.markdown("✅ Match Prediction")
     st.markdown("🚧 Tournament Tracker *(coming soon)*")
     st.markdown("🚧 Surface Win Rates *(coming soon)*")
 
