@@ -320,11 +320,29 @@ with tabs[3]:
 
 with tabs[4]:
     st.markdown("""
-    ### What is MatchMind?
-    **MatchMind** is your smart tennis insights assistant.  
-    Powered by OpenAI and match data, it gives fast, intuitive predictions — so you can always know who’s got the edge.
+    ### 📖 About This Project
 
-    **Built for players, fans, and data nerds alike.**
+    Welcome to the **UTR Tennis Match Predictor** — your go-to tool for analyzing and forecasting professional tennis matches using real data.
+
+    #### 🧠 What We Built  
+    Our platform combines historical match outcomes and player UTR (Universal Tennis Rating) data to predict the likelihood of one player winning against another. Under the hood, we use a machine learning model trained on past ATP-level matches, factoring in performance trends, UTR history, and game win ratios.
+
+    #### 🔬 How It Works  
+    - We collect and update data from UTR and match databases using web scraping tools.  
+    - The predictor uses features like average opponent UTR, win percentages, and recent form.  
+    - Users can input two players and instantly receive a match prediction based on model inference.
+
+    #### 📊 Bonus Tools  
+    Check out the **Player Metrics** tab to explore individual performance history:
+    - UTR progression over time  
+    - Win/loss breakdown  
+    - Game win percentages  
+    - Custom visualizations
+
+    #### 👨‍💻 About the Developers  
+    We’re a team of student developers and tennis enthusiasts combining our passions for sports analytics, data science, and clean UI design. This is an ongoing project — we’re constantly improving predictions, cleaning data, and adding new insights.
+
+    If you have feedback, want to contribute, or just love tennis tech, reach out!
     """)
 
 with tabs[5]:
