@@ -7,6 +7,8 @@ from st_files_connection import FilesConnection
 import pandas as pd
 from predict_utils import *
 import matplotlib.pyplot as plt
+from datetime import datetime
+from google.cloud import storage
 
 # OpenAI client
 my_api_key = st.secrets['openai_key']
@@ -118,7 +120,6 @@ def gather_list_check_existence(player_1, player_2, location, player_list):
     else:
         return "INVALID_PLAYERS"
 
-
 # Create agent
 get_agent = Agent(name="Get Agent", 
                 instructions="You are a helpful Agent. You are confirming that tennis players exist in a list. "
@@ -143,14 +144,22 @@ get_agent = Agent(name="Get Agent",
                   "5. Once output, restart at step 1",
                   tools=[gather_list_check_existence, make_prediction])
 
-
-
 # ========== Streamlit UI ==========
-st.title("UTR Match Predictor Test 🤖")
+st.title("UTR Match Predictor Test 🎾")
 
-tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "UTR Graph", "ℹ️ About"])
+with st.sidebar:
+    st.header("🔧 Tools & Insights")
+    st.markdown("🚧 Tournament Tracker *(coming soon)*")
+    st.markdown("🚧 Surface Win Rates *(coming soon)*")
+
+# st.button("Create Custom Player Profile (Coming Soon)", disabled=True)
+
+tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "🎾 Player Metrics", "ℹ️ About"])
 
 with tabs[0]:
+    st.subheader("AI-Powered Match Outcome Predictor")
+    st.caption("Leverage player data and win percentages to simulate match outcomes in seconds.")
+
     st.write("Enter two player names and a match location to receive a prediction for the match.")
     
     # Ensure chat history persists across reruns
@@ -178,14 +187,7 @@ with tabs[0]:
     
         # Display message
         with st.chat_message(role):
-            st.markdown(f"""
-        <div style="background-color:#f8f9fa; border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-            <h4 style="color:#003366;">🎾 Prediction</h4>
-            <pre style="white-space: pre-wrap; font-family: 'Courier New', monospace;">{content}</pre>
-        </div>
-        """,
-        unsafe_allow_html=True
-        )
+            st.markdown(content)
     
     # User input field at the bottom
     if user_query := st.chat_input("Your request:"):
@@ -214,28 +216,33 @@ with tabs[0]:
 # === Tab: Upcoming Matches ===
 with tabs[1]:
     st.header("📅 Upcoming Matches")
+    st.subheader("Stay Ahead of the Game")
+    st.caption("See what's next on the pro circuit, and who’s most likely to rise.")
+
     st.write("Here you can display upcoming tennis matches (e.g., from a dataset or API).")
+
+    st.markdown("*** Coming Soon ***")
 
 # === Tab: Large UTR Moves ===
 with tabs[2]:
     st.header("📈 Large UTR Moves")
+    st.subheader("Biggest Shifts in Player Ratings")
+    st.caption("Our algorithm tracks the highest-impact UTR swings — who’s peaking, who’s slipping.")
+
     st.write("This tab will highlight matches where players gained or lost a large amount of UTR since the previous week.")
 
     # Load the CSV from your bucket
     conn = st.connection('gcs', type=FilesConnection)
     df = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
-    # # Show the top few rows
-    # st.dataframe(df.head(10))
-
     content = []
     prev_name = ''
     for i in range(len(df)):
         if df['utr'][i] > 13:
-            curr_name = df['f_name'][i]+' '+df['l_name'][i]
+            curr_name = df['first_name'][i]+' '+df['last_name'][i]
             if curr_name != prev_name:
-                curr_name = df['f_name'][i]+' '+df['l_name'][i]
-                content.append([df['f_name'][i]+' '+df['l_name'][i], df['utr'][i+1], df['utr'][i], 
+                curr_name = df['first_name'][i]+' '+df['last_name'][i]
+                content.append([df['first_name'][i]+' '+df['last_name'][i], df['utr'][i+1], df['utr'][i], 
                                 df['utr'][i]-df['utr'][i+1], 100*((df['utr'][i]/df['utr'][i+1])-1)])
             prev_name = curr_name
     df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
@@ -245,29 +252,136 @@ with tabs[2]:
     df = df.sort_values(by="UTR % Change", ascending=True)
     st.dataframe(df.head(10))
 
-    # history = get_player_history(df)
-
-    # content = []
-    # for player in history.keys():
-    #     row = {player: history[player]}
-
-    # Optionally, sort or filter
-    # df_sorted = df.sort_values(by="utr_change", ascending=False)
-    # st.subheader("Top UTR Gains")
-    # st.dataframe(df_sorted.head(10))
-
 with tabs[3]:
+    st.header("🎾 Player Metrics")
+
     # Load data from GCS
     conn = st.connection('gcs', type=FilesConnection)
-    df = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
-    df = df[-100:]
+    df1 = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
+    df2 = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
 
-    # Example scatter plot
-    fig, ax = plt.subplots()
-    colors = df['p_win'].map({1: 'blue', 0: 'red'})  # Adjust depending on how p_win is encoded
-    ax.scatter(df['p1_utr'], df['p2_utr'], c=colors)
-    ax.set_xlabel("Player 1 UTR")
-    ax.set_ylabel("Player 2 UTR")
-    ax.set_title("UTR Matchups by Outcome (R=p1w, B=p2w)")
+    history = get_player_history(df1)
+    player_df = get_player_profiles_general(df2, history)
 
-    st.pyplot(fig)
+    # Player selection
+    st.subheader("Compare Two Players")
+    player_names = [""] + sorted(player_df.keys())
+    col1, col2 = st.columns(2)
+
+    with col1:
+        player1 = st.selectbox("Player 1", player_names, key="player1")
+
+    with col2:
+        player2 = st.selectbox("Player 2", player_names, key="player2")
+
+    def display_player_metrics(player1, player2, history):
+        if player1 != "" and player2 != "":
+            profile = player_df[player1]
+
+            st.markdown(f"### {player1}")
+            st.metric("Current UTR", profile.get("utr", 0))
+            st.metric("Win Rate Vs. Lower UTRs", f"{round(profile.get("win_vs_lower", 0) * 100, 2)}%")
+            st.metric("Win Rate Vs. Higher UTRs", f"{round(profile.get("win_vs_higher", 0) * 100, 2)}%")
+            st.metric("Win Rate Last 10 Matches", f"{round(profile.get("recent10", 0) * 100, 2)}%")
+            try:
+                st.metric("Head-To-Head (W-L)", f"{profile.get("h2h")[player2][0]} - {profile.get("h2h")[player2][1]-profile.get("h2h")[player2][0]}")
+            except:
+                st.metric("Head-To-Head (W-L)", "0 - 0")
+
+    def display_graph(player1, player2, history):
+        # Plot both UTR histories
+        try:
+            utrs1 = history[player1].get("utr", [])
+            dates1 = history[player1].get("date", [])
+            utrs2 = history[player2].get("utr", [])
+            dates2 = history[player2].get("date", [])
+
+            if utrs1 and dates1 and utrs2 and dates2:
+                df1 = pd.DataFrame({"Date": pd.to_datetime(dates1), "UTR": utrs1, "Player": player1})
+                df2 = pd.DataFrame({"Date": pd.to_datetime(dates2), "UTR": utrs2, "Player": player2})
+                df_plot = pd.concat([df1, df2]).sort_values("Date")
+
+                fig, ax = plt.subplots()
+                for name, group in df_plot.groupby("Player"):
+                    ax.plot(group["Date"], group["UTR"], label=name)  # No marker
+
+                ax.set_title("UTR Over Time")
+                ax.set_xlabel("Date")
+                ax.set_ylabel("UTR")
+                ax.legend()
+                ax.grid(True)
+                fig.autofmt_xdate()
+
+                st.pyplot(fig)
+        except:
+            pass
+
+    st.divider()
+
+    col1, col2 = st.columns(2)
+    with col1:
+        display_player_metrics(player1, player2, history)
+    with col2:
+        display_player_metrics(player2, player1, history)
+
+    st.divider()
+
+    display_graph(player1, player2, history)
+
+with tabs[4]:
+    st.markdown("""
+    ### 📖 About This Project
+
+    Welcome to the **UTR Tennis Match Predictor** — your go-to tool for analyzing and forecasting professional tennis matches using real data.
+
+    #### 🧠 What We Built  
+    Our platform combines historical match outcomes and player UTR (Universal Tennis Rating) data to predict the likelihood of one player winning against another. Under the hood, we use a machine learning model trained on past ATP-level matches, factoring in performance trends, UTR history, and game win ratios.
+
+    #### 🔬 How It Works  
+    - We collect and update data from UTR and match databases using web scraping tools.  
+    - The predictor uses features like average opponent UTR, win percentages, and recent form.  
+    - Users can input two players and instantly receive a match prediction based on model inference.
+
+    #### 📊 Bonus Tools  
+    Check out the **Player Metrics** tab to explore individual performance history:
+    - UTR progression over time  
+    - Win/loss breakdown  
+    - Game win percentages  
+    - Custom visualizations
+
+    #### 👨‍💻 About the Developers  
+    We’re a team of student developers and tennis enthusiasts combining our passions for sports analytics, data science, and clean UI design. This is an ongoing project — we’re constantly improving predictions, cleaning data, and adding new insights.
+
+    If you have feedback, want to contribute, or just love tennis tech, reach out!
+    """)
+
+    st.markdown("💬 We Value Your Feedback!")
+    ### Feedback Function ###
+    def collect_feedback():
+        pass
+    # # Create a form to collect feedback
+    # with st.form(key="feedback_form"):
+    #     # Collect feedback from users
+    #     rating = st.slider("How would you rate your experience?", min_value=1, max_value=10)
+    #     comments = st.text_area("Any comments or suggestions?", height=150)
+        
+    #     # Submit button
+    #     submit_button = st.form_submit_button(label="Submit Feedback")
+        
+    #     if submit_button:
+    #         # Store the feedback (could also save to a file, database, etc.)
+    #         feedback_data = {
+    #             "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+    #             "rating": rating,
+    #             "comments": comments
+    #         }
+            
+    #         # Optionally, save the feedback to a CSV or database
+    #         feedback_df = pd.DataFrame([feedback_data])
+    #         feedback_df.to_csv("feedback.csv", mode="a", header=False, index=False)
+            
+    #         # Display thank you message
+    #         st.success("Thank you for your feedback!")
+    #         st.write("We'll review your comments to improve our platform.")
+
+    collect_feedback()
