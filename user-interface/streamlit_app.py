@@ -227,7 +227,7 @@ with tabs[1]:
 with tabs[2]:
     st.header("📈 Large UTR Moves")
     st.subheader("Biggest Shifts in Player Ratings")
-    st.caption("Our algorithm tracks the highest-impact UTR swings — who’s peaking, who’s slipping.")
+    st.caption("Our algorithm tracks the highest-impact UTR swings — who’s rising, who’s falling.")
 
     st.write("This tab will highlight matches where players gained or lost a large amount of UTR since the previous week.")
 
