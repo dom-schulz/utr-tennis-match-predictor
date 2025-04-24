@@ -71,6 +71,7 @@ def load_everything(credentials_dict):
 
 model, utr_df, history, profiles = load_everything(credentials_dict)
 player_names = sorted(set(profiles.keys()) & set(history.keys()))
+player_names = [""] + player_names
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -84,6 +85,8 @@ with tabs[0]:
         p1 = st.selectbox("Player 1", player_names, index=0)
     with col2:
         p2 = st.selectbox("Player 2", [n for n in player_names if n != p1], index=1)
+
+    # =================== PREDICT ======================== #
 
     # pull latest UTRs
     p1_utr, p2_utr = history[p1], history[p2]
@@ -99,6 +102,95 @@ with tabs[0]:
         with torch.no_grad():
             prob = 1 - float(model(torch.tensor(vec, dtype=torch.float32))[0])
         st.metric(label="Probability Player 1 Wins", value=f"{prob*100:0.1f}%")
+
+    st.divider()
+    
+    # =================== Metrics ======================== #
+
+    # Load data from GCS
+    # utr_bucket = client.bucket(UTR_BUCKET)
+    # df1 = download_csv_from_gcs(credentials_dict, utr_bucket, UTR_FILE)
+    # matches_bucket = client.bucket(MATCHES_BUCKET)
+    # df2 = download_csv_from_gcs(credentials_dict, matches_bucket, MATCHES_FILE)
+
+    # history = get_player_history_general(df1)
+    # player_df = get_player_profiles_general(df2, history)
+
+    # # Player selection
+    # st.subheader("Compare Two Players")
+    # player_names = [""] + sorted(player_df.keys())
+    # col1, col2 = st.columns(2)
+
+    # with col1:
+    #     p1 = st.selectbox("Player 1", player_names, key="player1")
+
+    # with col2:
+    #     p2 = st.selectbox("Player 2", player_names, key="player2")
+
+    def display_player_metrics(player1, player2, history):
+        if player1 != "" and player2 != "":
+            profile = player_df[player1]
+
+            # Assuming you want to take the average of the list if it's a list
+            utr_value = profile.get("utr", 0)
+
+            # Check if utr_value is a list and calculate the average if it is
+            if isinstance(utr_value, list):
+                utr_value = sum(utr_value) / len(utr_value) if utr_value else 0  # Avoid division by zero
+
+            st.markdown(f"### {player1}")
+            
+            # Limit utr value to 2 decimal places
+            utr_value = round(utr_value, 2)
+            
+            st.metric("Current UTR", utr_value)
+            st.metric("Win Rate Vs. Lower UTRs", f"{round(profile.get('win_vs_lower', 0) * 100, 2)}%")
+            st.metric("Win Rate Vs. Higher UTRs", f"{round(profile.get('win_vs_higher', 0) * 100, 2)}%")
+            st.metric("Win Rate Last 10 Matches", f"{round(profile.get('recent10', 0) * 100, 2)}%")
+            try:
+                st.metric("Head-To-Head (W-L)", f"{profile.get('h2h')[player2][0]} - {profile.get('h2h')[player2][1]-profile.get('h2h')[player2][0]}")
+            except:
+                st.metric("Head-To-Head (W-L)", "0 - 0")
+
+    def display_graph(player1, player2, history):
+        # Plot both UTR histories
+        try:
+            utrs1 = history[player1].get("utr", [])
+            dates1 = history[player1].get("date", [])
+            utrs2 = history[player2].get("utr", [])
+            dates2 = history[player2].get("date", [])
+
+            if utrs1 and dates1 and utrs2 and dates2:
+                df1 = pd.DataFrame({"Date": pd.to_datetime(dates1), "UTR": utrs1, "Player": player1})
+                df2 = pd.DataFrame({"Date": pd.to_datetime(dates2), "UTR": utrs2, "Player": player2})
+                df_plot = pd.concat([df1, df2]).sort_values("Date")
+
+                fig, ax = plt.subplots()
+                for name, group in df_plot.groupby("Player"):
+                    ax.plot(group["Date"], group["UTR"], label=name)  # No marker
+
+                ax.set_title("UTR Over Time")
+                ax.set_xlabel("Date")
+                ax.set_ylabel("UTR")
+                ax.legend()
+                ax.grid(True)
+                fig.autofmt_xdate()
+
+                st.pyplot(fig)
+        except:
+            pass
+
+    st.divider()
+
+    display_graph(p1, p2, history)
+
+    st.divider()
+
+    col1, col2 = st.columns(2)
+    with col1:
+        display_player_metrics(p1, p2, history)
+    with col2:
+        display_player_metrics(p2, p1, history)
                     
 # === Tab: Upcoming Matches ===
 with tabs[1]:
