@@ -22,7 +22,7 @@ tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Mov
 # Load Model & Data
 # ────────────────────────────────────────────────────────────────────────────────
 
-credentials_dict = {
+CREDENTIALS_DICT = {
         "type": st.secrets["connections_gcs_type"],
         "project_id": st.secrets["connections_gcs_project_id"],
         "private_key_id": st.secrets["connections_gcs_private_key_id"],
@@ -34,16 +34,16 @@ credentials_dict = {
         "auth_provider_x509_cert_url": st.secrets["connections_gcs_auth_provider_x509_cert_url"],
         "client_x509_cert_url": st.secrets["connections_gcs_client_x509_cert_url"],
         "universe_domain": st.secrets["connections_gcs_universe_domain"]
-    }
+}
 
 @st.cache_resource(show_spinner="🔄  Loading Data & Model from the Cloud...")
-def load_everything(credentials_dict):
+def load_everything():
 
     # Initialize client (credentials are picked up from st.secrets)
-    credentials = service_account.Credentials.from_service_account_info(credentials_dict)
+    credentials = service_account.Credentials.from_service_account_info(CREDENTIALS_DICT)
     
     # Initialize the GCS client with credentials and project
-    client = storage.Client(credentials=credentials, project=credentials_dict["project_id"])
+    client = storage.Client(credentials=credentials, project=CREDENTIALS_DICT["project_id"])
 
     # Download model from GCS
     model_bucket = client.bucket(MODEL_BUCKET)
@@ -69,7 +69,7 @@ def load_everything(credentials_dict):
     return model, utr_df, history, profiles
 
 
-model, utr_df, history, profiles = load_everything(credentials_dict)
+model, utr_df, history, profiles = load_everything()
 player_names = sorted(set(profiles.keys()) & set(history.keys()))
 
 

@@ -20,6 +20,20 @@ UTR_FILE = "utr_history.csv"
 MATCHES_BUCKET = "matches-scraper-bucket"
 MATCHES_FILE = "atp_utr_tennis_matches.csv"
 
+CREDENTIALS_DICT = {
+        "type": st.secrets["connections_gcs_type"],
+        "project_id": st.secrets["connections_gcs_project_id"],
+        "private_key_id": st.secrets["connections_gcs_private_key_id"],
+        "private_key": st.secrets["connections_gcs_private_key"],
+        "client_email": st.secrets["connections_gcs_client_email"],
+        "client_id": st.secrets["connections_gcs_client_id"],
+        "auth_uri": st.secrets["connections_gcs_auth_uri"],
+        "token_uri": st.secrets["connections_gcs_token_uri"],
+        "auth_provider_x509_cert_url": st.secrets["connections_gcs_auth_provider_x509_cert_url"],
+        "client_x509_cert_url": st.secrets["connections_gcs_client_x509_cert_url"],
+        "universe_domain": st.secrets["connections_gcs_universe_domain"]
+}
+
 
 # Tennis Predictor Model
 class TennisPredictor(nn.Module):
@@ -196,44 +210,44 @@ def find_winner(score):
     return pred_winner
 
 
-def make_prediction(p1, p2, location, best_of=3):
-    conn = st.connection('gcs', type=FilesConnection)
-    data = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
-    utr_history = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
+# def make_prediction(p1, p2, location, best_of=3):
+#     conn = st.connection('gcs', type=FilesConnection)
+#     data = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
+#     utr_history = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
-    model = joblib.load('model.sav')
+#     model = joblib.load('model.sav')
 
-    history = get_player_history(utr_history)
-    player_profiles = get_player_profiles(data, history)
+#     history = get_player_history(utr_history)
+#     player_profiles = get_player_profiles(data, history)
 
-    prop = get_prop(model, p1, p2, player_profiles)
-    score = create_score(prop, best_of)
+#     prop = get_prop(model, p1, p2, player_profiles)
+#     score = create_score(prop, best_of)
 
-    pred_winner = find_winner(score)
-    if prop >= 0.5:
-        true_winner = 'p1'
-    else:
-        true_winner = 'p2'
+#     pred_winner = find_winner(score)
+#     if prop >= 0.5:
+#         true_winner = 'p1'
+#     else:
+#         true_winner = 'p2'
 
-    while true_winner != pred_winner:
-        score = create_score(prop, best_of)
-        pred_winner = find_winner(score)
+#     while true_winner != pred_winner:
+#         score = create_score(prop, best_of)
+#         pred_winner = find_winner(score)
 
-    prediction = ""
+#     prediction = ""
 
-    if true_winner == 'p1':
-        prediction += f'{p1} is predicted to win against {p2} ({round(100*prop, 2)}% Probability): '
-    else:
-        prediction += f'{p1} is predicted to lose against {p2} ({round(100*(1-prop), 2)}% Probability): '
-    for i in range(len(score)):
-        if i % 4 == 0 and int(score[i]) > int(score[i+2]):
-            prediction += score[i]
-        elif i % 4 == 0 and int(score[i]) < int(score[i+2]):
-            prediction += score[i]
-        else:
-            prediction += score[i]
+#     if true_winner == 'p1':
+#         prediction += f'{p1} is predicted to win against {p2} ({round(100*prop, 2)}% Probability): '
+#     else:
+#         prediction += f'{p1} is predicted to lose against {p2} ({round(100*(1-prop), 2)}% Probability): '
+#     for i in range(len(score)):
+#         if i % 4 == 0 and int(score[i]) > int(score[i+2]):
+#             prediction += score[i]
+#         elif i % 4 == 0 and int(score[i]) < int(score[i+2]):
+#             prediction += score[i]
+#         else:
+#             prediction += score[i]
 
-    return prediction
+#     return prediction
 
 
 def get_player_profiles(matches, history):
@@ -416,61 +430,65 @@ def download_model_from_gcs(bucket_name, source_blob_name, destination_file_name
 
 
 def load_model():
-    bucket_name = "utr-model-training-bucket"              # 🔁 replace with your GCS bucket
-    source_blob_name = "model.sav"                # 🔁 path in bucket
-    local_path = "/model.sav"                 # safe temp location in Streamlit
+    bucket_name = "utr-model-training-bucket"              
+    source_blob_name = "model.sav"            
+    local_path = "/model.sav"                 
 
+    client = storage.Client()
+    
     download_model_from_gcs(bucket_name, source_blob_name, local_path)
     model = joblib.load(local_path)
     return model
 
 
-# def make_prediction(p1, p2, location, best_of=3):
-#     conn = st.connection('gcs', type=FilesConnection)
-#     data = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
-#     utr_history = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
+def make_prediction(p1, p2, location, best_of=3):
+    conn = st.connection('gcs', type=FilesConnection)
+    data = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
+    utr_history = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
-#     # model = joblib.load('model.sav')
+    # model = joblib.load('model.sav')
 
-#     model = load_model()
+    model = load_model()
 
-#     history = get_player_history(utr_history)
-#     player_profiles = get_player_profiles(data, history, p1, p2)
+    history = get_player_history(utr_history)
+    player_profiles = get_player_profiles(data, history, p1, p2)
 
-#     prop = get_prop(model, p1, p2, player_profiles)
-#     score = create_score(prop, best_of)
+    prop = get_prop(model, p1, p2, player_profiles)
+    score = create_score(prop, best_of)
 
-#     pred_winner = find_winner(score)
-#     if prop >= 0.5:
-#         true_winner = 'p1'
-#     else:
-#         true_winner = 'p2'
+    pred_winner = find_winner(score)
+    if prop >= 0.5:
+        true_winner = 'p1'
+    else:
+        true_winner = 'p2'
 
-#     while true_winner != pred_winner:
-#         score = create_score(prop, best_of)
-#         pred_winner = find_winner(score)
+    while true_winner != pred_winner:
+        score = create_score(prop, best_of)
+        pred_winner = find_winner(score)
 
-#     prediction = ""
+    prediction = ""
 
-#     if true_winner == 'p1':
-#         prediction += f'{p1} is predicted to win against {p2} ({round(100*prop, 2)}% Probability): '
-#     else:
-#         prediction += f'{p1} is predicted to lose against {p2} ({round(100*(1-prop), 2)}% Probability): '
-#     for i in range(len(score)):
-#         if i % 4 == 0 and int(score[i]) > int(score[i+2]):
-#             prediction += score[i]
-#         elif i % 4 == 0 and int(score[i]) < int(score[i+2]):
-#             prediction += score[i]
-#         else:
-#             prediction += score[i]
+    if true_winner == 'p1':
+        prediction += f'{p1} is predicted to win against {p2} ({round(100*prop, 2)}% Probability): '
+    else:
+        prediction += f'{p1} is predicted to lose against {p2} ({round(100*(1-prop), 2)}% Probability): '
+    for i in range(len(score)):
+        if i % 4 == 0 and int(score[i]) > int(score[i+2]):
+            prediction += score[i]
+        elif i % 4 == 0 and int(score[i]) < int(score[i+2]):
+            prediction += score[i]
+        else:
+            prediction += score[i]
 
-#     return prediction
+    return prediction
 
 
 def download_csv_from_gcs(bucket, file_path):
     """Downloads a CSV from GCS and returns a pandas DataFrame."""
     
     try:
+        # use global credentials dict
+        client = storage.Client(credentials=CREDENTIALS_DICT)
         blob = bucket.blob(file_path)
         data = blob.download_as_string()
         df = pd.read_csv(io.BytesIO(data))
