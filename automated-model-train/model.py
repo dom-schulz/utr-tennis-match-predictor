@@ -65,8 +65,7 @@ X_tensor = torch.tensor(X_scaled, dtype=torch.float32)
 y_tensor = torch.tensor(y, dtype=torch.float32)
 
 # Split the data into training and testing sets
-X_train, X_temp, y_train, y_temp = train_test_split(X_tensor, y_tensor, test_size=0.2, random_state=42)
-X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
+X_train, X_val, y_train, y_val = train_test_split(X_tensor, y_tensor, test_size=0.1, random_state=42)
 
 # Create DataLoader for training
 train_dataset = TensorDataset(X_train, y_train)
@@ -82,7 +81,7 @@ criterion = nn.BCELoss()  # Binary cross-entropy loss for classification
 optimizer = optim.AdamW(model.parameters(), lr=0.00001, weight_decay=0.5)
 
 # Training loop
-epochs = 15    ######## RESET TO 100 ########
+epochs = 100 
 train_loss = []
 val_loss_arr = []
 for epoch in range(epochs):
