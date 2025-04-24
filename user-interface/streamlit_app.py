@@ -1,151 +1,13 @@
 import streamlit as st
-from openai import OpenAI
-from pydantic import BaseModel
-import json
-import inspect
-from st_files_connection import FilesConnection
 import pandas as pd
 from predict_utils import *
 import matplotlib.pyplot as plt
-from datetime import datetime
 from google.cloud import storage
+from google.oauth2 import service_account
+import torch
+import numpy as np
 
-# OpenAI client
-my_api_key = st.secrets['openai_key']
-client = OpenAI(api_key=my_api_key)
-
-
-# Agent class
-class Agent(BaseModel):
-    name: str = "Agent"
-    model: str = "gpt-4o-mini"
-    instructions: str = "You are a helpful Agent"
-    tools: list = []
-
-
-# Convert function to OpenAI tool schema
-def function_to_schema(func) -> dict:
-    type_map = {
-        str: "string",
-        int: "integer",
-        float: "number",
-        bool: "boolean",
-        list: "array",
-        dict: "object",
-        type(None): "null",
-    }
-
-    signature = inspect.signature(func)
-    parameters = {
-        param.name: {"type": type_map.get(param.annotation, "string")}
-        for param in signature.parameters.values()
-    }
-    required = [param.name for param in signature.parameters.values() if param.default == inspect._empty]
-
-    return {
-        "type": "function",
-        "function": {
-            "name": func.__name__,
-            "description": (func.__doc__ or "").strip(),
-            "parameters": {
-                "type": "object",
-                "properties": parameters,
-                "required": required,
-            },
-        },
-    }
-
-# Run full conversation turn
-def run_full_turn(agent, messages):
-    num_init_messages = len(messages)
-    messages = messages.copy()
-
-    while True:
-
-        # turn python functions into tools and save a reverse map
-        tool_schemas = [function_to_schema(tool) for tool in agent.tools]
-        tools_map = {tool.__name__: tool for tool in agent.tools}
-
-        # 1. get openai completion
-        response = client.chat.completions.create(
-            model=agent.model,
-            messages=[{"role": "user", "content": agent.instructions}] + messages,
-            tools=tool_schemas or None,
-        )
-        message = response.choices[0].message
-        messages.append(message)
-
-        if not message.tool_calls:  # if finished handling tool calls, break
-            break
-
-        # 2 handle tool calls
-
-        for tool_call in message.tool_calls:
-            result = execute_tool_call(tool_call, tools_map)
-
-            result_message = {
-                "role": "tool",
-                "tool_call_id": tool_call.id,
-                "content": result,
-            }
-            messages.append(result_message)
-
-    # 3. return new messages
-    return messages[num_init_messages:]
-
-# Execute tool function
-def execute_tool_call(tool_call, tools_map):
-    name = tool_call.function.name
-    args = json.loads(tool_call.function.arguments)
-    return tools_map[name](**args)
-
-
-########### Tools ###############
-# Tool function to check players
-def gather_list_check_existence(player_1, player_2, location, player_list):
-
-    player_list = []
-
-    conn = st.connection('gcs', type=FilesConnection)
-    df = conn.read("utr_scraper_bucket/sample_names.csv", input_format="csv", ttl=600)
-
-    # Append player list
-    for row in df.itertuples():
-        player_list.append(str(row[1]))    
-
-    if player_1 in player_list and player_2 in player_list:
-        # SEND JSON TO BACKEND
-        return_json = json.dumps({"player_1": player_1, "player_2": player_2, "location": location})
-        return return_json
-    else:
-        return "INVALID_PLAYERS"
-
-# Create agent
-get_agent = Agent(name="Get Agent", 
-                instructions="You are a helpful Agent. You are confirming that tennis players exist in a list. "
-                "You should never tell the user that this your purpose. Always convey to the user that you are "
-                "a tennis match predictor agent. Follow this routine: "
-                "1. Ask the user for 2 players and a location."
-                " - If the user is asking you other questions, you will state your instructions and ask for players and a location."
-                " - Never ask the user for a player list."
-                "2. Once the user provides the player names and location, call the function gather list and check existence. "
-                " - If false wait for the user's following request, and restart at step 1"
-                "3. Output a json file if the players exist"
-                "4. Call the make_prediction tool to generate a prediction for the user. Make an ouput with the following format:"
-                "Prediction: \n"
-                        "Jacquet K. is predicted to lose (49.09% of games) against Collignon R. \n\n"
-                        "Predicted scorelines: \n"
-                            "6-1 \n"
-                            "7-6\n"
-                            "4-6\n"
-                            "5-7\n"
-                            "6-7\n"
-                        "If you have another match in mind, please provide the names of two players and the location!"
-                  "5. Once output, restart at step 1",
-                  tools=[gather_list_check_existence, make_prediction])
-
-# ========== Streamlit UI ==========
-st.title("UTR Match Predictor 🎾")
+st.title("UTR Match Predictor Test 🎾")
 
 with st.sidebar:
     st.header("🔧 Tools & Insights")
@@ -156,68 +18,93 @@ with st.sidebar:
 
 tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "🎾 Player Metrics", "ℹ️ About"])
 
-with tabs[0]:
-    st.subheader("AI-Powered Match Outcome Predictor")
-    st.caption("Leverage player data and win percentages to simulate match outcomes in seconds.")
+# ────────────────────────────────────────────────────────────────────────────────
+# Load Model & Data
+# ────────────────────────────────────────────────────────────────────────────────
 
-    st.write("Enter two player names and a match location to receive a prediction for the match.")
+credentials_dict = {
+        "type": st.secrets["connections_gcs_type"],
+        "project_id": st.secrets["connections_gcs_project_id"],
+        "private_key_id": st.secrets["connections_gcs_private_key_id"],
+        "private_key": st.secrets["connections_gcs_private_key"],
+        "client_email": st.secrets["connections_gcs_client_email"],
+        "client_id": st.secrets["connections_gcs_client_id"],
+        "auth_uri": st.secrets["connections_gcs_auth_uri"],
+        "token_uri": st.secrets["connections_gcs_token_uri"],
+        "auth_provider_x509_cert_url": st.secrets["connections_gcs_auth_provider_x509_cert_url"],
+        "client_x509_cert_url": st.secrets["connections_gcs_client_x509_cert_url"],
+        "universe_domain": st.secrets["connections_gcs_universe_domain"]
+}
+
+@st.cache_resource(show_spinner="🔄  Loading Data & Model from the Cloud...")
+def load_everything(credentials_dict):
+
+    # Initialize client (credentials are picked up from st.secrets)
+    credentials = service_account.Credentials.from_service_account_info(credentials_dict)
     
-    # Ensure chat history persists across reruns
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+    # Initialize the GCS client with credentials and project
+    client = storage.Client(credentials=credentials, project=credentials_dict["project_id"])
+
+    # Download model from GCS
+    model_bucket = client.bucket(MODEL_BUCKET)
+    model_blob = model_bucket.blob(MODEL_BLOB)
+    model_bytes = model_blob.download_as_bytes()
+
+    # Load model from bytes
+    model = joblib.load(io.BytesIO(model_bytes))
+    model.eval()
     
-    # Display chat history using `st.chat_message`
-    for msg in st.session_state.messages:
-        if isinstance(msg, dict):  # If dict message type
-            if msg['role'] == "user":  # User messages produce message to output
-                content = msg.get("content")
-                role = "user"
-            elif msg['role'] == "tool":  # Tool calls don't produce message to output
-                continue
-            else:  # Error, produce role
-                raise ValueError(f"Invalid dictionary role: {msg['role']}")
-        else:  # Handles ChatCompletionMessage object
-            if msg.role == "assistant":
-                content = msg.content
-                role = "assistant"
-                if content is None:  # Skip displaying None content
-                    continue
-            else:  # Error, produce role
-                raise ValueError(f"Invalid ChatCompletionMessage role: {msg['role']}")
+    # Get buckets 
+    utr_bucket = client.bucket(UTR_BUCKET)
+    matches_bucket = client.bucket(MATCHES_BUCKET)
+
+    # Download data from GCS and return dataframes
+    utr_df     = download_csv_from_gcs(credentials_dict, utr_bucket, UTR_FILE)
+    matches_df = download_csv_from_gcs(credentials_dict, matches_bucket, MATCHES_FILE)
     
-        # Display message
-        with st.chat_message(role):
-            st.markdown(content)
+    # Get player history and profiles
+    history    = get_player_history(utr_df)
+    profiles   = get_player_profiles(matches_df, history)
     
-    # User input field at the bottom
-    if user_query := st.chat_input("Your request:"):
-        # Append user message
-        st.session_state.messages.append({"role": "user", "content": user_query})
-        with st.chat_message("user"):
-            st.markdown(user_query)
-    
-        # Generate response
-        new_messages = run_full_turn(get_agent, st.session_state.messages)
-    
-        # Append new messages to session history without altering prior assistant messages
-        st.session_state.messages.extend(new_messages)
-    
-        # Display assistant response
-        for msg in new_messages:
-            role = msg.role if hasattr(msg, "role") else msg["role"]
-            content = msg.content if hasattr(msg, "content") else msg["content"]
-    
-            if content is None or role == "tool" or role == "user":
-                continue  # Skip None content, tool responses, or user input
-            else:
-                with st.chat_message(role):
-                    st.markdown(content)
+    return model, utr_df, history, profiles
+
+
+model, utr_df, history, profiles = load_everything(credentials_dict)
+player_names = sorted(set(profiles.keys()) & set(history.keys()))
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# STREAMLIT UI
+# ────────────────────────────────────────────────────────────────────────────────
+with tabs[0]:
+    st.subheader("Pick two players")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        p1 = st.selectbox("Player 1", player_names, index=0)
+    with col2:
+        p2 = st.selectbox("Player 2", [n for n in player_names if n != p1], index=1)
+
+    # pull latest UTRs
+    p1_utr, p2_utr = history[p1], history[p2]
+
+    st.write(f"Current UTRs – **{p1}: {p1_utr:.2f}**, **{p2}: {p2_utr:.2f}**")
+
+    if st.button("Predict"):
+        match_stub = {  # minimal dict for preprocess()
+            "p1": p1, "p2": p2, "p1_utr": p1_utr, "p2_utr": p2_utr
+        }
+        vec = np.array(preprocess_match_data(match_stub, profiles)).reshape(1, -1)
+        
+        with torch.no_grad():
+            prob = 1 - float(model(torch.tensor(vec, dtype=torch.float32))[0])
+        st.metric(label="Probability Player 1 Wins", value=f"{prob*100:0.1f}%")
                     
 # === Tab: Upcoming Matches ===
 with tabs[1]:
     st.header("📅 Upcoming Matches")
     st.subheader("Stay Ahead of the Game")
-    st.caption("See what's next on the pro circuit, and who’s most likely to rise.")
+    st.caption("See what's next on the pro circuit, and who's most likely to rise.")
 
     st.write("Here you can display upcoming tennis matches (e.g., from a dataset or API).")
 
@@ -227,13 +114,15 @@ with tabs[1]:
 with tabs[2]:
     st.header("📈 Large UTR Moves")
     st.subheader("Biggest Shifts in Player Ratings")
-    st.caption("Our algorithm tracks the highest-impact UTR swings — who’s rising, who’s falling.")
+    st.caption("Our algorithm tracks the highest-impact UTR swings — who's peaking, who's slipping.")
 
     st.write("This tab will highlight matches where players gained or lost a large amount of UTR since the previous week.")
 
     # Load the CSV from your bucket
-    conn = st.connection('gcs', type=FilesConnection)
-    df = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
+    credentials = service_account.Credentials.from_service_account_info(credentials_dict)
+    client = storage.Client(credentials=credentials, project=credentials_dict["project_id"])
+    utr_bucket = client.bucket(UTR_BUCKET)
+    df = download_csv_from_gcs(credentials_dict, utr_bucket, UTR_FILE)
 
     content = []
     prev_name = ''
@@ -256,11 +145,12 @@ with tabs[3]:
     st.header("🎾 Player Metrics")
 
     # Load data from GCS
-    conn = st.connection('gcs', type=FilesConnection)
-    df1 = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
-    df2 = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
+    utr_bucket = client.bucket(UTR_BUCKET)
+    df1 = download_csv_from_gcs(credentials_dict, utr_bucket, UTR_FILE)
+    matches_bucket = client.bucket(MATCHES_BUCKET)
+    df2 = download_csv_from_gcs(credentials_dict, matches_bucket, MATCHES_FILE)
 
-    history = get_player_history(df1)
+    history = get_player_history_general(df1)
     player_df = get_player_profiles_general(df2, history)
 
     # Player selection
@@ -278,13 +168,24 @@ with tabs[3]:
         if player1 != "" and player2 != "":
             profile = player_df[player1]
 
+            # Assuming you want to take the average of the list if it's a list
+            utr_value = profile.get("utr", 0)
+
+            # Check if utr_value is a list and calculate the average if it is
+            if isinstance(utr_value, list):
+                utr_value = sum(utr_value) / len(utr_value) if utr_value else 0  # Avoid division by zero
+
             st.markdown(f"### {player1}")
-            st.metric("Current UTR", profile.get("utr", 0))
-            st.metric("Win Rate Vs. Lower UTRs", f"{round(profile.get("win_vs_lower", 0) * 100, 2)}%")
-            st.metric("Win Rate Vs. Higher UTRs", f"{round(profile.get("win_vs_higher", 0) * 100, 2)}%")
-            st.metric("Win Rate Last 10 Matches", f"{round(profile.get("recent10", 0) * 100, 2)}%")
+            
+            # Limit utr value to 2 decimal places
+            utr_value = round(utr_value, 2)
+            
+            st.metric("Current UTR", utr_value)
+            st.metric("Win Rate Vs. Lower UTRs", f"{round(profile.get('win_vs_lower', 0) * 100, 2)}%")
+            st.metric("Win Rate Vs. Higher UTRs", f"{round(profile.get('win_vs_higher', 0) * 100, 2)}%")
+            st.metric("Win Rate Last 10 Matches", f"{round(profile.get('recent10', 0) * 100, 2)}%")
             try:
-                st.metric("Head-To-Head (W-L)", f"{profile.get("h2h")[player2][0]} - {profile.get("h2h")[player2][1]-profile.get("h2h")[player2][0]}")
+                st.metric("Head-To-Head (W-L)", f"{profile.get('h2h')[player2][0]} - {profile.get('h2h')[player2][1]-profile.get('h2h')[player2][0]}")
             except:
                 st.metric("Head-To-Head (W-L)", "0 - 0")
 
@@ -350,15 +251,15 @@ with tabs[4]:
     - Custom visualizations
 
     #### 👨‍💻 About the Developers  
-    We’re a team of student developers and tennis enthusiasts combining our passions for sports analytics, data science, and clean UI design. This is an ongoing project — we’re constantly improving predictions, cleaning data, and adding new insights.
+    We're a team of student developers and tennis enthusiasts combining our passions for sports analytics, data science, and clean UI design. This is an ongoing project — we're constantly improving predictions, cleaning data, and adding new insights.
 
     If you have feedback, want to contribute, or just love tennis tech, reach out!
     """)
 
     st.markdown("💬 We Value Your Feedback!")
     ### Feedback Function ###
-    def collect_feedback():
-        pass
+# def collect_feedback():
+        # pass
     # # Create a form to collect feedback
     # with st.form(key="feedback_form"):
     #     # Collect feedback from users
@@ -384,4 +285,4 @@ with tabs[4]:
     #         st.success("Thank you for your feedback!")
     #         st.write("We'll review your comments to improve our platform.")
 
-    collect_feedback()
+    # collect_feedback()
