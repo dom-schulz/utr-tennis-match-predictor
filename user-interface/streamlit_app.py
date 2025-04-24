@@ -28,9 +28,22 @@ tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Mov
 # ────────────────────────────────────────────────────────────────────────────────
 @st.cache_resource(show_spinner="🔄  Loading Data & Model from the Cloud...")
 def load_everything():
+    credentials_dict = {
+        "type": st.secrets["connections.gcs.type"],
+        "project_id": st.secrets["connections.gcs.project_id"],
+        "private_key_id": st.secrets["connections.gcs.private_key_id"],
+        "private_key": st.secrets["connections.gcs.private_key"],
+        "client_email": st.secrets["connections.gcs.client_email"],
+        "client_id": st.secrets["connections.gcs.client_id"],
+        "auth_uri": st.secrets["connections.gcs.auth_uri"],
+        "token_uri": st.secrets["connections.gcs.token_uri"],
+        "auth_provider_x509_cert_url": st.secrets["connections.gcs.auth_provider_x509_cert_url"],
+        "client_x509_cert_url": st.secrets["connections.gcs.client_x509_cert_url"],
+        "universe_domain": st.secrets["connections.gcs.universe_domain"]
+    }   
+    
     
     # Initialize client (credentials are picked up from st.secrets)
-    credentials_dict = st.secrets["connections.gcs"]
     credentials = service_account.Credentials.from_service_account_info(credentials_dict)
     
     # Initialize the GCS client with credentials and project
