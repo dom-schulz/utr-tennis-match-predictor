@@ -69,7 +69,7 @@ def load_everything(credentials_dict):
     return model, utr_df, history, profiles
 
 
-model, utr_df, history, profiles = load_everything()
+model, utr_df, history, profiles = load_everything(credentials_dict)
 player_names = sorted(set(profiles.keys()) & set(history.keys()))
 
 
