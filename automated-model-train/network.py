@@ -5,11 +5,14 @@ import torch.nn as nn
 class TennisPredictor(nn.Module):
     def __init__(self, input_size):
         super(TennisPredictor, self).__init__()
-        self.fc1 = nn.Linear(input_size, 256)
-        self.fc2 = nn.Linear(256, 128)
-        self.fc3 = nn.Linear(128, 64)
-        self.fc4 = nn.Linear(64, 32)
-        self.fc5 = nn.Linear(32, 1)
+        self.fc1 = nn.Linear(input_size, 1028)
+        self.fc2 = nn.Linear(1028, 512)
+        self.fc3 = nn.Linear(512, 256)
+        self.fc4 = nn.Linear(256, 128)
+        self.fc5 = nn.Linear(128, 64)
+        self.fc6 = nn.Linear(64, 32)
+        self.fc7 = nn.Linear(32, 16)
+        self.fc8 = nn.Linear(16, 1)
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
 
@@ -18,7 +21,10 @@ class TennisPredictor(nn.Module):
         x = self.relu(self.fc2(x))
         x = self.relu(self.fc3(x))
         x = self.relu(self.fc4(x))
-        x = self.sigmoid(self.fc5(x))
+        x = self.relu(self.fc5(x))
+        x = self.relu(self.fc6(x))
+        x = self.relu(self.fc7(x))
+        x = self.sigmoid(self.fc8(x))
         return x
 
 # Convert -1 values to 0 and create a mask
@@ -28,23 +34,23 @@ def create_masked_inputs(X):
     return X, mask
 
 # Preprocessing function to convert match data into features for the model
-def preprocess_match_data(matches, profiles):
+def preprocess_match_data(matches, profiles): # log_predict?
     match_vector = [matches['p1_utr']-matches['p2_utr'], 
-                    profiles[ matches['p1'] ]['win_vs_lower'],
-                    profiles[ matches['p2'] ]['win_vs_lower'],
-                    profiles[ matches['p1'] ]['win_vs_higher'],
-                    profiles[ matches['p2'] ]['win_vs_higher'],
-                    profiles[ matches['p1'] ]['recent10'],
-                    profiles[ matches['p2'] ]['recent10'],
-                    profiles[ matches['p1'] ]['wvl_utr'],
-                    profiles[ matches['p2'] ]['wvl_utr'],
-                    profiles[ matches['p1'] ]['wvh_utr'],
-                    profiles[ matches['p2'] ]['wvh_utr'],
-                    # profiles[ matches['p1'] ]['r10_utr'],
-                    # profiles[ matches['p2'] ]['r10_utr'],
-                    profiles[ matches['p1'] ]['h2h'][ matches['p2'] ][0] / profiles[ matches['p1'] ]['h2h'][ matches['p2'] ][1],
-                    profiles[ matches['p2'] ]['h2h'][ matches['p1'] ][0] / profiles[ matches['p2'] ]['h2h'][ matches['p1'] ][1]
-                    ]
+                profiles[ matches['p1'] ]['win_vs_lower'],
+                profiles[ matches['p2'] ]['win_vs_lower'],
+                profiles[ matches['p1'] ]['win_vs_higher'],
+                profiles[ matches['p2'] ]['win_vs_higher'],
+                profiles[ matches['p1'] ]['recent10'],
+                profiles[ matches['p2'] ]['recent10'],
+                profiles[ matches['p1'] ]['wvl_utr'],
+                profiles[ matches['p2'] ]['wvl_utr'],
+                profiles[ matches['p1'] ]['wvh_utr'],
+                profiles[ matches['p2'] ]['wvh_utr'],
+                profiles[ matches['p1'] ]['h2h'][ matches['p2'] ][0] / profiles[ matches['p1'] ]['h2h'][ matches['p2'] ][1],
+                profiles[ matches['p2'] ]['h2h'][ matches['p1'] ][0] / profiles[ matches['p2'] ]['h2h'][ matches['p1'] ][1],
+                # profiles[ matches['p1'] ]['h2h'][ matches['p2'] ][2] / profiles[ matches['p1'] ]['h2h'][ matches['p2'] ][3],
+                # profiles[ matches['p2'] ]['h2h'][ matches['p1'] ][2] / profiles[ matches['p2'] ]['h2h'][ matches['p1'] ][3]
+                ]
     return match_vector
 
 def get_player_profiles(data, history):
@@ -62,7 +68,7 @@ def get_player_profiles(data, history):
                     "wvh_utr": [],
                     "recent10": [],
                     "r10_utr": [],
-                    "utr": history[player]['utr'],
+                    "utr": history[player], # Was history[player]['utr']
                     "h2h": {}
                 }
             elif player not in player_profiles:
@@ -85,7 +91,7 @@ def get_player_profiles(data, history):
                     "wvh_utr": [],
                     "recent10": [],
                     "r10_utr": [],
-                    "utr": history[opponent]['utr'],
+                    "utr": history[opponent], # Was history[opponent]['utr']
                     "h2h": {}
                 }
             elif opponent not in player_profiles:
@@ -101,19 +107,19 @@ def get_player_profiles(data, history):
                 }
 
             if opponent not in player_profiles[player]['h2h']:
-                player_profiles[player]['h2h'][opponent] = [0,0]
+                player_profiles[player]['h2h'][opponent] = [0,0,1,1]
 
             if player not in player_profiles[opponent]['h2h']:
-                player_profiles[opponent]['h2h'][player] = [0,0]
-
+                player_profiles[opponent]['h2h'][player] = [0,0,1,1]
+             
             if data['winner'][i] == player:
                 player_profiles[player]['h2h'][opponent][0] += 1
                 player_profiles[player]['h2h'][opponent][1] += 1
                 player_profiles[opponent]['h2h'][player][1] += 1
-            # else:
-            #     player_profiles[player]['h2h'][opponent][1] += 1
-            #     player_profiles[opponent]['h2h'][player][0] += 1
-            #     player_profiles[opponent]['h2h'][player][1] += 1
+            else:
+                player_profiles[player]['h2h'][opponent][1] += 1
+                player_profiles[opponent]['h2h'][player][0] += 1
+                player_profiles[opponent]['h2h'][player][1] += 1
             
             # Record win rates vs higher/lower-rated opponents
             if utr_diff > 0:  # Player faced a lower-rated opponent
@@ -139,11 +145,11 @@ def get_player_profiles(data, history):
                 # player_profiles[player]["r10_utr"] = player_profiles[player]["r10_utr"][1:]
                 # player_profiles[player]["r10_utr"].append(data["p2_utr"][i] if data["p1"][i] == player else data["p1_utr"][i])
 
-            # if len(player_profiles[opponent]["recent10"]) < 10:
-            #     player_profiles[opponent]["recent10"].append(data["p_win"][i] == 1*data['p2_utr'][i] if data["p1"][i] == opponent else data["p_win"][i] == 0)
-            # else:
-            #     player_profiles[opponent]["recent10"] = player_profiles[opponent]["recent10"][1:]
-            #     player_profiles[opponent]["recent10"].append(data["p_win"][i] == 1*data['p2_utr'][i] if data["p1"][i] == opponent else data["p_win"][i] == 0)
+            if len(player_profiles[opponent]["recent10"]) < 10:
+                player_profiles[opponent]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == opponent else data["p_win"][i] == 0)
+            else:
+                player_profiles[opponent]["recent10"] = player_profiles[opponent]["recent10"][1:]
+                player_profiles[opponent]["recent10"].append(data["p_win"][i] == 1 if data["p1"][i] == opponent else data["p_win"][i] == 0)
 
     for player in player_profiles:
         profile = player_profiles[player]
@@ -156,12 +162,12 @@ def get_player_profiles(data, history):
 
 def get_player_history(utr_history):
     history = {}
-
     for i in range(len(utr_history)):
-        if utr_history['l_name'][i]+' '+utr_history['f_name'][i][0]+'.' not in history:
-            history[utr_history['l_name'][i]+' '+utr_history['f_name'][i][0]+'.'] = {
-                'utr': utr_history['utr'][i]
-            }
+        if utr_history['first_name'][i]+' '+utr_history['last_name'][i] not in history.keys():
+            history[utr_history['first_name'][i]+' '+utr_history['last_name'][i]] = [[utr_history['utr'][i], utr_history['date'][i]]]
+        else:
+            history[utr_history['first_name'][i]+' '+utr_history['last_name'][i]].append([utr_history['utr'][i], utr_history['date'][i]])
+
     return history
 
 def get_prop(model, matches, player_profiles):
