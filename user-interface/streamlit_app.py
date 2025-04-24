@@ -8,6 +8,7 @@ from predict_utils import *
 import matplotlib.pyplot as plt
 from datetime import datetime
 from google.cloud import storage
+from google.oauth2 import service_account
 import torch
 import numpy as np
 
@@ -28,8 +29,12 @@ tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Mov
 @st.cache_resource(show_spinner="🔄  Loading Data & Model from the Cloud...")
 def load_everything():
     
-    # Initialize client (credentials are picked up automatically from st.secrets)
-    client = storage.Client()
+    # Initialize client (credentials are picked up from st.secrets)
+    credentials_dict = st.secrets["connections.gcs"]
+    credentials = service_account.Credentials.from_service_account_info(credentials_dict)
+    
+    # Initialize the GCS client with credentials and project
+    client = storage.Client(credentials=credentials, project=credentials_dict["project_id"])
 
     # Download model from GCS
     model_bucket = client.bucket(MODEL_BUCKET)
