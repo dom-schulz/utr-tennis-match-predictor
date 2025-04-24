@@ -22,7 +22,7 @@ tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Mov
 # Load Model & Data
 # ────────────────────────────────────────────────────────────────────────────────
 
-CREDENTIALS_DICT = {
+credentials_dict = {
         "type": st.secrets["connections_gcs_type"],
         "project_id": st.secrets["connections_gcs_project_id"],
         "private_key_id": st.secrets["connections_gcs_private_key_id"],
@@ -37,13 +37,13 @@ CREDENTIALS_DICT = {
 }
 
 @st.cache_resource(show_spinner="🔄  Loading Data & Model from the Cloud...")
-def load_everything():
+def load_everything(credentials_dict):
 
     # Initialize client (credentials are picked up from st.secrets)
-    credentials = service_account.Credentials.from_service_account_info(CREDENTIALS_DICT)
+    credentials = service_account.Credentials.from_service_account_info(credentials_dict)
     
     # Initialize the GCS client with credentials and project
-    client = storage.Client(credentials=credentials, project=CREDENTIALS_DICT["project_id"])
+    client = storage.Client(credentials=credentials, project=credentials_dict["project_id"])
 
     # Download model from GCS
     model_bucket = client.bucket(MODEL_BUCKET)
@@ -59,8 +59,8 @@ def load_everything():
     matches_bucket = client.bucket(MATCHES_BUCKET)
 
     # Download data from GCS and return dataframes
-    utr_df     = download_csv_from_gcs(utr_bucket, UTR_FILE)
-    matches_df = download_csv_from_gcs(matches_bucket, MATCHES_FILE)
+    utr_df     = download_csv_from_gcs(credentials_dict, utr_bucket, UTR_FILE)
+    matches_df = download_csv_from_gcs(credentials_dict, matches_bucket, MATCHES_FILE)
     
     # Get player history and profiles
     history    = get_player_history(utr_df)
@@ -121,7 +121,7 @@ with tabs[2]:
     # Load the CSV from your bucket
     client = storage.Client()
     utr_bucket = client.bucket(UTR_BUCKET)
-    df = download_csv_from_gcs(utr_bucket, UTR_FILE)
+    df = download_csv_from_gcs(credentials_dict, utr_bucket, UTR_FILE)
 
     content = []
     prev_name = ''
@@ -145,9 +145,9 @@ with tabs[3]:
 
     # Load data from GCS
     utr_bucket = client.bucket(UTR_BUCKET)
-    df1 = download_csv_from_gcs(utr_bucket, UTR_FILE)
+    df1 = download_csv_from_gcs(credentials_dict, utr_bucket, UTR_FILE)
     matches_bucket = client.bucket(MATCHES_BUCKET)
-    df2 = download_csv_from_gcs(matches_bucket, MATCHES_FILE)
+    df2 = download_csv_from_gcs(credentials_dict, matches_bucket, MATCHES_FILE)
 
     history = get_player_history_general(df1)
     player_df = get_player_profiles_general(df2, history)
