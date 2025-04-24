@@ -284,4 +284,4 @@ with tabs[4]:
     #         st.success("Thank you for your feedback!")
     #         st.write("We'll review your comments to improve our platform.")
 
-    collect_feedback()
+    # collect_feedback()
