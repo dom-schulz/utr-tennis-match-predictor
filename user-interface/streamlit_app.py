@@ -119,7 +119,8 @@ with tabs[2]:
     st.write("This tab will highlight matches where players gained or lost a large amount of UTR since the previous week.")
 
     # Load the CSV from your bucket
-    client = storage.Client()
+    credentials = service_account.Credentials.from_service_account_info(credentials_dict)
+    client = storage.Client(credentials=credentials, project=credentials_dict["project_id"])
     utr_bucket = client.bucket(UTR_BUCKET)
     df = download_csv_from_gcs(credentials_dict, utr_bucket, UTR_FILE)
 
