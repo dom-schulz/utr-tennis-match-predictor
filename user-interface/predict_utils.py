@@ -2,15 +2,14 @@ import numpy as np
 import random
 import pandas as pd
 import torch
+import torch.nn as nn
 import joblib
 from colorama import Fore, Style, init
-import torch
-import torch.nn as nn
 from st_files_connection import FilesConnection
 import streamlit as st
-import joblib
 from google.cloud import storage
 import io
+
 
 # GCS Buckets and files
 MODEL_BUCKET = "utr-model-training-bucket"
