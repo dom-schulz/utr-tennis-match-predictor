@@ -258,16 +258,15 @@ with tabs[4]:
 
     st.markdown("💬 We Value Your Feedback!")
     ### Feedback Function ###
-# def collect_feedback():
-        # pass
-    # # Create a form to collect feedback
-    # with st.form(key="feedback_form"):
-    #     # Collect feedback from users
-    #     rating = st.slider("How would you rate your experience?", min_value=1, max_value=10)
-    #     comments = st.text_area("Any comments or suggestions?", height=150)
+    def collect_feedback():
+    # Create a form to collect feedback
+    with st.form(key="feedback_form"):
+        # Collect feedback from users
+        rating = st.slider("How would you rate your experience?", min_value=1, max_value=10)
+        comments = st.text_area("Any comments or suggestions?", height=150)
         
-    #     # Submit button
-    #     submit_button = st.form_submit_button(label="Submit Feedback")
+        # Submit button
+        submit_button = st.form_submit_button(label="Submit Feedback")
         
     #     if submit_button:
     #         # Store the feedback (could also save to a file, database, etc.)
@@ -285,4 +284,4 @@ with tabs[4]:
     #         st.success("Thank you for your feedback!")
     #         st.write("We'll review your comments to improve our platform.")
 
-    # collect_feedback()
+    collect_feedback()
