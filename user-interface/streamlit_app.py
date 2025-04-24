@@ -276,7 +276,7 @@ with tabs[4]:
     #             "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
     #             "rating": rating,
     #             "comments": comments
-    #         }
+    }
             
     #         # Optionally, save the feedback to a CSV or database
     #         feedback_df = pd.DataFrame([feedback_data])
