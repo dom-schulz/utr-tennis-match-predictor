@@ -535,6 +535,7 @@ def preprocess_match_data(match_row, profiles):
 def display_player_metrics(player1, player2, history, profiles):
     if player1 != "" and player2 != "":
         profile = profiles[player1]
+        st.markdown(profile)
 
         # Assuming you want to take the average of the list if it's a list
         utr_value = profile.get("utr", 0)
