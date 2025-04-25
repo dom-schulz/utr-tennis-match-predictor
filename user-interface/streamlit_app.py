@@ -6,7 +6,7 @@ from google.oauth2 import service_account
 import torch
 import numpy as np
 
-st.title("UTR Match Predictor Test 🎾")
+st.title("UTR Match Predictor 🎾")
 
 with st.sidebar:
     st.header("🔧 Tools & Insights")
