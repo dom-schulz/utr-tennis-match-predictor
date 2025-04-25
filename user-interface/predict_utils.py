@@ -237,7 +237,7 @@ def find_winner(score):
 #     return prediction
 
 
-def get_player_profiles(matches, history):
+def get_set_player_profiles(matches, history):
     """Same logic you used in training (simplified to what preprocess needs)."""
     profiles = {}
     for r in matches.itertuples():
@@ -249,9 +249,10 @@ def get_player_profiles(matches, history):
                     "h2h": {}, "utr": history.get(plyr, getattr(r, "p1_utr" if plyr == r.p1 else "p2_utr"))
                 }
             if opp not in profiles[plyr]["h2h"]:
-                profiles[plyr]["h2h"][opp] = [0, 0, 1, 1]  # W, G, W_?, G_?
+                profiles[plyr]["h2h"][opp] = [0, 0]  # W, G, W_?, G_?
                 
             # minimal updates just so preprocess() works
+            
     # convert lists → means so they’re scalar
     for p in profiles.values():
         for k in ("win_vs_lower", "win_vs_higher", "recent10", "wvl_utr", "wvh_utr"):
@@ -259,7 +260,7 @@ def get_player_profiles(matches, history):
     return profiles
 
 
-def get_player_profiles_general(data, history):
+def get_set_player_profiles_general(data, history):
     player_profiles = {}
 
     for i in range(len(data)):
@@ -535,7 +536,7 @@ def preprocess_match_data(match_row, profiles):
 def display_player_metrics(player1, player2, history, profiles):
     if player1 != "" and player2 != "":
         profile = profiles[player1]
-        st.markdown(profile)
+        # st.markdown(profile)
 
         # Assuming you want to take the average of the list if it's a list
         utr_value = profile.get("utr", 0)
