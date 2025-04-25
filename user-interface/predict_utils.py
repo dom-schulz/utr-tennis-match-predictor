@@ -559,6 +559,7 @@ def display_player_metrics(player1, player2, history, profiles):
 def display_graph(player1, player2, history):
     # Plot both UTR histories
     if player1 != "" and player2 != "":
+        st.markdown(history[player1])
         utrs1 = history[player1].get("utr", [])
         dates1 = history[player1].get("date", [])
         utrs2 = history[player2].get("utr", [])
