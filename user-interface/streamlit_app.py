@@ -64,12 +64,13 @@ def load_everything(credentials_dict):
     
     # Get player history and profiles
     history    = get_player_history(utr_df)
+    graph_hist = get_player_history_general(utr_df)
     profiles   = get_player_profiles(matches_df, history)
     
-    return model, utr_df, history, profiles
+    return model, utr_df, history, profiles, graph_hist
 
 
-model, utr_df, history, profiles = load_everything(credentials_dict)
+model, utr_df, history, profiles, graph_hist = load_everything(credentials_dict)
 player_names = sorted(set(profiles.keys()) & set(history.keys()))
 player_names = [""] + player_names
 
@@ -181,7 +182,7 @@ with tabs[0]:
 
     st.divider()
 
-    display_graph(p1, p2, history)
+    display_graph(p1, p2, graph_hist)
 
     st.divider()
 
