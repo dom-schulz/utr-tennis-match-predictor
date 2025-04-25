@@ -240,6 +240,7 @@ def find_winner(score):
 def get_set_player_profiles(matches, history, st=None):
     """Same logic you used in training (simplified to what preprocess needs)."""
     profiles = {}
+    st.write("Gathering Profile Data")
     for r in matches.itertuples():
         for plyr, opp in ((r.p1, r.p2), (r.p2, r.p1)):
             if plyr not in profiles:
