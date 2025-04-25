@@ -165,8 +165,8 @@ def preprocess_player_data(p1, p2, profiles):
                     profiles[p2]['wvl_utr'],
                     profiles[p1]['wvh_utr'],
                     profiles[p2]['wvh_utr'],
-                    profiles[p1]['h2h'][p2][0] / profiles[p1]['h2h'][p2][1],
-                    profiles[p2]['h2h'][p1][0] / profiles[p2]['h2h'][p1][1]
+                    h2h_ratio(p1, p2),
+                    h2h_ratio(p2, p1)
                     ]
     return match_vector
 
@@ -542,7 +542,12 @@ def download_csv_from_gcs(credentials_dict, bucket, file_path):
     except Exception as e:
         raise
 
-
+# Helper that returns win-ratio with a safe fallback (0 wins / 1 match)
+def h2h_ratio(player, opponent):
+    h2h_stats = profiles[player]["h2h"].get(opponent, [0, 1])
+    wins = h2h_stats[0]
+    total = h2h_stats[1] if h2h_stats[1] != 0 else 1  # prevent division by zero
+    return wins / total
 
 # Rewritten preprocess_player_data function, handles division by zero error
 def preprocess_match_data(match_row, profiles):
@@ -564,13 +569,6 @@ def preprocess_match_data(match_row, profiles):
     p1 = match_row["p1"]
     p2 = match_row["p2"]
 
-    # Helper that returns win-ratio with a safe fallback (0 wins / 1 match)
-    def h2h_ratio(player, opponent):
-        h2h_stats = profiles[player]["h2h"].get(opponent, [0, 1])
-        wins = h2h_stats[0]
-        total = h2h_stats[1] if h2h_stats[1] != 0 else 1  # prevent division by zero
-        return wins / total
-
     vec = [
         match_row["p1_utr"] - match_row["p2_utr"],
         profiles[p1]["win_vs_lower"],  profiles[p2]["win_vs_lower"],
@@ -586,7 +584,7 @@ def preprocess_match_data(match_row, profiles):
 def display_player_metrics(player1, player2, history, profiles):
     if player1 != "" and player2 != "":
         profile = profiles[player1]
-        st.markdown(profile)
+        # st.markdown(profile)
 
         # Assuming you want to take the average of the list if it's a list
         utr_value = profile.get("utr", 0)
