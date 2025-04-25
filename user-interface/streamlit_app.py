@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from predict_utils import *
-import matplotlib.pyplot as plt
 from google.cloud import storage
 from google.oauth2 import service_account
 import torch

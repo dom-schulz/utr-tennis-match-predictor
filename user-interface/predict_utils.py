@@ -12,6 +12,7 @@ import joblib
 from google.cloud import storage
 import io
 from google.oauth2 import service_account
+import matplotlib.pyplot as plt
 
 # GCS Buckets and files
 MODEL_BUCKET = "utr-model-training-bucket"
