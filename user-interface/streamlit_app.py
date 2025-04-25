@@ -64,7 +64,7 @@ def load_everything(credentials_dict):
     # Get player history and profiles
     history    = get_player_history(utr_df)
     graph_hist = get_player_history_general(utr_df)
-    profiles   = get_set_player_profiles(matches_df, history)
+    profiles   = get_set_player_profiles(matches_df, history, st=st)
     
     return model, utr_df, history, profiles, graph_hist
 

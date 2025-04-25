@@ -237,7 +237,7 @@ def find_winner(score):
 #     return prediction
 
 
-def get_set_player_profiles(matches, history):
+def get_set_player_profiles(matches, history, st=None):
     """Same logic you used in training (simplified to what preprocess needs)."""
     profiles = {}
     for r in matches.itertuples():
