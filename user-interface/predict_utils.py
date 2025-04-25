@@ -254,7 +254,7 @@ def get_set_player_profiles(matches, history, st=None):
                 
             # minimal updates just so preprocess() works
             
-    st.markdown("Gather Profile Data")
+    # st.markdown("Gather Profile Data")
     for r in matches.itertuples():
         # for plyr, opp in ((r.p1, r.p2), (r.p2, r.p1)):
             if r.winner == r.p1:
