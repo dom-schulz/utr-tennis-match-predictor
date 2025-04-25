@@ -284,7 +284,7 @@ with tabs[3]:
 
     def display_graph(player1, player2, history):
         # Plot both UTR histories
-        try:
+        if player1 != "" and player2 != "":
             utrs1 = history[player1].get("utr", [])
             dates1 = history[player1].get("date", [])
             utrs2 = history[player2].get("utr", [])
@@ -307,8 +307,6 @@ with tabs[3]:
                 fig.autofmt_xdate()
 
                 st.pyplot(fig)
-        except:
-            pass
 
     st.divider()
 
