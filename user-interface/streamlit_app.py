@@ -189,9 +189,9 @@ with tabs[0]:
 
     col1, col2 = st.columns(2)
     with col1:
-        display_player_metrics(p1, p2, history, player_df)
+        display_player_metrics(p1, p2, history, profiles)
     with col2:
-        display_player_metrics(p2, p1, history, player_df)
+        display_player_metrics(p2, p1, history, profiles)
                     
 # === Tab: Upcoming Matches ===
 with tabs[1]:
