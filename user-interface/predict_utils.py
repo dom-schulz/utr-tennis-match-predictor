@@ -255,7 +255,7 @@ def get_set_player_profiles(matches, history):
             
     for r in matches.itertuples():
         # for plyr, opp in ((r.p1, r.p2), (r.p2, r.p1)):
-        st.markdown(r)
+        st.markdown("Gathering Profile Data")
             if r.winner == r.p1:
                 profiles[r.p1]['h2h'][r.p2][0] += 1
                 profiles[r.p1]['h2h'][r.p2][1] += 1
