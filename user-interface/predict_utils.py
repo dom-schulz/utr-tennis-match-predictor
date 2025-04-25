@@ -256,50 +256,50 @@ def get_set_player_profiles(matches, history):
     for r in matches.itertuples():
         # for plyr, opp in ((r.p1, r.p2), (r.p2, r.p1)):
             if r.winner == r.p1:
-                player_profiles[r.p1]['h2h'][r.p2][0] += 1
-                player_profiles[r.p1]['h2h'][r.p2][1] += 1
-                player_profiles[r.p2]['h2h'][r.p1][1] += 1
+                profiles[r.p1]['h2h'][r.p2][0] += 1
+                profiles[r.p1]['h2h'][r.p2][1] += 1
+                profiles[r.p2]['h2h'][r.p1][1] += 1
             else:
-                player_profiles[r.p1]['h2h'][r.p2][1] += 1
-                player_profiles[r.p2]['h2h'][r.p1][0] += 1
-                player_profiles[r.p2]['h2h'][r.p1][1] += 1
+                profiles[r.p1]['h2h'][r.p2][1] += 1
+                profiles[r.p2]['h2h'][r.p1][0] += 1
+                profiles[r.p2]['h2h'][r.p1][1] += 1
             
             # Record win rates vs higher/lower-rated opponents
             if r.p1_utr-r.p2_utr > 0:  # Player faced a lower-rated opponent
                 if r.winner == r.p1:
-                    player_profiles[r.p1]["win_vs_lower"].append(1)
-                    player_profiles[r.p2]["win_vs_higher"].append(0)
-                    player_profiles[r.p1]["wvl_utr"].append(r.p2_utr)
-                    player_profiles[r.p2]["wvh_utr"].append(0)
+                    profiles[r.p1]["win_vs_lower"].append(1)
+                    profiles[r.p2]["win_vs_higher"].append(0)
+                    profiles[r.p1]["wvl_utr"].append(r.p2_utr)
+                    profiles[r.p2]["wvh_utr"].append(0)
                 else:
-                    player_profiles[r.p1]["win_vs_lower"].append(0)
-                    player_profiles[r.p2]["win_vs_higher"].append(1)
-                    player_profiles[r.p2]["wvh_utr"].append(r.p1_utr)
-                    player_profiles[r.p1]["wvl_utr"].append(0)
+                    profiles[r.p1]["win_vs_lower"].append(0)
+                    profiles[r.p2]["win_vs_higher"].append(1)
+                    profiles[r.p2]["wvh_utr"].append(r.p1_utr)
+                    profiles[r.p1]["wvl_utr"].append(0)
 
             else:  # Player faced a higher-rated opponent
                 if r.winner == r.p1:
-                    player_profiles[r.p1]["win_vs_higher"].append(1)
-                    player_profiles[r.p2]["win_vs_lower"].append(0)
-                    player_profiles[r.p1]["wvh_utr"].append(r.p2_utr)
-                    player_profiles[r.p2]["wvl_utr"].append(0)
+                    profiles[r.p1]["win_vs_higher"].append(1)
+                    profiles[r.p2]["win_vs_lower"].append(0)
+                    profiles[r.p1]["wvh_utr"].append(r.p2_utr)
+                    profiles[r.p2]["wvl_utr"].append(0)
                 else:
-                    player_profiles[r.p1]["win_vs_higher"].append(0)
-                    player_profiles[r.p2]["win_vs_lower"].append(1)
-                    player_profiles[r.p2]["wvl_utr"].append(r.p1_utr)
-                    player_profiles[r.p1]["wvh_utr"].append(0)
+                    profiles[r.p1]["win_vs_higher"].append(0)
+                    profiles[r.p2]["win_vs_lower"].append(1)
+                    profiles[r.p2]["wvl_utr"].append(r.p1_utr)
+                    profiles[r.p1]["wvh_utr"].append(0)
 
             if r.winner == r.p1:
-                player_profiles[r.p1]["recent10"].append(1)
-                player_profiles[r.p2]["recent10"].append(0)
+                profiles[r.p1]["recent10"].append(1)
+                profiles[r.p2]["recent10"].append(0)
             else:
-                player_profiles[r.p1]["recent10"].append(0)
-                player_profiles[r.p2]["recent10"].append(1)
+                profiles[r.p1]["recent10"].append(0)
+                profiles[r.p2]["recent10"].append(1)
 
             if len(player_profiles[r.p1]["recent10"]) > 10:
-                player_profiles[r.p1]["recent10"] = player_profiles[r.p1]["recent10"][1:]
+                profiles[r.p1]["recent10"] = profiles[r.p1]["recent10"][1:]
             if len(player_profiles[r.p2]["recent10"]) > 10:
-                player_profiles[r.p2]["recent10"] = player_profiles[r.p2]["recent10"][1:]
+                profiles[r.p2]["recent10"] = profiles[r.p2]["recent10"][1:]
             
     # convert lists → means so they’re scalar
     for p in profiles.values():
