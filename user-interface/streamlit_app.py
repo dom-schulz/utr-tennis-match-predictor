@@ -127,7 +127,7 @@ with tabs[0]:
     # with col2:
     #     p2 = st.selectbox("Player 2", player_names, key="player2")
 
-    def display_player_metrics(player1, player2, history):
+    def display_player_metrics(player1, player2, history, player_df):
         if player1 != "" and player2 != "":
             profile = player_df[player1]
 
@@ -188,9 +188,9 @@ with tabs[0]:
 
     col1, col2 = st.columns(2)
     with col1:
-        display_player_metrics(p1, p2, history)
+        display_player_metrics(p1, p2, history, player_df)
     with col2:
-        display_player_metrics(p2, p1, history)
+        display_player_metrics(p2, p1, history, player_df)
                     
 # === Tab: Upcoming Matches ===
 with tabs[1]:
