@@ -249,7 +249,7 @@ def get_set_player_profiles(matches, history):
                     "h2h": {}, "utr": history.get(plyr, getattr(r, "p1_utr" if plyr == r.p1 else "p2_utr"))
                 }
             if opp not in profiles[plyr]["h2h"]:
-                profiles[plyr]["h2h"][opp] = [0, 0]  # W, G, W_?, G_?
+                profiles[plyr]["h2h"][opp] = [0, 0]  # Wins, Total
                 
             # minimal updates just so preprocess() works
             
