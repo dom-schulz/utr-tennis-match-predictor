@@ -161,7 +161,7 @@ with tabs[2]:
     df = df.sort_values(by="UTR % Change", ascending=True)
     st.dataframe(df.head(10))
 
-with tabs[4]:
+with tabs[3]:
     st.markdown("""
     ### 📖 About This Project
 
