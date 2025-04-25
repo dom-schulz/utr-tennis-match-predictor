@@ -6,7 +6,7 @@ from google.oauth2 import service_account
 import torch
 import numpy as np
 
-st.title("UTR Match Predictor Test 🎾")
+st.title("UTR Match Predictor 🎾")
 
 with st.sidebar:
     st.header("🔧 Tools & Insights")
@@ -101,7 +101,7 @@ with tabs[0]:
             vec = np.array(preprocess_player_data(p1, p1, profiles)).reshape(1, -1)
             
             with torch.no_grad():
-                prob = 1 - float(model(torch.tensor(vec, dtype=torch.float32)).squeeze().detach().numpy())
+                prob = 1 - float(model(torch.tensor(vec, dtype=torch.float32))[0])
             st.metric(label="Probability Player 1 Wins", value=f"{prob*100:0.1f}%")
 
     st.divider()
