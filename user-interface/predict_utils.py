@@ -154,6 +154,13 @@ def create_score(prop, best_of):
 
 
 def preprocess_player_data(p1, p2, profiles):
+    # Helper that returns win-ratio with a safe fallback (0 wins / 1 match)
+    def h2h_ratio(player, opponent):
+        h2h_stats = profiles[player]["h2h"].get(opponent, [0, 1])
+        wins = h2h_stats[0]
+        total = h2h_stats[1] if h2h_stats[1] != 0 else 1  # prevent division by zero
+        return wins / total
+        
     match_vector = [profiles[p1]['utr']-profiles[p2]['utr'], 
                     profiles[p1]['win_vs_lower'],
                     profiles[p2]['win_vs_lower'],
@@ -542,12 +549,7 @@ def download_csv_from_gcs(credentials_dict, bucket, file_path):
     except Exception as e:
         raise
 
-# Helper that returns win-ratio with a safe fallback (0 wins / 1 match)
-def h2h_ratio(player, opponent):
-    h2h_stats = profiles[player]["h2h"].get(opponent, [0, 1])
-    wins = h2h_stats[0]
-    total = h2h_stats[1] if h2h_stats[1] != 0 else 1  # prevent division by zero
-    return wins / total
+
 
 # Rewritten preprocess_player_data function, handles division by zero error
 def preprocess_match_data(match_row, profiles):
@@ -568,6 +570,13 @@ def preprocess_match_data(match_row, profiles):
     """
     p1 = match_row["p1"]
     p2 = match_row["p2"]
+
+    # Helper that returns win-ratio with a safe fallback (0 wins / 1 match)
+    def h2h_ratio(player, opponent):
+        h2h_stats = profiles[player]["h2h"].get(opponent, [0, 1])
+        wins = h2h_stats[0]
+        total = h2h_stats[1] if h2h_stats[1] != 0 else 1  # prevent division by zero
+        return wins / total
 
     vec = [
         match_row["p1_utr"] - match_row["p2_utr"],
