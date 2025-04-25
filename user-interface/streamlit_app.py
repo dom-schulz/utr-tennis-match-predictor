@@ -350,6 +350,7 @@ with tabs[4]:
 
     st.markdown("💬 We Value Your Feedback!")
     ### Feedback Function ###
+
     # def collect_feedback():
     # Create a form to collect feedback
     # with st.form(key="feedback_form"):
