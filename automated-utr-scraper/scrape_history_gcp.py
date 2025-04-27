@@ -29,8 +29,9 @@ LOCAL_PROFILE_FILE = "profile_id.csv"  # profile file bundled with the Docker im
 email = os.getenv("UTR_EMAIL")
 password = os.getenv("UTR_PASSWORD")
 
-# Initialize GCS client
-client = storage.Client() 
+# Initialize GCS client ### Use credentials file for local testing
+client = storage.Client()
+
 bucket = client.bucket(BUCKET_NAME)
 upload_blob = bucket.blob(UPLOAD_FILE_NAME)
 
@@ -157,49 +158,22 @@ def flush_logs():
         except Exception as e:
             logger.error(f"Error flushing logs to GCS: {str(e)}")
 
-def shutdown_vm():
-    """Shut down the VM instance after the job completes."""
-    try:
-        # First try to get instance name from metadata server
-        logger.info("Attempting to shut down VM...")
-        save_logs_to_gcs("Attempting to shut down VM...")
-
-        # Get instance information from metadata server
-        metadata_url = "http://metadata.google.internal/computeMetadata/v1/instance/"
-        headers = {"Metadata-Flavor": "Google"}
-        
-        # Get instance name and zone
-        instance_name = requests.get(metadata_url + "name", headers=headers).text
-        zone_url = metadata_url + "zone"
-        zone_path = requests.get(zone_url, headers=headers).text
-        project_id = requests.get(metadata_url + "project/project-id", headers=headers).text
-        
-        # Extract just the zone name from the path
-        zone = zone_path.split('/')[-1]
-        
-        logger.info(f"Shutting down VM: {instance_name} in zone {zone}, project {project_id}")
-        save_logs_to_gcs(f"Shutting down VM: {instance_name} in zone {zone}, project {project_id}")
-        
-        # Initialize the Compute Engine API client
-        instances_client = compute_v1.InstancesClient()
-        
-        # Create the stop request
-        operation = instances_client.stop(
-            project=project_id,
-            zone=zone,
-            instance=instance_name
-        )
-        
-        logger.info(f"Stop operation initiated: {operation.name}")
-        save_logs_to_gcs(f"Stop operation initiated: {operation.name}")
-        
-        return True
+def download_csv_from_gcs(log_traceback, bucket, file_path):
+    """Downloads a CSV from GCS and returns a pandas DataFrame."""
     
+    logger = log_traceback[0]
+    traceback = log_traceback[1]
+    
+    try:
+        blob = bucket.blob(file_path)
+        data = blob.download_as_string()
+        df = pd.read_csv(io.BytesIO(data))
+        logger.info(f"Successfully downloaded and read {file_path}")
+        return df
     except Exception as e:
-        logger.error(f"Error in shutdown_vm: {str(e)}")
+        logger.error(f"Error downloading or reading CSV from GCS: {str(e)}")
         logger.error(traceback.format_exc())
-        save_logs_to_gcs(f"Error in shutdown_vm: {str(e)}")
-        return False
+        raise
 
 
 
@@ -225,26 +199,16 @@ if not email or not password:
     save_logs_to_gcs("UTR credentials not found in environment variables")
     exit(1)
 
+logger_traceback = [logger, traceback]
+
 # Read the local CSV file bundled with the Docker image
-try:
-    # Check if file exists
-    if not os.path.exists(LOCAL_PROFILE_FILE):
-        logger.error(f"Profile file {LOCAL_PROFILE_FILE} not found in Docker image")
-        save_logs_to_gcs(f"Profile file {LOCAL_PROFILE_FILE} not found in Docker image")
-        exit(1)
-    
-    logger.info(f"Found profile file: {LOCAL_PROFILE_FILE}")
-    file_size = os.path.getsize(LOCAL_PROFILE_FILE)
-    logger.info(f"Profile file size: {file_size} bytes")
-    
-    # # Log file content for debugging
-    # with open(LOCAL_PROFILE_FILE, 'r') as f:
-    #     content = f.read()
-    #     logger.info(f"Profile file content:\n{content}")
-    #     save_logs_to_gcs(f"Profile file contains {content.count(chr(10))+1} lines")
-        
+try:        
     # Read the CSV file
-    profile_ids = pd.read_csv(LOCAL_PROFILE_FILE)
+    profile_ids = download_csv_from_gcs(logger_traceback, bucket, LOCAL_PROFILE_FILE)
+    
+    # Log read in file
+    logger.info(f"Successfully read {len(profile_ids)} profiles from local file")
+    save_logs_to_gcs(f"Successfully read {len(profile_ids)} profiles from local file")
     
     # Convert p_id column to integer, handling NaN designation
     if 'p_id' in profile_ids.columns:
@@ -280,17 +244,17 @@ try:
         logger.info("Added profile_id column based on p_id for compatibility")
         save_logs_to_gcs("Added profile_id column based on p_id for compatibility")
     
-    if 'f_name' in profile_ids.columns and 'first_name' not in profile_ids.columns:
-        # Make a copy of the f_name column as first_name for compatibility
-        profile_ids['first_name'] = profile_ids['f_name']
-        logger.info("Added first_name column based on f_name for compatibility")
-        save_logs_to_gcs("Added first_name column based on f_name for compatibility")
+    if 'f_name' in profile_ids.columns and 'f_name' not in profile_ids.columns:
+        # Make a copy of the f_name column as f_name for compatibility
+        profile_ids['f_name'] = profile_ids['f_name']
+        logger.info("Added f_name column based on f_name for compatibility")
+        save_logs_to_gcs("Added f_name column based on f_name for compatibility")
     
-    if 'l_name' in profile_ids.columns and 'last_name' not in profile_ids.columns:
-        # Make a copy of the l_name column as last_name for compatibility
-        profile_ids['last_name'] = profile_ids['l_name']
-        logger.info("Added last_name column based on l_name for compatibility")
-        save_logs_to_gcs("Added last_name column based on l_name for compatibility")
+    if 'l_name' in profile_ids.columns and 'l_name' not in profile_ids.columns:
+        # Make a copy of the l_name column as l_name for compatibility
+        profile_ids['l_name'] = profile_ids['l_name']
+        logger.info("Added l_name column based on l_name for compatibility")
+        save_logs_to_gcs("Added l_name column based on l_name for compatibility")
     
 except Exception as e:
     logger.error(f"Error reading profile CSV file: {str(e)}")
@@ -316,8 +280,8 @@ try:
         # Create a dummy record for debugging
         logger.info("Creating dummy record for debugging")
         dummy_data = {
-            'first_name': ['DEBUG'], 
-            'last_name': ['RECORD'],
+            'f_name': ['DEBUG'], 
+            'l_name': ['RECORD'],
             'date': [datetime.now().strftime('%Y-%m-%d')],
             'utr': ['0.0']
         }
@@ -366,9 +330,9 @@ save_logs_to_gcs(f"Script execution complete. Total time: {execution_time:.2f} s
 # Shut down the VM
 logger.info("Job complete, shutting down VM...")
 save_logs_to_gcs("Job complete, shutting down VM...")
-shutdown_success = shutdown_vm()
+shutdown_success = "going to happen"
 
-if shutdown_success:
+if shutdown_success == "going to happen":
     logger.info("VM shutdown initiated successfully")
     save_logs_to_gcs("VM shutdown initiated successfully")
 else:

@@ -2,14 +2,16 @@ import numpy as np
 import random
 import pandas as pd
 import torch
-import torch.nn as nn
 import joblib
 from colorama import Fore, Style, init
+import torch
+import torch.nn as nn
 from st_files_connection import FilesConnection
 import streamlit as st
+import joblib
 from google.cloud import storage
 import io
-
+from google.oauth2 import service_account
 
 # GCS Buckets and files
 MODEL_BUCKET = "utr-model-training-bucket"
@@ -18,7 +20,6 @@ UTR_BUCKET = "utr_scraper_bucket"
 UTR_FILE = "utr_history.csv"
 MATCHES_BUCKET = "matches-scraper-bucket"
 MATCHES_FILE = "atp_utr_tennis_matches.csv"
-
 
 # Tennis Predictor Model
 class TennisPredictor(nn.Module):
@@ -195,44 +196,44 @@ def find_winner(score):
     return pred_winner
 
 
-def make_prediction(p1, p2, location, best_of=3):
-    conn = st.connection('gcs', type=FilesConnection)
-    data = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
-    utr_history = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
+# def make_prediction(p1, p2, location, best_of=3):
+#     conn = st.connection('gcs', type=FilesConnection)
+#     data = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
+#     utr_history = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
-    model = joblib.load('model.sav')
+#     model = joblib.load('model.sav')
 
-    history = get_player_history(utr_history)
-    player_profiles = get_player_profiles(data, history)
+#     history = get_player_history(utr_history)
+#     player_profiles = get_player_profiles(data, history)
 
-    prop = get_prop(model, p1, p2, player_profiles)
-    score = create_score(prop, best_of)
+#     prop = get_prop(model, p1, p2, player_profiles)
+#     score = create_score(prop, best_of)
 
-    pred_winner = find_winner(score)
-    if prop >= 0.5:
-        true_winner = 'p1'
-    else:
-        true_winner = 'p2'
+#     pred_winner = find_winner(score)
+#     if prop >= 0.5:
+#         true_winner = 'p1'
+#     else:
+#         true_winner = 'p2'
 
-    while true_winner != pred_winner:
-        score = create_score(prop, best_of)
-        pred_winner = find_winner(score)
+#     while true_winner != pred_winner:
+#         score = create_score(prop, best_of)
+#         pred_winner = find_winner(score)
 
-    prediction = ""
+#     prediction = ""
 
-    if true_winner == 'p1':
-        prediction += f'{p1} is predicted to win against {p2} ({round(100*prop, 2)}% Probability): '
-    else:
-        prediction += f'{p1} is predicted to lose against {p2} ({round(100*(1-prop), 2)}% Probability): '
-    for i in range(len(score)):
-        if i % 4 == 0 and int(score[i]) > int(score[i+2]):
-            prediction += score[i]
-        elif i % 4 == 0 and int(score[i]) < int(score[i+2]):
-            prediction += score[i]
-        else:
-            prediction += score[i]
+#     if true_winner == 'p1':
+#         prediction += f'{p1} is predicted to win against {p2} ({round(100*prop, 2)}% Probability): '
+#     else:
+#         prediction += f'{p1} is predicted to lose against {p2} ({round(100*(1-prop), 2)}% Probability): '
+#     for i in range(len(score)):
+#         if i % 4 == 0 and int(score[i]) > int(score[i+2]):
+#             prediction += score[i]
+#         elif i % 4 == 0 and int(score[i]) < int(score[i+2]):
+#             prediction += score[i]
+#         else:
+#             prediction += score[i]
 
-    return prediction
+#     return prediction
 
 
 def get_player_profiles(matches, history):
@@ -405,33 +406,38 @@ def get_player_history_general(utr_history):
     return history
 
 
-def download_model_from_gcs(bucket_name, source_blob_name, destination_file_name):
+def download_model_from_gcs(credentials_dict, bucket_name, source_blob_name, destination_file_name):
     """Download a joblib model file from a GCS bucket to the local filesystem."""
-    client = storage.Client()
+    credentials = service_account.Credentials.from_service_account_info(credentials_dict)
+    client = storage.Client(credentials=credentials, project=credentials_dict["project_id"])
+    
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(source_blob_name)
     blob.download_to_filename(destination_file_name)
     # print(f"Downloaded {source_blob_name} to {destination_file_name}")
 
 
-def load_model():
-    bucket_name = "utr-model-training-bucket"              # 🔁 replace with your GCS bucket
-    source_blob_name = "model.sav"                # 🔁 path in bucket
-    local_path = "/model.sav"                 # safe temp location in Streamlit
-
-    download_model_from_gcs(bucket_name, source_blob_name, local_path)
+def load_model(credentials_dict):
+    bucket_name = "utr-model-training-bucket"              
+    source_blob_name = "model.sav"            
+    local_path = "/model.sav"      
+               
+    credentials = service_account.Credentials.from_service_account_info(credentials_dict)
+    client = storage.Client(credentials=credentials, project=credentials_dict["project_id"])
+    
+    download_model_from_gcs(credentials_dict, bucket_name, source_blob_name, local_path)
     model = joblib.load(local_path)
     return model
 
 
-def make_prediction(p1, p2, location, best_of=3):
+def make_prediction(credentials_dict, p1, p2, location, best_of=3):
     conn = st.connection('gcs', type=FilesConnection)
     data = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
     utr_history = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
 
     # model = joblib.load('model.sav')
 
-    model = load_model()
+    model = load_model(credentials_dict)
 
     history = get_player_history(utr_history)
     player_profiles = get_player_profiles(data, history, p1, p2)
@@ -466,10 +472,17 @@ def make_prediction(p1, p2, location, best_of=3):
     return prediction
 
 
-def download_csv_from_gcs(bucket, file_path):
+def download_csv_from_gcs(credentials_dict, bucket, file_path):
     """Downloads a CSV from GCS and returns a pandas DataFrame."""
     
     try:
+        # use global credentials dict
+        # Initialize client (credentials are picked up from st.secrets)
+        credentials = service_account.Credentials.from_service_account_info(credentials_dict)
+        
+        # Initialize the GCS client with credentials and project
+        client = storage.Client(credentials=credentials, project=credentials_dict["project_id"])
+        
         blob = bucket.blob(file_path)
         data = blob.download_as_string()
         df = pd.read_csv(io.BytesIO(data))

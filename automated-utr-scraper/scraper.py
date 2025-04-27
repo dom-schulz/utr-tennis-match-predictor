@@ -422,6 +422,7 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
     success_count = 0
 
     for i in range(offset, end_idx):
+        
         try:
             logger.info(f"Processing profile {i-offset+1}/{end_idx-offset}: {df['f_name'][i]} {df['l_name'][i]}")
             
@@ -436,7 +437,7 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
             continue
 
         if not load_page(driver, search_url):
-            logger.warning(f"Skipping profile {df['f_name'][i]} {df['l_name'][i]} due to page load failure")
+            # logger.warning(f"Skipping profile {df['f_name'][i]} {df['l_name'][i]} due to page load failure")
             processed_count += 1
             continue
 
@@ -553,10 +554,10 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
     logger.info(f"Closing Chrome driver after scraping UTR history. Processed {processed_count} profiles with {success_count} successful extractions.")
     driver.quit()
     
-    # Create DataFrame from collected data
-    if not data_rows:
-        logger.warning("No UTR history data was collected!")
-        return pd.DataFrame(columns=['first_name', 'last_name', 'date', 'utr'])
+    # # Create DataFrame from collected data
+    # if not data_rows:
+    #     logger.warning("No UTR history data was collected!")
+    #     return pd.DataFrame(columns=['first_name', 'last_name', 'date', 'utr'])
         
     df_result = pd.DataFrame(data_rows, columns=['first_name', 'last_name', 'date', 'utr'])
     logger.info(f"Created DataFrame with {len(df_result)} total UTR records")

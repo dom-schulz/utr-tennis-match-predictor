@@ -1,12 +1,7 @@
 import streamlit as st
-from pydantic import BaseModel
-import json
-import inspect
-from st_files_connection import FilesConnection
 import pandas as pd
 from predict_utils import *
 import matplotlib.pyplot as plt
-from datetime import datetime
 from google.cloud import storage
 from google.oauth2 import service_account
 import torch
@@ -26,9 +21,8 @@ tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Mov
 # ────────────────────────────────────────────────────────────────────────────────
 # Load Model & Data
 # ────────────────────────────────────────────────────────────────────────────────
-@st.cache_resource(show_spinner="🔄  Loading Data & Model from the Cloud...")
-def load_everything():
-    credentials_dict = {
+
+credentials_dict = {
         "type": st.secrets["connections_gcs_type"],
         "project_id": st.secrets["connections_gcs_project_id"],
         "private_key_id": st.secrets["connections_gcs_private_key_id"],
@@ -40,9 +34,11 @@ def load_everything():
         "auth_provider_x509_cert_url": st.secrets["connections_gcs_auth_provider_x509_cert_url"],
         "client_x509_cert_url": st.secrets["connections_gcs_client_x509_cert_url"],
         "universe_domain": st.secrets["connections_gcs_universe_domain"]
-    }
+}
 
-    
+@st.cache_resource(show_spinner="🔄  Loading Data & Model from the Cloud...")
+def load_everything(credentials_dict):
+
     # Initialize client (credentials are picked up from st.secrets)
     credentials = service_account.Credentials.from_service_account_info(credentials_dict)
     
@@ -63,8 +59,8 @@ def load_everything():
     matches_bucket = client.bucket(MATCHES_BUCKET)
 
     # Download data from GCS and return dataframes
-    utr_df     = download_csv_from_gcs(utr_bucket, UTR_FILE)
-    matches_df = download_csv_from_gcs(matches_bucket, MATCHES_FILE)
+    utr_df     = download_csv_from_gcs(credentials_dict, utr_bucket, UTR_FILE)
+    matches_df = download_csv_from_gcs(credentials_dict, matches_bucket, MATCHES_FILE)
     
     # Get player history and profiles
     history    = get_player_history(utr_df)
@@ -73,7 +69,7 @@ def load_everything():
     return model, utr_df, history, profiles
 
 
-model, utr_df, history, profiles = load_everything()
+model, utr_df, history, profiles = load_everything(credentials_dict)
 player_names = sorted(set(profiles.keys()) & set(history.keys()))
 
 
@@ -123,8 +119,10 @@ with tabs[2]:
     st.write("This tab will highlight matches where players gained or lost a large amount of UTR since the previous week.")
 
     # Load the CSV from your bucket
-    conn = st.connection('gcs', type=FilesConnection)
-    df = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
+    credentials = service_account.Credentials.from_service_account_info(credentials_dict)
+    client = storage.Client(credentials=credentials, project=credentials_dict["project_id"])
+    utr_bucket = client.bucket(UTR_BUCKET)
+    df = download_csv_from_gcs(credentials_dict, utr_bucket, UTR_FILE)
 
     content = []
     prev_name = ''
@@ -147,9 +145,10 @@ with tabs[3]:
     st.header("🎾 Player Metrics")
 
     # Load data from GCS
-    conn = st.connection('gcs', type=FilesConnection)
-    df1 = conn.read("utr_scraper_bucket/utr_history.csv", input_format="csv", ttl=600)
-    df2 = conn.read("matches-scraper-bucket/atp_utr_tennis_matches.csv", input_format="csv", ttl=600)
+    utr_bucket = client.bucket(UTR_BUCKET)
+    df1 = download_csv_from_gcs(credentials_dict, utr_bucket, UTR_FILE)
+    matches_bucket = client.bucket(MATCHES_BUCKET)
+    df2 = download_csv_from_gcs(credentials_dict, matches_bucket, MATCHES_FILE)
 
     history = get_player_history_general(df1)
     player_df = get_player_profiles_general(df2, history)

@@ -118,11 +118,11 @@ def collect_scores(all_scores):
 
 ### Loads The Page ###
 def load_page(driver, url):
-    logger.info(f"Loading page: {url}")
+    # logger.info(f"Loading page: {url}")
     try:
         driver.get(url)
         time.sleep(2)  # Increased from 1 for more reliable loading
-        logger.info(f"Page loaded successfully: {url[:60]}...")
+        # logger.info(f"Page loaded successfully: {url[:60]}...")
         return True
     except Exception as e:
         logger.error(f"Error loading page {url}: {str(e)}")
@@ -132,7 +132,7 @@ def load_page(driver, url):
 
 ### Scrolls The Page ###
 def scroll_page(driver):
-    logger.info("Starting page scroll")
+    # logger.info("Starting page scroll")
     try:
         previous_height = driver.execute_script("return document.body.scrollHeight")
         scroll_count = 0
@@ -144,14 +144,15 @@ def scroll_page(driver):
             new_height = driver.execute_script("return document.body.scrollHeight")
             
             if new_height == previous_height:
-                logger.info(f"Scrolling complete after {scroll_count+1} scrolls")
+                # logger.info(f"Scrolling complete after {scroll_count+1} scrolls")
                 break
                 
             previous_height = new_height
             scroll_count += 1
             
         if scroll_count >= max_scrolls:
-            logger.warning("Reached maximum scroll limit - page may not be fully loaded")
+            # logger.warning("Reached maximum scroll limit - page may not be fully loaded")
+            pass
     except Exception as e:
         logger.error(f"Error during page scrolling: {str(e)}")
         logger.error(traceback.format_exc())
@@ -159,6 +160,7 @@ def scroll_page(driver):
 
 ### Get UTR Rating ###
 def scrape_player_matches(profile_ids, utr_history, matches, email, password, offset=0, stop=1, writer=None):
+    
     # Initialize the Selenium WebDriver with headless options for Docker
     logger.info("Initializing Chrome driver for player matches scraping")
     chrome_options = get_chrome_options()
@@ -170,43 +172,40 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
         logger.error(f"Failed to initialize Chrome driver: {str(e)}")
         logger.error(traceback.format_exc())
         return None
-        
+
     url = 'https://app.utrsports.net/'
     today = date.today()
 
-    try:
-        sign_in(driver, url, email, password)
-    except Exception as e:
-        logger.error(f"Sign in failed, aborting scraping: {str(e)}")
-        driver.quit()
-        return None
+    sign_in(driver, url, email, password)
 
-    y = 1
+    ## TESTING Purposes
+    # limit = 14
+    # logger.info(f'Processing {limit+1} profiles')
+
+        
     for i in range(len(profile_ids)):
-        if i == stop:
-            break
-        # if i % round(len(profile_ids)/100) == 0:
-        #     print(f'Scraping..... {y}%')
-        #     y += 1
+        logger.info(f'Processing profile {i+1}/{len(profile_ids)}')
+        
+        # TESTING Purposes
+        # if i == limit:
+        #     logger.info(f'Profile Number Limit Reached')
+        #     break
+        
+        # if i == stop:
+        #     break
 
         try:
             search_url = f"https://app.utrsports.net/profiles/{round(profile_ids['p_id'][i+offset])}"
-            logger.info(f"Processing profile {i+1}/{len(profile_ids)}: ID {profile_ids['p_id'][i+offset]}")
-        except Exception as e:
-            logger.error(f"Error accessing profile ID at index {i+offset}: {str(e)}")
+        except:
             continue
 
-        if not load_page(driver, search_url):
-            logger.warning(f"Skipping profile {profile_ids['p_id'][i+offset]} due to page load failure")
-            continue
+        load_page(driver, search_url)
             
         scroll_page(driver)
 
         # Now that the page is rendered, parse the page with BeautifulSoup
-        logger.info("Parsing page content with BeautifulSoup")
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         tournaments = soup.find_all("div", class_="eventItem__eventItem__2Xpsd")
-        logger.info(f"Found {len(tournaments)} tournaments for profile {profile_ids['p_id'][i+offset]}")
        
         '''
         For each tournament, grab the data specified from each match in the tournament.
@@ -215,9 +214,7 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
         for tourney in tournaments:
             try:
                 tourney_name = tourney.find("span", class_="").text
-                logger.info(f"Found tournament: {tourney_name}")
             except:
-                logger.warning("Could not find tournament name, skipping")
                 continue
           
             if ',' in tourney_name:
@@ -254,136 +251,126 @@ def scrape_player_matches(profile_ids, utr_history, matches, email, password, of
                     tourney_name = tourney_name[1:]
 
             matches = tourney.find_all("div", class_="d-none d-md-block")
-            logger.info(f"Found {len(matches)} matches in tournament: {tourney_name}")
 
             for match in matches:
+                tround = match.find("div", class_="scorecard__header__2iDdF").text
+                r = ''
+                for j in range(len(tround)):
+                    if tround[-j-1] != '|':
+                        r = tround[-1*j-1] + r
+                    else:
+                        r = r[1:]
+                        break
+                
+                start = -1
+                end = -1
+                for j in range(len(tround)):
+                    if tround[j] == '|' and start == -1:
+                        start = j
+                    elif tround[j] == '|' and start != -1:
+                        end = j
+                if end == -1:
+                    match_date_str = tround[(start+2):j]
+                else:
+                    match_date_str = tround[(start+2):(end-1)]
+
+                match_date = datetime.strptime(match_date_str, "%b %d").replace(year=datetime.now().year).date()
+                if match_date > today:
+                    match_date = match_date - relativedelta(year=datetime.now().year-1)
+
+                data_row = [tourney_name, match_date, slam, 'Outdoor', surface, r]
+                is_tie = False
+
                 try:
-                    tround = match.find("div", class_="scorecard__header__2iDdF").text
-                    r = ''
-                    for j in range(len(tround)):
-                        if tround[-j-1] != '|':
-                            r = tround[-1*j-1] + r
-                        else:
-                            r = r[1:]
+                    winner_name = match.find("a", class_="flex-column player-name winner").text # throws error when TIE (COLLEGE MATCHES)
+                    loser_name = match.find("a", class_="flex-column player-name").text
+                except:
+                    tie = match.find_all("a", class_="flex-column player-name")
+                    winner_name, loser_name = tie[0].text, tie[1].text
+                    is_tie = True
+
+                try:
+                    temp = False
+                    for utrdata in utr_history[winner_name]:
+                        if datetime.strptime(utrdata[1], '%Y-%m-%d').date() <= match_date:
+                            w_utr = utrdata[0]
+                            temp = True
                             break
-                    
-                    start = -1
-                    end = -1
-                    for j in range(len(tround)):
-                        if tround[j] == '|' and start == -1:
-                            start = j
-                        elif tround[j] == '|' and start != -1:
-                            end = j
-                    if end == -1:
-                        match_date_str = tround[(start+2):j]
-                    else:
-                        match_date_str = tround[(start+2):(end-1)]
-
-                    match_date = datetime.strptime(match_date_str, "%b %d").replace(year=datetime.now().year).date()
-                    if match_date > today:
-                        match_date = match_date - relativedelta(year=datetime.now().year-1)
-
-                    data_row = [tourney_name, match_date, slam, 'Outdoor', surface, r]
-                    is_tie = False
-
-                    try:
-                        winner_name = match.find("a", class_="flex-column player-name winner").text # throws error when TIE (COLLEGE MATCHES)
-                        loser_name = match.find("a", class_="flex-column player-name").text
-                    except:
-                        tie = match.find_all("a", class_="flex-column player-name")
-                        if len(tie) >= 2:
-                            winner_name, loser_name = tie[0].text, tie[1].text
-                            is_tie = True
-                        else:
-                            logger.warning("Could not find player names in match, skipping")
-                            continue
-
-                    try:
-                        temp = False
-                        for utrdata in utr_history[winner_name]:
-                            if datetime.strptime(utrdata[1], '%Y-%m-%d').date() <= match_date:
-                                w_utr = utrdata[0]
-                                temp = True
-                                break
-                        if not temp:
-                            w_utr = utr_history[winner_name][len(utr_history[winner_name])-1][0]
-                        temp = False
-                        for utrdata in utr_history[loser_name]:
-                            if datetime.strptime(utrdata[1], '%Y-%m-%d').date() <= match_date:
-                                l_utr = utrdata[0]
-                                temp = True
-                                break
-                        if not temp:
-                            l_utr = utr_history[loser_name][len(utr_history[loser_name])-1][0]
-                    except Exception as e:
-                        logger.warning(f"Could not find UTR data: {str(e)}")
-                        continue
-
-                    all_scores = match.find_all("div", "score-item")
-                    score, p1_games, p2_games = collect_scores(all_scores)
-                    score = score if score else 'W'
-                    if score == 'W':
-                        continue
-
-                    sets = 0
-                    num_sets = 0
-                    for j in range(len(score)):
-                        if j % 4 == 0:
-                            num_sets += 1
-                            try:
-                                if int(score[j]) > int(score[j+2]):
-                                    sets += 1
-                                else:
-                                    sets -= 1
-                            except:
-                                continue
-                    if num_sets < 3:
-                        best_of = 3
-                    elif num_sets == 3 and abs(sets) == 1:
-                        best_of = 3
-                    else:
-                        best_of = 5
-
-                    data_row += [best_of]
-
-                    winner_name1 = ''
-                    a = False
-                    for ch in winner_name:
-                        if ch == ' ':
-                            a = True
-                        elif a:
-                            winner_name1 = winner_name1 + ch
-                    winner_name1 = winner_name1 + ' ' + winner_name[0] + '.'
-
-                    loser_name1 = ''
-                    a = False
-                    for ch in loser_name:
-                        if ch == ' ':
-                            a = True
-                        elif a:
-                            loser_name1 = loser_name1 + ch
-                    loser_name1 = loser_name1 + ' ' + loser_name[0] + '.'
-
-                    ri = random.randint(0,1)
-                    if ri == 0:
-                        data_row += [winner_name1, w_utr, loser_name1, l_utr, winner_name1, p1_games, p2_games, score, 0]
-                    else:
-                        data_row += [loser_name1, l_utr, winner_name1, w_utr, winner_name1, p1_games, p2_games, score, 1]
-
-                    if is_tie:
-                        data_row[-1] = 0.5  # Mark ties properly
-
-                    writer.writerow(data_row)
-                    logger.info(f"Processed match: {winner_name} vs {loser_name}")
-                except Exception as e:
-                    logger.error(f"Error processing match: {str(e)}")
-                    logger.error(traceback.format_exc())
+                    if not temp:
+                        w_utr = utr_history[winner_name][len(utr_history[winner_name])-1][0]
+                    temp = False
+                    for utrdata in utr_history[loser_name]:
+                        if datetime.strptime(utrdata[1], '%Y-%m-%d').date() <= match_date:
+                            l_utr = utrdata[0]
+                            temp = True
+                            break
+                    if not temp:
+                        l_utr = utr_history[loser_name][len(utr_history[loser_name])-1][0]
+                except:
                     continue
 
+                all_scores = match.find_all("div", "score-item")
+                score, p1_games, p2_games = collect_scores(all_scores)
+                score = score if score else 'W'
+                if score == 'W':
+                    continue
+
+                sets = 0
+                num_sets = 0
+                for j in range(len(score)):
+                    if j % 4 == 0:
+                        num_sets += 1
+                        try:
+                            if int(score[j]) > int(score[j+2]):
+                                sets += 1
+                            else:
+                                sets -= 1
+                        except:
+                            continue
+                if num_sets < 3:
+                    best_of = 3
+                elif num_sets == 3 and abs(sets) == 1:
+                    best_of = 3
+                else:
+                    best_of = 5
+
+                data_row += [best_of]
+
+                winner_name1 = ''
+                a = False
+                for ch in winner_name:
+                    if ch == ' ':
+                        a = True
+                    elif a:
+                        winner_name1 = winner_name1 + ch
+                winner_name1 = winner_name1 + ' ' + winner_name[0] + '.'
+
+                loser_name1 = ''
+                a = False
+                for ch in loser_name:
+                    if ch == ' ':
+                        a = True
+                    elif a:
+                        loser_name1 = loser_name1 + ch
+                loser_name1 = loser_name1 + ' ' + loser_name[0] + '.'
+
+                ri = random.randint(0,1)
+                if ri == 0:
+                    data_row += [winner_name1, w_utr, loser_name1, l_utr, winner_name1, p1_games, p2_games, score, 0]
+                else:
+                    data_row += [loser_name1, l_utr, winner_name1, w_utr, winner_name1, p1_games, p2_games, score, 1]
+
+                if is_tie:
+                    data_row[-1] = 0.5  # Mark ties properly
+
+                # Log add data row
+                logger.info(f'Adding data row: {data_row}')
+                writer.writerow(data_row)
+
     # Close the driver
-    logger.info("Closing Chrome driver after scraping player matches")
     driver.quit()
 ###
+
 
 ### Get UTR History ###
 def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
@@ -424,7 +411,7 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
 
     for i in range(offset, end_idx):
         try:
-            logger.info(f"Processing profile {i-offset+1}/{end_idx-offset}: {df['f_name'][i]} {df['l_name'][i]}")
+            # logger.info(f"Processing profile {i-offset+1}/{end_idx-offset}: {df['f_name'][i]} {df['l_name'][i]}")
             
             # Check if profile ID is valid
             if pd.isna(df['p_id'][i]) or df['p_id'][i] == '':
@@ -433,11 +420,11 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
                 
             search_url = f"https://app.utrsports.net/profiles/{int(df['p_id'][i])}?t=6"
         except Exception as e:
-            logger.error(f"Error preparing URL for profile at index {i}: {str(e)}")
+            # logger.error(f"Error preparing URL for profile at index {i}: {str(e)}")
             continue
 
         if not load_page(driver, search_url):
-            logger.warning(f"Skipping profile {df['f_name'][i]} {df['l_name'][i]} due to page load failure")
+            # logger.warning(f"Skipping profile {df['f_name'][i]} {df['l_name'][i]} due to page load failure")
             processed_count += 1
             continue
 
@@ -452,36 +439,39 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
                 os.makedirs(screenshot_dir, exist_ok=True)
                 screenshot_path = os.path.join(screenshot_dir, f"debug_screenshot_{df['f_name'][i]}_{df['l_name'][i]}.png")
                 driver.save_screenshot(screenshot_path)
-                logger.info(f"Saved screenshot to {screenshot_path}")
+                # logger.info(f"Saved screenshot to {screenshot_path}")
         except Exception as e:
-            logger.warning(f"Could not save screenshot: {str(e)}")
+            # logger.warning(f"Could not save screenshot: {str(e)}")
+            pass
             # Screenshot failure is non-critical, continue processing
 
         # Look for "Show all" button
         show_all_found = False
         try:
-            logger.info("Looking for 'Show all' button")
+            # logger.info("Looking for 'Show all' button")
             time.sleep(1)
             show_all = driver.find_element(By.LINK_TEXT, 'Show all')
             show_all.click()
-            logger.info("Clicked 'Show all' button")
+            # logger.info("Clicked 'Show all' button")
             show_all_found = True
         except Exception as e:
-            logger.warning(f"First attempt to find 'Show all' button failed: {str(e)}")
+            # logger.warning(f"First attempt to find 'Show all' button failed: {str(e)}")
+            pass
             
             try:
                 # Try again with a longer wait
-                logger.info("Making second attempt to find 'Show all' button")
+                # logger.info("Making second attempt to find 'Show all' button")
                 time.sleep(3)
                 show_all = driver.find_element(By.LINK_TEXT, 'Show all')
                 show_all.click()
-                logger.info("Clicked 'Show all' button on second attempt")
+                # logger.info("Clicked 'Show all' button on second attempt")
                 show_all_found = True
             except Exception as e2:
-                logger.error(f"Could not find 'Show all' button: {str(e2)}")
-                logger.error(f"Debug info - Current URL: {driver.current_url}")
-                logger.error(f"Page title: {driver.title}")
-                
+                # logger.error(f"Could not find 'Show all' button: {str(e2)}")
+                # logger.error(f"Debug info - Current URL: {driver.current_url}")
+                # logger.error(f"Page title: {driver.title}")
+                pass
+            
                 # Check if we're still logged in
                 if "Sign In" in driver.page_source or "Log In" in driver.page_source:
                     logger.error("Session appears to have expired, attempting to log in again")
@@ -491,6 +481,7 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
                         load_page(driver, search_url)
                     except:
                         logger.error("Re-login attempt failed")
+                        pass
                 
                 processed_count += 1
                 continue
@@ -500,18 +491,19 @@ def scrape_utr_history(df, email, password, offset=0, stop=1, writer=None):
             scroll_page(driver)
 
         # Now that the page is rendered, parse the page with BeautifulSoup
-        logger.info("Parsing page content with BeautifulSoup")
+        # logger.info("Parsing page content with BeautifulSoup")
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
         # Debug page content
         if "UTR History" not in driver.page_source:
-            logger.warning("UTR History section might be missing from the page")
+            # logger.warning("UTR History section might be missing from the page")
+            pass
         
         # Find the UTR history container
         container = soup.find("div", class_="newStatsTabContent__section__1TQzL p0 bg-transparent")
         
         if not container:
-            logger.warning(f"UTR history container not found for {df['f_name'][i]} {df['l_name'][i]}")
+            # logger.warning(f"UTR history container not found for {df['f_name'][i]} {df['l_name'][i]}")
             processed_count += 1
             continue
             
