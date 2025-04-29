@@ -103,56 +103,16 @@ with tabs[0]:
 # === Tab: Upcoming Matches ===
 # === Tab: Upcoming Matches ===
 with tabs[1]:
-    st.header("📅 Upcoming Matches")
+   st.header("📅 Upcoming Matches")
     st.subheader("Stay Ahead of the Game")
     st.caption("See what's next on the pro circuit, and who's most likely to rise.")
 
-    # Load matches
-    upcoming_matches_df = pd.read_csv("ATP_upcoming_matches.csv")
+    st.write("Here you can display upcoming tennis matches (e.g., from a dataset or API).")
 
-    # Add a prediction for each match
-    predictions = []
+    st.markdown("*** Coming Soon ***")
 
-    for idx, row in upcoming_matches_df.iterrows():
-        player1 = row["Player_1"]
-        player2 = row["Player_2"]
 
-        # Check if both players are in your player database
-        if player1 in profiles and player2 in profiles:
-            try:
-                # Pull latest UTRs from the history dict
-                p1_utr, p2_utr = history[player1], history[player2]
-
-                # Create match stub
-                match_stub = {
-                    "p1": player1,
-                    "p2": player2,
-                    "p1_utr": p1_utr,
-                    "p2_utr": p2_utr
-                }
-
-                # Preprocess and predict
-                vec = np.array(preprocess_match_data(match_stub, profiles)).reshape(1, -1)
-                with torch.no_grad():
-                    prob = 1 - float(model(torch.tensor(vec, dtype=torch.float32))[0])
-
-                # Format the prediction nicely
-                predicted_winner = player1 if prob >= 0.5 else player2
-                predictions.append(f"{predicted_winner} ({prob*100:.1f}%)")
-
-            except Exception as e:
-                predictions.append("Prediction Error")
-        else:
-            predictions.append("Player Info Missing")
-
-    # Add the prediction column
-    upcoming_matches_df["Prediction"] = predictions
-
-    # Show the dataframe
-    if not upcoming_matches_df.empty:
-        st.dataframe(upcoming_matches_df, use_container_width=True)
-    else:
-        st.write("No upcoming matches to display at the moment.")
+    
 
 # === Tab: Large UTR Moves ===
 with tabs[2]:
