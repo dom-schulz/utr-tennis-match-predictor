@@ -2,7 +2,7 @@
 
 This repository contains our project to develop a tennis prediction system that collects player data through automated scrapers, analyzes match perforamnce, and delivers accurate match outcome predictions through an interactive web application. The system uses UTR (Universal Tennis Rating) data and machine learning to provide probabilistic forecasts for professional tennis matches.
 
-This repository currently contains 3 components for a tennis match prediction system:
+This repository currently under development...
 
 ## Current Items
 
@@ -28,29 +28,23 @@ Both scrapers have near identical logic/structure. For more details, see the [UT
 The Streamlit app serves as the user interface for the tennis match prediction system. It allows users to:
 
 - Input player names to receive a prediction
-- Receive generated match predictions based on UTR data via an AI chatbot
-- View detailed match outcome probabilities and expected scores
+- Receive generated match predictions based on UTR and match history
+- View match outcome probabilities
 
-The app is currently a functional prototype and will receive significant updates in mid-April. You can access the live interface at [Tennis Predictor App](https://utr-tennis-match-predictor.streamlit.app/).
-
-#### Sample Chat Inputs
-Try these player names:
-```
-Medvedev D. Alcaraz C. Seattle
-```
+The app is currently a functional prototype and will receive significant updates in mid/late-April. You can access the live interface at [Tennis Predictor App](https://utr-tennis-match-predictor.streamlit.app/).
 
 For more details, see the [Streamlit App Documentation](https://github.com/dom-schulz/utr-tennis-match-predictor/blob/main/user-interface/README.md).
 
-
-## Next Developments (April 2025)
-
 ### Automated Model Training
 
-After each iteration of the automated scraper runs, we plan to retrain the model automatically. This will allow the prediction system to:
+After each iteration of the automated scraper runs, the model is retrained automatically. This allows the prediction system to:
 
 - Use the latest scraped data without manual intervention
 - Serve predictions by accessing the pre-trained model instead of retraining it for every request
 - Upgrade from logistic regression to a neural network model, which has shown significant improvements in prediction accuracy during recent testing
+
+
+## Next Developments (April 2025)
 
 ### User Interface Updates
 
