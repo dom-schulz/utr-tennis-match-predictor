@@ -101,6 +101,7 @@ with tabs[0]:
         st.metric(label="Probability Player 1 Wins", value=f"{prob*100:0.1f}%")
                     
 # === Tab: Upcoming Matches ===
+# === Tab: Upcoming Matches ===
 with tabs[1]:
     st.header("📅 Upcoming Matches")
     st.subheader("Stay Ahead of the Game")
@@ -113,13 +114,13 @@ with tabs[1]:
     predictions = []
 
     for idx, row in upcoming_matches_df.iterrows():
-        player1 = row["Player 1"]
-        player2 = row["Player 2"]
+        player1 = row["Player_1"]
+        player2 = row["Player_2"]
 
         # Check if both players are in your player database
         if player1 in profiles and player2 in profiles:
             try:
-                # pull latest UTRs
+                # Pull latest UTRs from the history dict
                 p1_utr, p2_utr = history[player1], history[player2]
 
                 # Create match stub
@@ -152,7 +153,6 @@ with tabs[1]:
         st.dataframe(upcoming_matches_df, use_container_width=True)
     else:
         st.write("No upcoming matches to display at the moment.")
-
 
 # === Tab: Large UTR Moves ===
 with tabs[2]:
