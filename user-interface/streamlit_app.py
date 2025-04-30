@@ -79,27 +79,80 @@ player_names = sorted(set(profiles.keys()) & set(history.keys()))
 with tabs[0]:
     st.subheader("Pick two players")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        p1 = st.selectbox("Player 1", player_names, index=0)
-    with col2:
-        p2 = st.selectbox("Player 2", [n for n in player_names if n != p1], index=1)
+    # Initialize session state for player selections if not already done
+    if 'p1_selection' not in st.session_state:
+        st.session_state.p1_selection = None
+    if 'p2_selection' not in st.session_state:
+        st.session_state.p2_selection = None
 
-    # pull latest UTRs
-    p1_utr, p2_utr = history[p1], history[p2]
-
-    st.write(f"Current UTRs – **{p1}: {p1_utr:.2f}**, **{p2}: {p2_utr:.2f}**")
-
-    if st.button("Predict"):
-        match_stub = {  # minimal dict for preprocess()
-            "p1": p1, "p2": p2, "p1_utr": p1_utr, "p2_utr": p2_utr
-        }
-        vec = np.array(preprocess_match_data(match_stub, profiles)).reshape(1, -1)
+    # Define callback functions to update session state
+    def update_p1():
+        st.session_state.p1_selection = st.session_state.p1_widget
         
-        with torch.no_grad():
-            prob = 1 - float(model(torch.tensor(vec, dtype=torch.float32))[0])
-        st.metric(label="Probability Player 1 Wins", value=f"{prob*100:0.1f}%")
-                    
+    def update_p2():
+        st.session_state.p2_selection = st.session_state.p2_widget
+
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        p1 = st.selectbox(
+            "Player 1", 
+            [""] + player_names,  # Add empty option as first choice
+            index=0 if st.session_state.p1_selection is None else 
+                 ([""] + player_names).index(st.session_state.p1_selection),
+            key="p1_widget",
+            on_change=update_p1
+        )
+    
+    with col2:
+        # Create full list of options first
+        full_p2_options = [""] + player_names
+        
+        # Only filter out Player 1 if Player 2 isn't already selected
+        # or if Player 2 is the same as the new Player 1 selection
+        if st.session_state.p2_selection is None or st.session_state.p2_selection == st.session_state.p1_selection:
+            p2_options = [""] + [n for n in player_names if n != st.session_state.p1_selection]
+            index_p2 = 0
+        else:
+            # Keep all options and just select the current p2
+            p2_options = full_p2_options
+            index_p2 = full_p2_options.index(st.session_state.p2_selection)
+        
+        p2 = st.selectbox(
+            "Player 2", 
+            p2_options,
+            index=index_p2,
+            key="p2_widget",
+            on_change=update_p2
+        )
+
+    # Only proceed with prediction if both players are selected
+    if st.session_state.p1_selection and st.session_state.p2_selection:
+        # If Player 1 and Player 2 are the same, reset Player 2
+        if st.session_state.p1_selection == st.session_state.p2_selection:
+            st.session_state.p2_selection = None
+            st.write("Please select a different player for Player 2.")
+        else:
+            p1 = st.session_state.p1_selection
+            p2 = st.session_state.p2_selection
+            
+            # pull latest UTRs
+            p1_utr, p2_utr = history[p1], history[p2]
+
+            st.write(f"Current UTRs – **{p1}: {p1_utr:.2f}**, **{p2}: {p2_utr:.2f}**")
+
+            if st.button("Predict"):
+                match_stub = {  # minimal dict for preprocess()
+                    "p1": p1, "p2": p2, "p1_utr": p1_utr, "p2_utr": p2_utr
+                }
+                vec = np.array(preprocess_match_data(match_stub, profiles)).reshape(1, -1)
+                
+                with torch.no_grad():
+                    prob = 1 - float(model(torch.tensor(vec, dtype=torch.float32))[0])
+                st.metric(label="Probability Player 1 Wins", value=f"{prob*100:0.1f}%")
+    else:
+        st.write("Please select both players to view UTRs and make a prediction.")
+
 # === Tab: Upcoming Matches ===
 with tabs[1]:
     st.header("📅 Upcoming Matches")
