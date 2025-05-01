@@ -98,7 +98,7 @@ with tabs[0]:
             # match_stub = {  # minimal dict for preprocess()
             #     "p1": p1, "p2": p2, "p1_utr": p1_utr, "p2_utr": p2_utr
             # }
-            vec = preprocess_player_data(p1, p1, profiles)
+            vec = preprocess_player_data(p1, p2, profiles)
             st.markdown(vec)
             
             with torch.no_grad():
