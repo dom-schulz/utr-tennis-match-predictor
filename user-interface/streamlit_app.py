@@ -79,7 +79,7 @@ player_names = sorted(set(profiles.keys()) & set(history.keys()))
 with tabs[0]:
     st.subheader("Pick two players")
 
-    if 'p1_selection' not in st.seesion_state:
+    if 'p1_selection' not in st.session_state:
         st.session_state.p1_selection = None
     if 'p2_selection' not in st.session_state:
         st.session_state.p2_selection = None
