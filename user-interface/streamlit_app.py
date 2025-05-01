@@ -102,8 +102,12 @@ with tabs[0]:
             st.markdown(vec)
             
             with torch.no_grad():
-                prob = 1 - float(model(torch.tensor(vec, dtype=torch.float32))[0])
-            st.metric(label="Probability Player 1 Wins", value=f"{prob*100:0.1f}%")
+                prob = model(torch.tensor(vec, dtype=torch.float32))[0]
+                if prob >= 0.5:
+                    winner = p1
+                else:
+                    winner = p2
+            st.metric(label="Winner", value=winner)
 
     st.divider()
     

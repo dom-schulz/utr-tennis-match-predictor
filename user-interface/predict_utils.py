@@ -184,7 +184,7 @@ def get_prop(model, p1, p2, player_profiles):
     X_tensor = torch.tensor(X, dtype=torch.float32)
 
     prop = model(X_tensor).squeeze().detach().numpy()
-    prop = 1-float(prop)
+    # prop = 1-float(prop)
     return prop
 
 
