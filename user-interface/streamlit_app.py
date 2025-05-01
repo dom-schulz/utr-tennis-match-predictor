@@ -101,7 +101,6 @@ with tabs[0]:
         st.metric(label="Probability Player 1 Wins", value=f"{prob*100:0.1f}%")
                     
 # === Tab: Upcoming Matches ===
-# === Tab: Upcoming Matches ===
 with tabs[1]:
    st.header("📅 Upcoming Matches")
     st.subheader("Stay Ahead of the Game")
