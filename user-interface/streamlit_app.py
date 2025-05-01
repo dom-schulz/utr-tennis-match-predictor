@@ -71,7 +71,6 @@ def load_everything(credentials_dict):
 
 model, utr_df, history, profiles, graph_hist = load_everything(credentials_dict)
 player_names = sorted(set(profiles.keys()) & set(history.keys()))
-player_names = [""] + player_names
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -80,34 +79,77 @@ player_names = [""] + player_names
 with tabs[0]:
     st.subheader("Pick two players")
 
+    if 'p1_selection' not in st.seesion_state:
+        st.session_state.p1_selection = None
+    if 'p2_selection' not in st.session_state:
+        st.session_state.p2_selection = None
+
+    # Define callback functions to update session state
+    def update_p1():
+        st.session_state.p1_selection = st.session_state.p1_widget
+    
+    def update_p2():
+        st.session_state.p2_selection = st.session_state.p2_widget
+
     col1, col2 = st.columns(2)
     with col1:
-        p1 = st.selectbox("Player 1", player_names, index=0)
+        p1 = st.selectbox("Player 1", [""] + player_names, 
+        index=0 if st.session_state.p1_selection is None else
+            ([""] + player_names).index(st.session_state.p1_selection),
+            key='p1_widget',
+            on_change=update_p1)
     with col2:
-        p2 = st.selectbox("Player 2", [n for n in player_names if n != p1], index=1)
+        # Create full list of options first
+        full_p2_options = [""] + player_names
+        
+        # Only filter out Player 1 if Player 2 isn't already selected
+        # or if Player 2 is the same as the new Player 1 selection
+        if st.session_state.p2_selection is None or st.session_state.p2_selection == st.session_state.p1_selection:
+            p2_options = [""] + [n for n in player_names if n != st.session_state.p1_selection]
+            index_p2 = 0
+        else:
+            # Keep all options and just select the current p2
+            p2_options = full_p2_options
+            index_p2 = full_p2_options.index(st.session_state.p2_selection)
+        
+        p2 = st.selectbox(
+            "Player 2", 
+            p2_options,
+            index=index_p2,
+            key="p2_widget",
+            on_change=update_p2
+        )
 
-    # =================== PREDICT ======================== #
-
-    # pull latest UTRs
-    if p1 != "" and p2 != "":
-        p1_utr, p2_utr = history[p1], history[p2]
-
-        st.write(f"Current UTRs – **{p1}: {p1_utr:.2f}**, **{p2}: {p2_utr:.2f}**")
-
-        if st.button("Predict"):
-            # match_stub = {  # minimal dict for preprocess()
-            #     "p1": p1, "p2": p2, "p1_utr": p1_utr, "p2_utr": p2_utr
-            # }
-            vec = preprocess_player_data(p1, p2, profiles)
-            # st.markdown(vec)
+    # Only proceed with prediction if both players are selected
+    if st.session_state.p1_selection and st.session_state.p2_selection:
+        # If Player 1 and Player 2 are the same, reset Player 2
+        if st.session_state.p1_selection == st.session_state.p2_selection:
+            st.session_state.p2_selection = None
+            st.write("Please select a different player for Player 2.")
+        else:
+            p1 = st.session_state.p1_selection
+            p2 = st.session_state.p2_selection
             
-            with torch.no_grad():
-                prob = model(torch.tensor(vec, dtype=torch.float32))[0]
-                if prob >= 0.5:
-                    winner = p1
-                else:
-                    winner = p2
-            st.metric(label="Winner", value=winner)
+            # pull latest UTRs
+            p1_utr, p2_utr = history[p1], history[p2]
+
+            st.write(f"Current UTRs – **{p1}: {p1_utr:.2f}**, **{p2}: {p2_utr:.2f}**")
+
+            if st.button("Predict"):
+                # match_stub = {  # minimal dict for preprocess()
+                #     "p1": p1, "p2": p2, "p1_utr": p1_utr, "p2_utr": p2_utr
+                # }
+                vec = preprocess_player_data(p1, p2, profiles)
+                
+                with torch.no_grad():
+                    prob = model(torch.tensor(vec, dtype=torch.float32))[0]
+                    if prob >= 0.5:
+                        winner = p1
+                    else:
+                        winner = p2
+                st.metric(label="Winner", value=winner)
+    else:
+        st.write("Please select both players to view UTRs and make a prediction.")
 
     st.divider()
     
