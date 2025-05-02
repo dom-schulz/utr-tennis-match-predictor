@@ -6,10 +6,8 @@ from google.cloud import storage
 from google.oauth2 import service_account
 import torch
 import numpy as np
-from bs4 import BeautifulSoup
 
-
-st.title("UTR Match Predictor Test 🎾")
+st.title("UTR Match Predictor 🎾")
 
 with st.sidebar:
     st.header("🔧 Tools & Insights")
@@ -81,98 +79,79 @@ player_names = sorted(set(profiles.keys()) & set(history.keys()))
 with tabs[0]:
     st.subheader("Pick two players")
 
+    # Initialize session state for player selections if not already done
+    if 'p1_selection' not in st.session_state:
+        st.session_state.p1_selection = None
+    if 'p2_selection' not in st.session_state:
+        st.session_state.p2_selection = None
+
+    # Define callback functions to update session state
+    def update_p1():
+        st.session_state.p1_selection = st.session_state.p1_widget
+        
+    def update_p2():
+        st.session_state.p2_selection = st.session_state.p2_widget
+
     col1, col2 = st.columns(2)
+    
     with col1:
-        p1 = st.selectbox("Player 1", player_names, index=0)
+        p1 = st.selectbox(
+            "Player 1", 
+            [""] + player_names,  # Add empty option as first choice
+            index=0 if st.session_state.p1_selection is None else 
+                 ([""] + player_names).index(st.session_state.p1_selection),
+            key="p1_widget",
+            on_change=update_p1
+        )
+    
     with col2:
-        p2 = st.selectbox("Player 2", [n for n in player_names if n != p1], index=1)
-
-    # pull latest UTRs
-    p1_utr, p2_utr = history[p1], history[p2]
-
-    st.write(f"Current UTRs – **{p1}: {p1_utr:.2f}**, **{p2}: {p2_utr:.2f}**")
-
-    if st.button("Predict"):
-        match_stub = {  # minimal dict for preprocess()
-            "p1": p1, "p2": p2, "p1_utr": p1_utr, "p2_utr": p2_utr
-        }
-        vec = np.array(preprocess_match_data(match_stub, profiles)).reshape(1, -1)
+        # Create full list of options first
+        full_p2_options = [""] + player_names
         
-        with torch.no_grad():
-            prob = 1 - float(model(torch.tensor(vec, dtype=torch.float32))[0])
-        st.metric(label="Probability Player 1 Wins", value=f"{prob*100:0.1f}%")
+        # Only filter out Player 1 if Player 2 isn't already selected
+        # or if Player 2 is the same as the new Player 1 selection
+        if st.session_state.p2_selection is None or st.session_state.p2_selection == st.session_state.p1_selection:
+            p2_options = [""] + [n for n in player_names if n != st.session_state.p1_selection]
+            index_p2 = 0
+        else:
+            # Keep all options and just select the current p2
+            p2_options = full_p2_options
+            index_p2 = full_p2_options.index(st.session_state.p2_selection)
         
-                    
-# === Tab: Upcoming Matches ===
-html1 = """
-<div class="fm-card tc-match -smaller" data-start-time="2025-05-02T14:00:00+00:00" data-match-status="prematch" data-match-slug="sr-match-59915190" data-tournament-slug="sr-tournament-2785-madrid-spain" id="live-update-sr-match-59915190" data-event="Mutua Madrid Open"><div class="tc-match__header"><div class="tc-match__header-top"><h3 class="tc-tournament-title"><a href="/tournaments/sr-tournament-2785-madrid-spain/" class="tc-tournament-title-link" title="Mutua Madrid Open">Mutua Madrid Open</a></h3></div><div class="tc-match__header-bottom"><div class="tc-match__header-left"><span class="tc-match__status" js-match-card-status="">Not Started</span><div class="tc-match__cta" js-match-card-buttons=""></div><div class="tc-time" js-match-card-start-time=""><div class="tc-time__label"><span class="tc-time__label__text">Estimated Start</span></div><div class="tc-time__hour"><strong class="-highlighted" js-local-time="" data-utc-time="2025-05-02T14:00:00+00:00" data-format="hh:mm">07:00</strong> <span class="tc-time__hour--smaller" js-local-time="" data-utc-time="2025-05-02T14:00:00+00:00" data-format="A">AM</span></div></div></div><div class="tc-match__header-right"><div class="tc-match__info"><span class="tc-round-name">SF</span> <span class="mx-01">-</span> <span class="tc-event-title">Men's Singles</span></div></div></div></div><a href="/tournaments/sr-tournament-2785-madrid-spain/sr-match-59915190/" class="tc-match__content-outer"><div class="tc-match__content"><div class="tc-match__items"><div class="tc-match__item -home" js-match-card-home-player=""><div class="tc-player"><div class="tc-player--wrap"><div class="tc-player--wrap--inner"><object><a class="tc-player__link" href="/players-rankings/francisco-cerundolo-sr-competitor-255595/" title="Francisco Cerundolo" data-id="sr:competitor:255595" data-slug="francisco-cerundolo-sr-competitor-255595" aria-label="Francisco Cerundolo"><div class="tc-player"><small class="tc-player__country">ARG</small> <span class="tc-player__name">F. <span>Cerundolo</span></span> <small class="tc-player__seeding">(20)</small></div></a></object></div></div></div><div class="tc-match__stats--wrap" js-match-card-score-container=""><div><small>&nbsp;</small></div></div></div><div class="tc-match__item -away" js-match-card-away-player=""><div class="tc-player"><div class="tc-player--wrap"><div class="tc-player--wrap--inner"><object><a class="tc-player__link" href="/players-rankings/casper-ruud-sr-competitor-119248/" title="Casper Ruud" data-id="sr:competitor:119248" data-slug="casper-ruud-sr-competitor-119248" aria-label="Casper Ruud"><div class="tc-player"><small class="tc-player__country">NOR</small> <span class="tc-player__name">C. <span>Ruud</span></span> <small class="tc-player__seeding">(14)</small></div></a></object></div></div></div><div class="tc-match__stats--wrap" js-match-card-score-container=""><div><small>&nbsp;</small></div></div></div></div><div class="tc-prediction" js-match-card-predictions=""><strong class="tc-prediction__title">Win Probability</strong> <span class="tc-prediction__name">C. <strong>Ruud</strong></span><div class="tc-prediction__box"><span class="tc-prediction__value">52.3%</span></div></div></div></a></div>
-"""
+        p2 = st.selectbox(
+            "Player 2", 
+            p2_options,
+            index=index_p2,
+            key="p2_widget",
+            on_change=update_p2
+        )
 
-html2 = """
-<div class="fm-card tc-match -smaller" data-start-time="2025-05-02T18:00:00+00:00" data-match-status="prematch" data-match-slug="sr-match-59915191" data-tournament-slug="sr-tournament-2785-madrid-spain" id="live-update-sr-match-59915191" data-event="Mutua Madrid Open"><div class="tc-match__header"><div class="tc-match__header-top"><h3 class="tc-tournament-title"><a href="/tournaments/sr-tournament-2785-madrid-spain/" class="tc-tournament-title-link" title="Mutua Madrid Open">Mutua Madrid Open</a></h3></div><div class="tc-match__header-bottom"><div class="tc-match__header-left"><span class="tc-match__status" js-match-card-status="">Not Started</span><div class="tc-match__cta" js-match-card-buttons=""></div><div class="tc-time" js-match-card-start-time=""><div class="tc-time__label"><span class="tc-time__label__text">Estimated Start</span></div><div class="tc-time__hour"><strong class="-highlighted" js-local-time="" data-utc-time="2025-05-02T18:00:00+00:00" data-format="hh:mm">11:00</strong> <span class="tc-time__hour--smaller" js-local-time="" data-utc-time="2025-05-02T18:00:00+00:00" data-format="A">AM</span></div></div></div><div class="tc-match__header-right"><div class="tc-match__info"><span class="tc-round-name">SF</span> <span class="mx-01">-</span> <span class="tc-event-title">Men's Singles</span></div></div></div></div><a href="/tournaments/sr-tournament-2785-madrid-spain/sr-match-59915191/" class="tc-match__content-outer"><div class="tc-match__content"><div class="tc-match__items"><div class="tc-match__item -home" js-match-card-home-player=""><div class="tc-player"><div class="tc-player--wrap"><div class="tc-player--wrap--inner"><object><a class="tc-player__link" href="/players-rankings/jack-draper-sr-competitor-237489/" title="Jack Draper" data-id="sr:competitor:237489" data-slug="jack-draper-sr-competitor-237489" aria-label="Jack Draper"><div class="tc-player"><small class="tc-player__country">GBR</small> <span class="tc-player__name">J. <span>Draper</span></span> <small class="tc-player__seeding">(5)</small></div></a></object></div></div></div><div class="tc-match__stats--wrap" js-match-card-score-container=""><div><small>&nbsp;</small></div></div></div><div class="tc-match__item -away" js-match-card-away-player=""><div class="tc-player"><div class="tc-player--wrap"><div class="tc-player--wrap--inner"><object><a class="tc-player__link" href="/players-rankings/lorenzo-musetti-sr-competitor-214499/" title="Lorenzo Musetti" data-id="sr:competitor:214499" data-slug="lorenzo-musetti-sr-competitor-214499" aria-label="Lorenzo Musetti"><div class="tc-player"><small class="tc-player__country">ITA</small> <span class="tc-player__name">L. <span>Musetti</span></span> <small class="tc-player__seeding">(10)</small></div></a></object></div></div></div><div class="tc-match__stats--wrap" js-match-card-score-container=""><div><small>&nbsp;</small></div></div></div></div><div class="tc-prediction" js-match-card-predictions=""><strong class="tc-prediction__title">Win Probability</strong> <span class="tc-prediction__name">J. <strong>Draper</strong></span><div class="tc-prediction__box"><span class="tc-prediction__value">63.1%</span></div></div></div></a></div>
-"""
+    # Only proceed with prediction if both players are selected
+    if st.session_state.p1_selection and st.session_state.p2_selection:
+        # If Player 1 and Player 2 are the same, reset Player 2
+        if st.session_state.p1_selection == st.session_state.p2_selection:
+            st.session_state.p2_selection = None
+            st.write("Please select a different player for Player 2.")
+        else:
+            p1 = st.session_state.p1_selection
+            p2 = st.session_state.p2_selection
+            
+            # pull latest UTRs
+            p1_utr, p2_utr = history[p1], history[p2]
 
-def extract_match_info(html_content):
-    soup = BeautifulSoup(html_content, 'html.parser')
-    match_info = {}
-    home_player = {}
-    away_player = {}
+            st.write(f"Current UTRs – **{p1}: {p1_utr:.2f}**, **{p2}: {p2_utr:.2f}**")
 
-    # Find tournament title (setting)
-    tournament_title_element = soup.find('h3', class_='tc-tournament-title')
-    tournament_title = tournament_title_element.find('a').get_text(strip=True) if tournament_title_element and tournament_title_element.find('a') else "N/A"
-
-    # Find estimated start time
-    time_element = soup.find('div', class_='tc-time__hour')
-    estimated_start_time = time_element.find('strong').get_text(strip=True) + " " + time_element.find('span', class_='tc-time__hour--smaller').get_text(strip=True) if time_element and time_element.find('strong') and time_element.find('span', class_='tc-time__hour--smaller') else "N/A"
-
-    # Find home player information
-    home_player_div = soup.find('div', class_='tc-match__item -home')
-    if home_player_div:
-        player_link = home_player_div.find('a', class_='tc-player__link')
-        if player_link:
-            country_small = player_link.find('small', class_='tc-player__country')
-            name_span = player_link.find('span', class_='tc-player__name')
-            seeding_small = player_link.find('small', class_='tc-player__seeding')
-
-            home_player['country'] = country_small.get_text(strip=True) if country_small else "N/A"
-            home_player['name'] = name_span.get_text(strip=True).replace('<span>', '').replace('</span>', '').strip() if name_span else "N/A"
-            home_player['seed'] = seeding_small.get_text(strip=True).strip('()') if seeding_small else "No seeding"
-
-    # Find away player information
-    away_player_div = soup.find('div', class_='tc-match__item -away')
-    if away_player_div:
-        player_link = away_player_div.find('a', class_='tc-player__link')
-        if player_link:
-            country_small = player_link.find('small', class_='tc-player__country')
-            name_span = player_link.find('span', class_='tc-player__name')
-            seeding_small = player_link.find('small', class_='tc-player__seeding')
-
-            away_player['country'] = country_small.get_text(strip=True) if country_small else "N/A"
-            away_player['name'] = name_span.get_text(strip=True).replace('<span>', '').replace('</span>', '').strip() if name_span else "N/A"
-            away_player['seed'] = seeding_small.get_text(strip=True).strip('()') if seeding_small else "No seeding"
-
-    match_info['tournament'] = tournament_title
-    match_info['time'] = estimated_start_time
-    match_info['home_player'] = home_player
-    match_info['away_player'] = away_player
-    return match_info
-
-# Process the first HTML
-match1_info = extract_match_info(html1)
-output_string1 = f"Tournament: {match1_info['tournament']}\n"
-output_string1 += f"Time: {match1_info['time']}\n"
-output_string1 += f"Home Player: {match1_info['home_player']['name']} ({match1_info['home_player']['country']}) [{match1_info['home_player']['seed']}]\n"
-output_string1 += f"Away Player: {match1_info['away_player']['name']} ({match1_info['away_player']['country']}) [{match1_info['away_player']['seed']}]\n"
-output_string1 += "-" * 30 + "\n"
-
-# Process the second HTML
-match2_info = extract_match_info(html2)
-output_string2 = f"Tournament: {match2_info['tournament']}\n"
-output_string2 += f"Time: {match2_info['time']}\n"
-output_string2 += f"Home Player: {match2_info['home_player']['name']} ({match2_info['home_player']['country']}) [{match2_info['home_player']['seed']}]\n"
-output_string2 += f"Away Player: {match2_info['away_player']['name']} ({match2_info['away_player']['country']}) [{match2_info['away_player']['seed']}]\n"
-output_string2 += "-" * 30 + "\n"
+            if st.button("Predict"):
+                match_stub = {  # minimal dict for preprocess()
+                    "p1": p1, "p2": p2, "p1_utr": p1_utr, "p2_utr": p2_utr
+                }
+                vec = np.array(preprocess_match_data(match_stub, profiles)).reshape(1, -1)
+                
+                with torch.no_grad():
+                    prob = 1 - float(model(torch.tensor(vec, dtype=torch.float32))[0])
+                st.metric(label="Probability Player 1 Wins", value=f"{prob*100:0.1f}%")
+    else:
+        st.write("Please select both players to view UTRs and make a prediction.")
 
 # === Tab: Upcoming Matches ===
 with tabs[1]:
@@ -182,13 +161,7 @@ with tabs[1]:
 
     st.write("Here you can display upcoming tennis matches (e.g., from a dataset or API).")
 
-    st.markdown("---")
-    st.subheader("Upcoming Match 1")
-    st.text(output_string1.strip())  # Use st.text to display pre-formatted text
-
-    st.markdown("---")
-    st.subheader("Upcoming Match 2")
-    st.text(output_string2.strip())
+    st.markdown("*** Coming Soon ***")
 
 # === Tab: Large UTR Moves ===
 with tabs[2]:
