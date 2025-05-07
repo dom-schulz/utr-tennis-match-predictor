@@ -6,7 +6,32 @@ from google.oauth2 import service_account
 import torch
 import numpy as np
 
-st.title("UTR Match Predictor 🎾")
+st.markdown("""
+    <style>
+    /* Sticky banner styling */
+    #main-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: #1f77b4;
+        color: white;
+        text-align: center;
+        padding: 10px 0;
+        font-size: 20px;
+        z-index: 1000;
+    }
+
+    /* Push main content down to avoid being hidden under the banner */
+    .main > div:first-child {
+        padding-top: 60px;
+    }
+    </style>
+
+    <div id="main-header">
+        🎾 UTR Tennis Match Predictor | Built by Team Zer0
+    </div>
+""", unsafe_allow_html=True)
 
 with st.sidebar:
     st.header("🔧 Tools & Insights")
