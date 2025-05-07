@@ -203,24 +203,30 @@ with tabs[2]:
             curr_name = df['first_name'][i]+' '+df['last_name'][i]
             if curr_name != prev_name:
                 curr_name = df['first_name'][i]+' '+df['last_name'][i]
-                content[ df['first_name'][i]+' '+df['last_name'][i]] = 10000*((df['utr'][i]/df['utr'][i+1])-1)
+                content[ df['first_name'][i]+' '+df['last_name'][i]] = 100*((df['utr'][i]/df['utr'][i+1])-1)
                                 # df['utr'][i]-df['utr'][i+1], 100*((df['utr'][i]/df['utr'][i+1])-1)])
             prev_name = curr_name
-    df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
-    df = df.sort_values(by="UTR % Change", ascending=False)
+    # df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
+    # df = df.sort_values(by="UTR % Change", ascending=False)
     # names = 
-    st.dataframe(df.head(10))
+    # st.dataframe(df.head(10))
 
-    df = df.sort_values(by="UTR % Change", ascending=True)
-    st.dataframe(df.head(10))
+    # df = df.sort_values(by="UTR % Change", ascending=True)
+    # st.dataframe(df.head(10))
+    # Step 2: Get top 20 up and down movers
+    sorted_changes = sorted(content.items(), key=lambda x: abs(x[1]), reverse=True)
+    top_movers = sorted_changes[:20]
 
-    color_map = {name: ("green" if freq > 0 else "red") for name, freq in content}
+    # Step 3: Build frequency dict and color mapping
+    frequencies = {name: abs(change) * 100 for name, change in top_movers}
+
+    color_map = {name: ("green" if freq > 0 else "red") for name, freq in top_movers}
 
     # Sample text
     text = "tennis match prediction tennis player match UTR win serve tennis forehand backhand win rally"
 
     # Step 5: Generate and display word cloud
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(content)
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(frequencies)
     wordcloud.recolor(color_func=color_func)
 
     fig, ax = plt.subplots(figsize=(10, 5))
