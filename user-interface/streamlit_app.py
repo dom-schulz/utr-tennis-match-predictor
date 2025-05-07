@@ -6,7 +6,7 @@ from google.oauth2 import service_account
 import torch
 import numpy as np
 
-st.title("Universal Tennis Predictions 🎾")
+st.header("Universal Tennis Predictions 🎾")
 
 with st.sidebar:
     st.header("🔧 Tools & Insights")
