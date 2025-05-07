@@ -222,9 +222,6 @@ with tabs[2]:
 
     color_map = {name: ("green" if freq > 0 else "red") for name, freq in top_movers}
 
-    # Sample text
-    text = "tennis match prediction tennis player match UTR win serve tennis forehand backhand win rally"
-
     # Step 5: Generate and display word cloud
     wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(frequencies)
     wordcloud.recolor(color_func=color_func)
@@ -233,18 +230,8 @@ with tabs[2]:
     ax.imshow(wordcloud, interpolation='bilinear')
     ax.axis("off")
 
-    st.markdown("### 🔀 Top UTR Movers Word Cloud")
+    st.markdown("### UTR Movers")
     st.pyplot(fig)
-
-    # Generate word cloud
-    # wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
-
-    # # Display it with matplotlib
-    # fig, ax = plt.subplots(figsize=(10, 5))
-    # ax.imshow(wordcloud, interpolation='bilinear')
-    # ax.axis("off")
-
-    # st.pyplot(fig)
 
 with tabs[3]:
     st.markdown("""
