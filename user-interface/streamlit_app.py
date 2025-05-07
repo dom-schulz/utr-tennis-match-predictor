@@ -208,7 +208,7 @@ with tabs[2]:
             prev_name = curr_name
     df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
     df = df.sort_values(by="UTR % Change", ascending=False)
-    names = 
+    # names = 
     st.dataframe(df.head(10))
 
     df = df.sort_values(by="UTR % Change", ascending=True)
