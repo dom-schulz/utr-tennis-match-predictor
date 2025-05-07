@@ -6,30 +6,7 @@ from google.oauth2 import service_account
 import torch
 import numpy as np
 
-st.markdown("""
-    <style>
-    .fixed-banner {
-        position: fixed;
-        top: 0;
-        width: 100%;
-        background-color: #1f77b4;
-        color: white;
-        text-align: center;
-        padding: 0.5rem;
-        font-size: 1.2rem;
-        z-index: 9999;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .main {
-        padding-top: 60px; /* Adjust to avoid overlap with banner */
-    }
-    </style>
-
-    <div class="fixed-banner">
-        🎾 UTR Tennis Match Predictor | By Team Zer0
-    </div>
-""", unsafe_allow_html=True)
+st.title("UTR Match Predictor 🎾")
 
 with st.sidebar:
     st.header("🔧 Tools & Insights")
