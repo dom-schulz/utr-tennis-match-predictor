@@ -69,6 +69,10 @@ def load_everything(credentials_dict):
     
     return model, utr_df, history, profiles, graph_hist
 
+# Define custom color function
+def color_func(word, **kwargs):
+    return color_map.get(word, "black")
+
 
 model, utr_df, history, profiles, graph_hist = load_everything(credentials_dict)
 player_names = sorted(set(profiles.keys()) & set(history.keys()))
@@ -187,40 +191,54 @@ with tabs[2]:
     st.write("This tab will highlight matches where players gained or lost a large amount of UTR since the previous week.")
 
     # Load the CSV from your bucket
-    # credentials = service_account.Credentials.from_service_account_info(credentials_dict)
-    # client = storage.Client(credentials=credentials, project=credentials_dict["project_id"])
-    # utr_bucket = client.bucket(UTR_BUCKET)
-    # df = download_csv_from_gcs(credentials_dict, utr_bucket, UTR_FILE)
+    credentials = service_account.Credentials.from_service_account_info(credentials_dict)
+    client = storage.Client(credentials=credentials, project=credentials_dict["project_id"])
+    utr_bucket = client.bucket(UTR_BUCKET)
+    df = download_csv_from_gcs(credentials_dict, utr_bucket, UTR_FILE)
 
-    # content = []
-    # prev_name = ''
-    # for i in range(len(df)):
-    #     if df['utr'][i] > 13:
-    #         curr_name = df['first_name'][i]+' '+df['last_name'][i]
-    #         if curr_name != prev_name:
-    #             curr_name = df['first_name'][i]+' '+df['last_name'][i]
-    #             content.append([df['first_name'][i]+' '+df['last_name'][i], df['utr'][i+1], df['utr'][i], 
-    #                             df['utr'][i]-df['utr'][i+1], 100*((df['utr'][i]/df['utr'][i+1])-1)])
-    #         prev_name = curr_name
-    # df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
-    # df = df.sort_values(by="UTR % Change", ascending=False)
-    # st.dataframe(df.head(10))
+    content = {}
+    prev_name = ''
+    for i in range(len(df)):
+        if df['utr'][i] > 13:
+            curr_name = df['first_name'][i]+' '+df['last_name'][i]
+            if curr_name != prev_name:
+                curr_name = df['first_name'][i]+' '+df['last_name'][i]
+                content[ df['first_name'][i]+' '+df['last_name'][i]] = 10000*((df['utr'][i]/df['utr'][i+1])-1)
+                                # df['utr'][i]-df['utr'][i+1], 100*((df['utr'][i]/df['utr'][i+1])-1)])
+            prev_name = curr_name
+    df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
+    df = df.sort_values(by="UTR % Change", ascending=False)
+    names = 
+    st.dataframe(df.head(10))
 
-    # df = df.sort_values(by="UTR % Change", ascending=True)
-    # st.dataframe(df.head(10))
+    df = df.sort_values(by="UTR % Change", ascending=True)
+    st.dataframe(df.head(10))
+
+    color_map = {name: ("green" if freq > 0 else "red") for name, freq in content}
 
     # Sample text
     text = "tennis match prediction tennis player match UTR win serve tennis forehand backhand win rally"
 
-    # Generate word cloud
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
+    # Step 5: Generate and display word cloud
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(content)
+    wordcloud.recolor(color_func=color_func)
 
-    # Display it with matplotlib
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.imshow(wordcloud, interpolation='bilinear')
     ax.axis("off")
 
+    st.markdown("### 🔀 Top UTR Movers Word Cloud")
     st.pyplot(fig)
+
+    # Generate word cloud
+    # wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
+
+    # # Display it with matplotlib
+    # fig, ax = plt.subplots(figsize=(10, 5))
+    # ax.imshow(wordcloud, interpolation='bilinear')
+    # ax.axis("off")
+
+    # st.pyplot(fig)
 
 with tabs[3]:
     st.markdown("""
