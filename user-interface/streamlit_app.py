@@ -144,18 +144,17 @@ with tabs[0]:
             st.write(f"Current UTRs – **{p1}: {p1_utr:.2f}**, **{p2}: {p2_utr:.2f}**")
 
             if st.button("Predict"):
-                match_stub = {  # minimal dict for preprocess()
-                    "p1": p1, "p2": p2, "p1_utr": p1_utr, "p2_utr": p2_utr
-                }
-                vec = np.array(preprocess_match_data(match_stub, profiles)).reshape(1, -1)
-                        
+                # match_stub = {  # minimal dict for preprocess()
+                #     "p1": p1, "p2": p2, "p1_utr": p1_utr, "p2_utr": p2_utr
+                # }
+                vec = preprocess_player_data(p1, p2, profiles)
+                
                 with torch.no_grad():
-                    prob = float(model(torch.tensor(vec, dtype=torch.float32))[0])
-                    
+                    prob = model(torch.tensor(vec, dtype=torch.float32))[0]
                     if prob >= 0.5:
-                        winner = p2
-                    else:
                         winner = p1
+                    else:
+                        winner = p2
                 st.metric(label="Winner", value=winner)
     else:
         st.write("Please select both players to view UTRs and make a prediction.")
