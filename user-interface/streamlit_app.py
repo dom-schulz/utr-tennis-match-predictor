@@ -331,37 +331,23 @@ with tabs[3]:
     rankings = scrape_rankings()
 
     if rankings:
-        # Display the rankings in a styled box container with better spacing
+        # Display the rankings with spacing, but without boxes
         st.markdown("""
-            <div style="border: 2px solid #000; padding: 20px; border-radius: 10px; font-family: Arial, sans-serif;">
+            <div style="font-family: Arial, sans-serif;">
                 <h3 style="text-align: center;">Top 10 ATP Rankings</h3>
-                <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-                    <thead style="background-color: #f1f1f1;">
-                        <tr>
-                            <th style="padding: 12px; border: 1px solid #ddd; text-align: center; width: 25%;">Rank</th>
-                            <th style="padding: 12px; border: 1px solid #ddd; text-align: center; width: 25%;">Name</th>
-                            <th style="padding: 12px; border: 1px solid #ddd; text-align: center; width: 25%;">Country</th>
-                            <th style="padding: 12px; border: 1px solid #ddd; text-align: center; width: 25%;">Points</th>
-                        </tr>
-                    </thead>
-                    <tbody>
         """, unsafe_allow_html=True)
 
         for rank, name, country, points in rankings:
             st.markdown(f"""
-                        <tr>
-                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">{rank}</td>
-                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">{name}</td>
-                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">{country}</td>
-                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">{points}</td>
-                        </tr>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee;">
+                    <span style="width: 10%; text-align: left;">{rank}</span>
+                    <span style="width: 40%; text-align: left;">{name}</span>
+                    <span style="width: 25%; text-align: center;">{country}</span>
+                    <span style="width: 25%; text-align: right;">{points}</span>
+                </div>
             """, unsafe_allow_html=True)
 
-        st.markdown("""
-                    </tbody>
-                </table>
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     else:
         st.write("Failed to retrieve rankings.")
