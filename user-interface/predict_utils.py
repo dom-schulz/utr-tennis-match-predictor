@@ -552,43 +552,17 @@ def download_csv_from_gcs(credentials_dict, bucket, file_path):
 
 
 # Rewritten preprocess_player_data function, handles division by zero error
-def preprocess_match_data(match_row, profiles):
-    """
-    Build the feature vector for one match.
+def preprocess_match_data(matches, profiles): # log_predict?
+    match_vector = [matches['p1_utr']-matches['p2_utr'],
+                        profiles[matches['p1']]['win_vs_lower']-profiles[matches['p2']]['win_vs_lower'],
+                        profiles[matches['p1']]['win_vs_higher']-profiles[matches['p2']]['win_vs_higher'],
+                        profiles[matches['p1']]['recent10']-profiles[matches['p2']]['recent10'],
+                        profiles[matches['p1']]['wvl_utr']-profiles[matches['p2']]['wvl_utr'],
+                        profiles[matches['p1']]['wvh_utr']-profiles[matches['p2']]['wvh_utr'],
+                        (profiles[matches['p1']]['h2h'][matches['p2']][0] / profiles[matches['p1']]['h2h'][matches['p2']][1])-(profiles[matches['p2']]['h2h'][matches['p1']][0] / profiles[matches['p2']]['h2h'][matches['p1']][1]),
+                        ]
+    return match_vector
 
-    Parameters
-    ----------
-    match_row : dict-like (e.g. a pandas Series or plain dict)
-        Must contain keys 'p1', 'p2', 'p1_utr', 'p2_utr'.
-    profiles : dict
-        Nested profile data exactly as in your original script.
-
-    Returns
-    -------
-    list[float]
-        Feature vector identical to the one returned by preprocess_match_data.
-    """
-    p1 = match_row["p1"]
-    p2 = match_row["p2"]
-
-    # Helper that returns win-ratio with a safe fallback (0 wins / 1 match)
-    def h2h_ratio(player, opponent):
-        h2h_stats = profiles[player]["h2h"].get(opponent, [0, 1])
-        wins = h2h_stats[0]
-        total = h2h_stats[1] if h2h_stats[1] != 0 else 1  # prevent division by zero
-        return wins / total
-
-    vec = [
-        match_row["p1_utr"] - match_row["p2_utr"],
-        profiles[p1]["win_vs_lower"],  profiles[p2]["win_vs_lower"],
-        profiles[p1]["win_vs_higher"], profiles[p2]["win_vs_higher"],
-        profiles[p1]["recent10"],      profiles[p2]["recent10"],
-        profiles[p1]["wvl_utr"],       profiles[p2]["wvl_utr"],
-        profiles[p1]["wvh_utr"],       profiles[p2]["wvh_utr"],
-        h2h_ratio(p1, p2),
-        h2h_ratio(p2, p1),
-    ]
-    return vec
 
 def display_player_metrics(player1, player2, history, profiles):
     if player1 != "" and player2 != "":
