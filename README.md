@@ -35,20 +35,20 @@ Overall, UTR serves as a valuable tool for players, coaches, and tournament orga
 
 ### The Data 
 
-The dataset utilizes many metrics focused on past player performance, including things like: 
-    - UTR difference
-    - player 1's Win percentage versus lower UTRs across all historical matches
-    - player 2's Win percentage versus lower UTRs across all historical matches
-    - player 1's Win percentage versus higher UTRs across all historical matches
-    - player 2's Win percentage versus higher UTRs across all historical matches
-    - player 1's Win percentage in most recent 10 matches
-    - player 2's Win percentage in most recent 10 matches
-    - player 1's average UTR beaten across all historical matches when UTR is lower (recorded as 0 if player 1 lost)
-    - player 2's average UTR beaten across all historical matches when UTR is lower (recorded as 0 if player 2 lost)
-    - player 1's average UTR beaten across all historical matches when UTR is higher (recorded as 0 if player 1 lost)
-    - player 2's average UTR beaten across all historical matches when UTR is higher (recorded as 0 if player 2 lost)
-    - player 1's win percentage against player 2 historically
-    - player 2's win percentage against player 1 historically
+The dataset utilizes many metrics focused on past player performance, including:
+- UTR difference
+- Player 1's win percentage versus lower UTRs across all historical matches
+- Player 2's win percentage versus lower UTRs across all historical matches
+- Player 1's win percentage versus higher UTRs across all historical matches
+- Player 2's win percentage versus higher UTRs across all historical matches
+- Player 1's win percentage in the most recent 10 matches
+- Player 2's win percentage in the most recent 10 matches
+- Player 1's average UTR beaten across all historical matches when UTR is lower (recorded as 0 if player 1 lost)
+- Player 2's average UTR beaten across all historical matches when UTR is lower (recorded as 0 if player 2 lost)
+- Player 1's average UTR beaten across all historical matches when UTR is higher (recorded as 0 if player 1 lost)
+- Player 2's average UTR beaten across all historical matches when UTR is higher (recorded as 0 if player 2 lost)
+- Player 1's win percentage against Player 2 historically
+- Player 2's win percentage against Player 1 historically
 
 
 
