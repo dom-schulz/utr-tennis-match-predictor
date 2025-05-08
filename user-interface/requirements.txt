@@ -11,3 +11,5 @@ matplotlib
 torch==2.2.0
 google-cloud-storage
 joblib
+wordcloud
+beautifulsoup4
