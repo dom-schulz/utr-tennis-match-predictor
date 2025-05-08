@@ -151,6 +151,7 @@ with tabs[0]:
                 
                 with torch.no_grad():
                     prob = model(torch.tensor(vec, dtype=torch.float32))[0]
+                    prob = 1-float(prob)
                     if prob >= 0.5:
                         winner = p1
                     else:
