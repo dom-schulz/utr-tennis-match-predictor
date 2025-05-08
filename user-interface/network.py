@@ -12,12 +12,18 @@ def create_masked_inputs(X):
 # Preprocessing function to convert match data into features for the model
 def preprocess_match_data(matches, profiles): # log_predict?
     match_vector = [matches['p1_utr']-matches['p2_utr'], 
-                profiles[ matches['p1'] ]['win_vs_lower'] - profiles[ matches['p2'] ]['win_vs_lower'],
-                profiles[ matches['p1'] ]['win_vs_higher'] - profiles[ matches['p2'] ]['win_vs_higher'],
-                profiles[ matches['p1'] ]['recent10'] - profiles[ matches['p2'] ]['recent10'],
-                profiles[ matches['p1'] ]['wvl_utr'] - profiles[ matches['p2'] ]['wvl_utr'],
-                profiles[ matches['p1'] ]['wvh_utr'] - profiles[ matches['p2'] ]['wvh_utr'],
-                (profiles[ matches['p1'] ]['h2h'][ matches['p2'] ][0] / profiles[ matches['p1'] ]['h2h'][ matches['p2'] ][1]) - (profiles[ matches['p2'] ]['h2h'][ matches['p1'] ][0] / profiles[ matches['p2'] ]['h2h'][ matches['p1'] ][1]),
+                profiles[ matches['p1'] ]['win_vs_lower'],
+                profiles[ matches['p2'] ]['win_vs_lower'],
+                profiles[ matches['p1'] ]['win_vs_higher'],
+                profiles[ matches['p2'] ]['win_vs_higher'],
+                profiles[ matches['p1'] ]['recent10'],
+                profiles[ matches['p2'] ]['recent10'],
+                profiles[ matches['p1'] ]['wvl_utr'],
+                profiles[ matches['p2'] ]['wvl_utr'],
+                profiles[ matches['p1'] ]['wvh_utr'],
+                profiles[ matches['p2'] ]['wvh_utr'],
+                profiles[ matches['p1'] ]['h2h'][ matches['p2'] ][0] / profiles[ matches['p1'] ]['h2h'][ matches['p2'] ][1],
+                profiles[ matches['p2'] ]['h2h'][ matches['p1'] ][0] / profiles[ matches['p2'] ]['h2h'][ matches['p1'] ][1],
                 # profiles[ matches['p1'] ]['h2h'][ matches['p2'] ][2] / profiles[ matches['p1'] ]['h2h'][ matches['p2'] ][3],
                 # profiles[ matches['p2'] ]['h2h'][ matches['p1'] ][2] / profiles[ matches['p2'] ]['h2h'][ matches['p1'] ][3]
                 ]

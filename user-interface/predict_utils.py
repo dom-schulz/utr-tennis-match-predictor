@@ -162,12 +162,18 @@ def preprocess_player_data(p1, p2, profiles):
         return wins / total
         
     match_vector = [profiles[p1]['utr']-profiles[p2]['utr'], 
-                    profiles[p1]['win_vs_lower'] - profiles[p2]['win_vs_lower'],
-                    profiles[p1]['win_vs_higher'] - profiles[p2]['win_vs_higher'],
-                    profiles[p1]['recent10'] - profiles[p2]['recent10'],
-                    profiles[p1]['wvl_utr'] - profiles[p2]['wvl_utr'],
-                    profiles[p1]['wvh_utr'] - profiles[p2]['wvh_utr'],
-                    h2h_ratio(p1, p2) - h2h_ratio(p2, p1)
+                    profiles[p1]['win_vs_lower'],
+                    profiles[p2]['win_vs_lower'],
+                    profiles[p1]['win_vs_higher'],
+                    profiles[p2]['win_vs_higher'],
+                    profiles[p1]['recent10'],
+                    profiles[p2]['recent10'],
+                    profiles[p1]['wvl_utr'],
+                    profiles[p2]['wvl_utr'],
+                    profiles[p1]['wvh_utr'],
+                    profiles[p2]['wvh_utr'],
+                    h2h_ratio(p1, p2),
+                    h2h_ratio(p2, p1)
                     ]
     return match_vector
 
@@ -574,12 +580,18 @@ def preprocess_match_data(match_row, profiles):
 
     vec = [
         match_row["p1_utr"] - match_row["p2_utr"],
-        profiles[p1]["win_vs_lower"] - profiles[p2]["win_vs_lower"],
-        profiles[p1]["win_vs_higher"] - profiles[p2]["win_vs_higher"],
-        profiles[p1]["recent10"] - profiles[p2]["recent10"],
-        profiles[p1]["wvl_utr"] - profiles[p2]["wvl_utr"],
-        profiles[p1]["wvh_utr"] - profiles[p2]["wvh_utr"],
-        h2h_ratio(p1, p2) - h2h_ratio(p2, p1),
+        profiles[p1]["win_vs_lower"],
+        profiles[p2]["win_vs_lower"],
+        profiles[p1]["win_vs_higher"],
+        profiles[p2]["win_vs_higher"],
+        profiles[p1]["recent10"],
+        profiles[p2]["recent10"],
+        profiles[p1]["wvl_utr"],
+        profiles[p2]["wvl_utr"],
+        profiles[p1]["wvh_utr"],
+        profiles[p2]["wvh_utr"],
+        h2h_ratio(p1, p2),
+        h2h_ratio(p2, p1),
     ]
     return vec
 
