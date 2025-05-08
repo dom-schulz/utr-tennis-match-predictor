@@ -203,13 +203,18 @@ with tabs[1]:
         player_home = player_names[0].get_text(strip=True)
         player_away = player_names[1].get_text(strip=True)
 
+        player_rank = soup.find_all('span', class_='tc-player-seeding')
+        player_homerank = player_rank[0].get_text(strip=True)
+        player_awayrank = player_rank[1].get_text(strip=True)
+
         player_countries = soup.find_all('small', class_='tc-player__country')
         country_home = player_countries[0].get_text(strip=True)
         country_away = player_countries[1].get_text(strip=True)
 
+        # <div class="tc-player-seeding">Seeded:&nbsp;3</div>
         # Format player names with country
-        player_home_formatted = f"{player_home} ({country_home})"
-        player_away_formatted = f"{player_away} ({country_away})"
+        player_home_formatted = f"{player_home} ({country_home}) ({player_home_rank})"
+        player_away_formatted = f"{player_away} ({country_away}) ({player_away_rank})"
 
         # Display match info
         st.subheader(f"Tournament: {tournament_title}")
