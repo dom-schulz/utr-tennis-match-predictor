@@ -173,8 +173,8 @@ with tabs[1]:
     country_away = soup1.find_all('small', class_='tc-player__country')[1].get_text(strip=True)
 
 # Format the player names with their countries
-    player_home_formatted = f"{country_home}"
-    player_away_formatted = f"{country_away}"
+    player_home_formatted = f"{country_home}   {player_home}"
+    player_away_formatted = f"{country_away}   {player_away}"
 
 # Directly display the match details in the Streamlit layout
     st.header("📅 Upcoming Match")
