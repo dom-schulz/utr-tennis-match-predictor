@@ -335,13 +335,13 @@ with tabs[3]:
         st.markdown("""
             <div style="border: 2px solid #000; padding: 20px; border-radius: 10px; font-family: Arial, sans-serif;">
                 <h3 style="text-align: center;">Top 10 ATP Rankings</h3>
-                <table style="width: 100%; border-collapse: separate; border-spacing: 0 10px; text-align: center;">
-                    <thead>
-                        <tr style="background-color: #f1f1f1;">
-                            <th style="padding: 12px 20px; border: 1px solid #ddd; font-weight: bold;">Rank</th>
-                            <th style="padding: 12px 20px; border: 1px solid #ddd; font-weight: bold;">Name</th>
-                            <th style="padding: 12px 20px; border: 1px solid #ddd; font-weight: bold;">Country</th>
-                            <th style="padding: 12px 20px; border: 1px solid #ddd; font-weight: bold;">Points</th>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                    <thead style="background-color: #f1f1f1;">
+                        <tr>
+                            <th style="padding: 12px; border: 1px solid #ddd; text-align: center;">Rank</th>
+                            <th style="padding: 12px; border: 1px solid #ddd; text-align: center;">Name</th>
+                            <th style="padding: 12px; border: 1px solid #ddd; text-align: center;">Country</th>
+                            <th style="padding: 12px; border: 1px solid #ddd; text-align: center;">Points</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -349,18 +349,23 @@ with tabs[3]:
 
         for rank, name, country, points in rankings:
             st.markdown(f"""
-                <tr>
-                    <td style="padding: 12px 20px; border: 1px solid #ddd;">{rank}</td>
-                    <td style="padding: 12px 20px; border: 1px solid #ddd;">{name}</td>
-                    <td style="padding: 12px 20px; border: 1px solid #ddd;">{country}</td>
-                    <td style="padding: 12px 20px; border: 1px solid #ddd;">{points}</td>
-                </tr>
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">{rank}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">{name}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">{country}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">{points}</td>
+                        </tr>
             """, unsafe_allow_html=True)
 
-        st.markdown("</tbody></table></div>", unsafe_allow_html=True)
+        st.markdown("""
+                    </tbody>
+                </table>
+            </div>
+        """, unsafe_allow_html=True)
 
     else:
         st.write("Failed to retrieve rankings.")
+
 
 
 with tabs[4]:
