@@ -149,13 +149,13 @@ with tabs[0]:
                 }
                 vec = np.array(preprocess_match_data(match_stub, profiles)).reshape(1, -1)
                         
-            with torch.no_grad():
-                prob = float(model(torch.tensor(vec, dtype=torch.float32))[0])
-                
-                if prob >= 0.5:
-                    winner = p2
-                else:
-                    winner = p1
+                with torch.no_grad():
+                    prob = float(model(torch.tensor(vec, dtype=torch.float32))[0])
+                    
+                    if prob >= 0.5:
+                        winner = p2
+                    else:
+                        winner = p1
                 st.metric(label="Winner", value=winner)
     else:
         st.write("Please select both players to view UTRs and make a prediction.")
