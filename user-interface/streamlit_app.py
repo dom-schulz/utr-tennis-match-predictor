@@ -83,7 +83,7 @@ player_names = sorted(set(profiles.keys()) & set(history.keys()))
 # STREAMLIT UI
 # ────────────────────────────────────────────────────────────────────────────────
 with tabs[0]:
-    st.subheader("Pick two players")
+    st.subheader("Input Players to Generate Match Prediction")
 
     if 'p1_selection' not in st.session_state:
         st.session_state.p1_selection = None
