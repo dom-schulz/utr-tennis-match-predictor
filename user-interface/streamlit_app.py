@@ -335,6 +335,12 @@ with tabs[3]:
         st.markdown("""
             <div style="font-family: Arial, sans-serif;">
                 <h3 style="text-align: center;">Top 10 ATP Rankings</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-weight: bold; border-bottom: 1px solid #eee; margin-bottom: 5px;">
+                    <span style="width: 10%; text-align: left;">Rank</span>
+                    <span style="width: 40%; text-align: left;">Name</span>
+                    <span style="width: 25%; text-align: center;">Country</span>
+                    <span style="width: 25%; text-align: right;">Points</span>
+                </div>
         """, unsafe_allow_html=True)
 
         for rank, name, country, points in rankings:
@@ -351,6 +357,7 @@ with tabs[3]:
 
     else:
         st.write("Failed to retrieve rankings.")
+
 
 
 with tabs[4]:
