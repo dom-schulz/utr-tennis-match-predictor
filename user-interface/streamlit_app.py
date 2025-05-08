@@ -8,9 +8,7 @@ import torch
 import numpy as np
 from bs4 import BeautifulSoup
 
-
-
-st.title("UTR Match Predictor 🎾")
+st.title("Universal Tennis Predictions 🎾")
 
 with st.sidebar:
     st.header("🔧 Tools & Insights")
@@ -19,7 +17,7 @@ with st.sidebar:
 
 # st.button("Create Custom Player Profile (Coming Soon)", disabled=True)
 
-tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "🎾 Player Metrics", "ℹ️ About"])
+tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "ℹ️ About"])
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Load Model & Data
@@ -67,12 +65,17 @@ def load_everything(credentials_dict):
     
     # Get player history and profiles
     history    = get_player_history(utr_df)
-    profiles   = get_player_profiles(matches_df, history)
+    graph_hist = get_player_history_general(utr_df)
+    profiles   = get_set_player_profiles(matches_df, history, st=st)
     
-    return model, utr_df, history, profiles
+    return model, utr_df, history, profiles, graph_hist
+
+# Define custom color function
+def color_func(word, **kwargs):
+    return color_map.get(word, "black")
 
 
-model, utr_df, history, profiles = load_everything(credentials_dict)
+model, utr_df, history, profiles, graph_hist = load_everything(credentials_dict)
 player_names = sorted(set(profiles.keys()) & set(history.keys()))
 
 
@@ -82,7 +85,6 @@ player_names = sorted(set(profiles.keys()) & set(history.keys()))
 with tabs[0]:
     st.subheader("Pick two players")
 
-    # Initialize session state for player selections if not already done
     if 'p1_selection' not in st.session_state:
         st.session_state.p1_selection = None
     if 'p2_selection' not in st.session_state:
@@ -91,22 +93,17 @@ with tabs[0]:
     # Define callback functions to update session state
     def update_p1():
         st.session_state.p1_selection = st.session_state.p1_widget
-        
+    
     def update_p2():
         st.session_state.p2_selection = st.session_state.p2_widget
 
     col1, col2 = st.columns(2)
-    
     with col1:
-        p1 = st.selectbox(
-            "Player 1", 
-            [""] + player_names,  # Add empty option as first choice
-            index=0 if st.session_state.p1_selection is None else 
-                 ([""] + player_names).index(st.session_state.p1_selection),
-            key="p1_widget",
-            on_change=update_p1
-        )
-    
+        p1 = st.selectbox("Player 1", [""] + player_names, 
+        index=0 if st.session_state.p1_selection is None else
+            ([""] + player_names).index(st.session_state.p1_selection),
+            key='p1_widget',
+            on_change=update_p1)
     with col2:
         # Create full list of options first
         full_p2_options = [""] + player_names
@@ -145,19 +142,43 @@ with tabs[0]:
             st.write(f"Current UTRs – **{p1}: {p1_utr:.2f}**, **{p2}: {p2_utr:.2f}**")
 
             if st.button("Predict"):
-                match_stub = {  # minimal dict for preprocess()
-                    "p1": p1, "p2": p2, "p1_utr": p1_utr, "p2_utr": p2_utr
-                }
-                vec = np.array(preprocess_match_data(match_stub, profiles)).reshape(1, -1)
+                # match_stub = {  # minimal dict for preprocess()
+                #     "p1": p1, "p2": p2, "p1_utr": p1_utr, "p2_utr": p2_utr
+                # }
+                vec = preprocess_player_data(p1, p2, profiles)
                 
                 with torch.no_grad():
-                    prob = 1 - float(model(torch.tensor(vec, dtype=torch.float32))[0])
-                st.metric(label="Probability Player 1 Wins", value=f"{prob*100:0.1f}%")
+                    prob = model(torch.tensor(vec, dtype=torch.float32))[0]
+                    if prob >= 0.5:
+                        winner = p1
+                    else:
+                        winner = p2
+                st.metric(label="Winner", value=winner)
     else:
         st.write("Please select both players to view UTRs and make a prediction.")
 
+    # st.divider()
+    
+    # ==================== Graph ======================== #
+
+    display_graph(p1, p2, graph_hist) # Graph
+
+    # st.divider()
+
+    # =================== Metrics ======================== #
+
+    col1, col2 = st.columns(2)
+    with col1:
+        display_player_metrics(p1, p2, history, profiles)
+    with col2:
+        display_player_metrics(p2, p1, history, profiles)
+                    
 # === Tab: Upcoming Matches ===
 with tabs[1]:
+    st.header("📅 Upcoming Matches")
+    st.subheader("Stay Ahead of the Game")
+    st.caption("See what's next on the pro circuit, and who's most likely to rise.")
+
     html1 = """<div class="fm-card tc-match -smaller" data-start-time="2025-05-08T09:00:00+00:00" data-match-status="prematch" data-match-slug="sr-match-60370623" data-tournament-slug="sr-tournament-2779-rome-italy" id="live-update-sr-match-60370623" data-event="Internazionali BNL d'Italia"><div class="tc-match__header"><div class="tc-match__header-top"><h3 class="tc-tournament-title"><a href="/tournaments/sr-tournament-2779-rome-italy/" class="tc-tournament-title-link" title="Internazionali BNL d'Italia">Internazionali BNL d'Italia</a></h3></div><div class="tc-match__header-bottom"><div class="tc-match__header-left"><span class="tc-match__status" js-match-card-status="">Not Started</span><div class="tc-match__cta" js-match-card-buttons=""></div><div class="tc-time" js-match-card-start-time=""><div class="tc-time__label"><span class="tc-time__label__text">Estimated Start</span></div><div class="tc-time__hour"><strong class="-highlighted" js-local-time="" data-utc-time="2025-05-08T09:00:00+00:00" data-format="hh:mm">02:00</strong> <span class="tc-time__hour--smaller" js-local-time="" data-utc-time="2025-05-08T09:00:00+00:00" data-format="A">AM</span></div></div></div><div class="tc-match__header-right"><div class="tc-match__info"><span class="tc-round-name">R128</span> <span class="mx-01">-</span> <span class="tc-event-title">Men's Singles</span></div></div></div></div><a href="/tournaments/sr-tournament-2779-rome-italy/sr-match-60370623/" class="tc-match__content-outer"><div class="tc-match__content"><div class="tc-match__items"><div class="tc-match__item -home" js-match-card-home-player=""><div class="tc-player"><div class="tc-player--wrap"><div class="tc-player--wrap--inner"><object><a class="tc-player__link" href="/players-rankings/matteo-arnaldi-sr-competitor-505550/" title="Matteo Arnaldi" data-id="sr:competitor:505550" data-slug="matteo-arnaldi-sr-competitor-505550" aria-label="Matteo Arnaldi"><div class="tc-player"><small class="tc-player__country">ITA</small> <span class="tc-player__name">M. <span>Arnaldi</span></span></div></a></object></div></div></div><div class="tc-match__stats--wrap" js-match-card-score-container=""><div><small>&nbsp;</small></div></div></div><div class="tc-match__item -away" js-match-card-away-player=""><div class="tc-player"><div class="tc-player--wrap"><div class="tc-player--wrap--inner"><object><a class="tc-player__link" href="/players-rankings/roberto-bautista-agut-sr-competitor-16720/" title="Roberto Bautista Agut" data-id="sr:competitor:16720" data-slug="roberto-bautista-agut-sr-competitor-16720" aria-label="Roberto Bautista Agut"><div class="tc-player"><small class="tc-player__country">ESP</small> <span class="tc-player__name">R. <span>Bautista Agut</span></span></div></a></object></div></div></div><div class="tc-match__stats--wrap" js-match-card-score-container=""><div><small>&nbsp;</small></div></div></div></div><div class="tc-prediction" js-match-card-predictions=""><strong class="tc-prediction__title">Win Probability</strong> <span class="tc-prediction__name">M. <strong>Arnaldi</strong></span><div class="tc-prediction__box"><span class="tc-prediction__value">73.8%</span></div></div></div></a></div>"""
 
 # Parse the HTML using BeautifulSoup
@@ -198,112 +219,44 @@ with tabs[2]:
     utr_bucket = client.bucket(UTR_BUCKET)
     df = download_csv_from_gcs(credentials_dict, utr_bucket, UTR_FILE)
 
-    content = []
+    content = {}
     prev_name = ''
     for i in range(len(df)):
         if df['utr'][i] > 13:
             curr_name = df['first_name'][i]+' '+df['last_name'][i]
             if curr_name != prev_name:
                 curr_name = df['first_name'][i]+' '+df['last_name'][i]
-                content.append([df['first_name'][i]+' '+df['last_name'][i], df['utr'][i+1], df['utr'][i], 
-                                df['utr'][i]-df['utr'][i+1], 100*((df['utr'][i]/df['utr'][i+1])-1)])
+                content[ df['first_name'][i]+' '+df['last_name'][i]] = 100*((df['utr'][i]/df['utr'][i+1])-1)
+                                # df['utr'][i]-df['utr'][i+1], 100*((df['utr'][i]/df['utr'][i+1])-1)])
             prev_name = curr_name
-    df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
-    df = df.sort_values(by="UTR % Change", ascending=False)
-    st.dataframe(df.head(10))
+    # df = pd.DataFrame(content, columns=["Name", "Previous UTR", "Current UTR", "UTR Change", "UTR % Change"])
+    # df = df.sort_values(by="UTR % Change", ascending=False)
+    # names = 
+    # st.dataframe(df.head(10))
 
-    df = df.sort_values(by="UTR % Change", ascending=True)
-    st.dataframe(df.head(10))
+    # df = df.sort_values(by="UTR % Change", ascending=True)
+    # st.dataframe(df.head(10))
+    # Step 2: Get top 20 up and down movers
+    sorted_changes = sorted(content.items(), key=lambda x: abs(x[1]), reverse=True)
+    top_movers = sorted_changes[:20]
+
+    # Step 3: Build frequency dict and color mapping
+    frequencies = {name: abs(change) * 100 for name, change in top_movers}
+
+    color_map = {name: ("green" if freq > 0 else "red") for name, freq in top_movers}
+
+    # Step 5: Generate and display word cloud
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(frequencies)
+    wordcloud.recolor(color_func=color_func)
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.imshow(wordcloud, interpolation='bilinear')
+    ax.axis("off")
+
+    st.markdown("### UTR Movers")
+    st.pyplot(fig)
 
 with tabs[3]:
-    st.header("🎾 Player Metrics")
-
-    # Load data from GCS
-    utr_bucket = client.bucket(UTR_BUCKET)
-    df1 = download_csv_from_gcs(credentials_dict, utr_bucket, UTR_FILE)
-    matches_bucket = client.bucket(MATCHES_BUCKET)
-    df2 = download_csv_from_gcs(credentials_dict, matches_bucket, MATCHES_FILE)
-
-    history = get_player_history_general(df1)
-    player_df = get_player_profiles_general(df2, history)
-
-    # Player selection
-    st.subheader("Compare Two Players")
-    player_names = [""] + sorted(player_df.keys())
-    col1, col2 = st.columns(2)
-
-    with col1:
-        player1 = st.selectbox("Player 1", player_names, key="player1")
-
-    with col2:
-        player2 = st.selectbox("Player 2", player_names, key="player2")
-
-    def display_player_metrics(player1, player2, history):
-        if player1 != "" and player2 != "":
-            profile = player_df[player1]
-
-            # Assuming you want to take the average of the list if it's a list
-            utr_value = profile.get("utr", 0)
-
-            # Check if utr_value is a list and calculate the average if it is
-            if isinstance(utr_value, list):
-                utr_value = sum(utr_value) / len(utr_value) if utr_value else 0  # Avoid division by zero
-
-            st.markdown(f"### {player1}")
-            
-            # Limit utr value to 2 decimal places
-            utr_value = round(utr_value, 2)
-            
-            st.metric("Current UTR", utr_value)
-            st.metric("Win Rate Vs. Lower UTRs", f"{round(profile.get('win_vs_lower', 0) * 100, 2)}%")
-            st.metric("Win Rate Vs. Higher UTRs", f"{round(profile.get('win_vs_higher', 0) * 100, 2)}%")
-            st.metric("Win Rate Last 10 Matches", f"{round(profile.get('recent10', 0) * 100, 2)}%")
-            try:
-                st.metric("Head-To-Head (W-L)", f"{profile.get('h2h')[player2][0]} - {profile.get('h2h')[player2][1]-profile.get('h2h')[player2][0]}")
-            except:
-                st.metric("Head-To-Head (W-L)", "0 - 0")
-
-    def display_graph(player1, player2, history):
-        # Plot both UTR histories
-        try:
-            utrs1 = history[player1].get("utr", [])
-            dates1 = history[player1].get("date", [])
-            utrs2 = history[player2].get("utr", [])
-            dates2 = history[player2].get("date", [])
-
-            if utrs1 and dates1 and utrs2 and dates2:
-                df1 = pd.DataFrame({"Date": pd.to_datetime(dates1), "UTR": utrs1, "Player": player1})
-                df2 = pd.DataFrame({"Date": pd.to_datetime(dates2), "UTR": utrs2, "Player": player2})
-                df_plot = pd.concat([df1, df2]).sort_values("Date")
-
-                fig, ax = plt.subplots()
-                for name, group in df_plot.groupby("Player"):
-                    ax.plot(group["Date"], group["UTR"], label=name)  # No marker
-
-                ax.set_title("UTR Over Time")
-                ax.set_xlabel("Date")
-                ax.set_ylabel("UTR")
-                ax.legend()
-                ax.grid(True)
-                fig.autofmt_xdate()
-
-                st.pyplot(fig)
-        except:
-            pass
-
-    st.divider()
-
-    col1, col2 = st.columns(2)
-    with col1:
-        display_player_metrics(player1, player2, history)
-    with col2:
-        display_player_metrics(player2, player1, history)
-
-    st.divider()
-
-    display_graph(player1, player2, history)
-
-with tabs[4]:
     st.markdown("""
     ### 📖 About This Project
 
@@ -332,9 +285,9 @@ with tabs[4]:
 
     st.markdown("💬 We Value Your Feedback!")
     ### Feedback Function ###
-    def collect_feedback():
-        pass
-    # # Create a form to collect feedback
+
+    # def collect_feedback():
+    # Create a form to collect feedback
     # with st.form(key="feedback_form"):
     #     # Collect feedback from users
     #     rating = st.slider("How would you rate your experience?", min_value=1, max_value=10)
@@ -359,4 +312,4 @@ with tabs[4]:
     #         st.success("Thank you for your feedback!")
     #         st.write("We'll review your comments to improve our platform.")
 
-    collect_feedback()
+    # collect_feedback()
