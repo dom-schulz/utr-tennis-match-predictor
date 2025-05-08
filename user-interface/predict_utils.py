@@ -12,6 +12,7 @@ import joblib
 from google.cloud import storage
 import io
 from google.oauth2 import service_account
+import matplotlib.pyplot as plt
 
 # GCS Buckets and files
 MODEL_BUCKET = "utr-model-training-bucket"
@@ -153,6 +154,13 @@ def create_score(prop, best_of):
 
 
 def preprocess_player_data(p1, p2, profiles):
+    # Helper that returns win-ratio with a safe fallback (0 wins / 1 match)
+    def h2h_ratio(player, opponent):
+        h2h_stats = profiles[player]["h2h"].get(opponent, [0, 1])
+        wins = h2h_stats[0]
+        total = h2h_stats[1] if h2h_stats[1] != 0 else 1  # prevent division by zero
+        return wins / total
+        
     match_vector = [profiles[p1]['utr']-profiles[p2]['utr'], 
                     profiles[p1]['win_vs_lower'],
                     profiles[p2]['win_vs_lower'],
@@ -164,8 +172,8 @@ def preprocess_player_data(p1, p2, profiles):
                     profiles[p2]['wvl_utr'],
                     profiles[p1]['wvh_utr'],
                     profiles[p2]['wvh_utr'],
-                    profiles[p1]['h2h'][p2][0] / profiles[p1]['h2h'][p2][1],
-                    profiles[p2]['h2h'][p1][0] / profiles[p2]['h2h'][p1][1]
+                    h2h_ratio(p1, p2),
+                    h2h_ratio(p2, p1)
                     ]
     return match_vector
 
@@ -176,7 +184,7 @@ def get_prop(model, p1, p2, player_profiles):
     X_tensor = torch.tensor(X, dtype=torch.float32)
 
     prop = model(X_tensor).squeeze().detach().numpy()
-    prop = 1-float(prop)
+    # prop = 1-float(prop)
     return prop
 
 
@@ -236,9 +244,10 @@ def find_winner(score):
 #     return prediction
 
 
-def get_player_profiles(matches, history):
+def get_set_player_profiles(matches, history, st=None):
     """Same logic you used in training (simplified to what preprocess needs)."""
     profiles = {}
+    # st.write("Gathering Profile Data")
     for r in matches.itertuples():
         for plyr, opp in ((r.p1, r.p2), (r.p2, r.p1)):
             if plyr not in profiles:
@@ -248,9 +257,59 @@ def get_player_profiles(matches, history):
                     "h2h": {}, "utr": history.get(plyr, getattr(r, "p1_utr" if plyr == r.p1 else "p2_utr"))
                 }
             if opp not in profiles[plyr]["h2h"]:
-                profiles[plyr]["h2h"][opp] = [0, 0, 1, 1]  # W, G, W_?, G_?
+                profiles[plyr]["h2h"][opp] = [0, 0]  # Wins, Total
                 
             # minimal updates just so preprocess() works
+            
+    # st.markdown("Gather Profile Data")
+    for r in matches.itertuples():
+        # for plyr, opp in ((r.p1, r.p2), (r.p2, r.p1)):
+            if r.winner == r.p1:
+                profiles[r.p1]['h2h'][r.p2][0] += 1
+                profiles[r.p1]['h2h'][r.p2][1] += 1
+                profiles[r.p2]['h2h'][r.p1][1] += 1
+            else:
+                profiles[r.p1]['h2h'][r.p2][1] += 1
+                profiles[r.p2]['h2h'][r.p1][0] += 1
+                profiles[r.p2]['h2h'][r.p1][1] += 1
+            
+            # Record win rates vs higher/lower-rated opponents
+            if r.p1_utr-r.p2_utr > 0:  # Player faced a lower-rated opponent
+                if r.winner == r.p1:
+                    profiles[r.p1]["win_vs_lower"].append(1)
+                    profiles[r.p2]["win_vs_higher"].append(0)
+                    profiles[r.p1]["wvl_utr"].append(r.p2_utr)
+                    profiles[r.p2]["wvh_utr"].append(0)
+                else:
+                    profiles[r.p1]["win_vs_lower"].append(0)
+                    profiles[r.p2]["win_vs_higher"].append(1)
+                    profiles[r.p2]["wvh_utr"].append(r.p1_utr)
+                    profiles[r.p1]["wvl_utr"].append(0)
+
+            else:  # Player faced a higher-rated opponent
+                if r.winner == r.p1:
+                    profiles[r.p1]["win_vs_higher"].append(1)
+                    profiles[r.p2]["win_vs_lower"].append(0)
+                    profiles[r.p1]["wvh_utr"].append(r.p2_utr)
+                    profiles[r.p2]["wvl_utr"].append(0)
+                else:
+                    profiles[r.p1]["win_vs_higher"].append(0)
+                    profiles[r.p2]["win_vs_lower"].append(1)
+                    profiles[r.p2]["wvl_utr"].append(r.p1_utr)
+                    profiles[r.p1]["wvh_utr"].append(0)
+
+            if r.winner == r.p1:
+                profiles[r.p1]["recent10"].append(1)
+                profiles[r.p2]["recent10"].append(0)
+            else:
+                profiles[r.p1]["recent10"].append(0)
+                profiles[r.p2]["recent10"].append(1)
+
+            if len(profiles[r.p1]["recent10"]) > 10:
+                profiles[r.p1]["recent10"] = profiles[r.p1]["recent10"][1:]
+            if len(profiles[r.p2]["recent10"]) > 10:
+                profiles[r.p2]["recent10"] = profiles[r.p2]["recent10"][1:]
+            
     # convert lists → means so they’re scalar
     for p in profiles.values():
         for k in ("win_vs_lower", "win_vs_higher", "recent10", "wvl_utr", "wvh_utr"):
@@ -258,7 +317,7 @@ def get_player_profiles(matches, history):
     return profiles
 
 
-def get_player_profiles_general(data, history):
+def get_set_player_profiles_general(data, history):
     player_profiles = {}
 
     for i in range(len(data)):
@@ -530,3 +589,56 @@ def preprocess_match_data(match_row, profiles):
         h2h_ratio(p2, p1),
     ]
     return vec
+
+def display_player_metrics(player1, player2, history, profiles):
+    if player1 != "" and player2 != "":
+        profile = profiles[player1]
+        # st.markdown(profile)
+
+        # Assuming you want to take the average of the list if it's a list
+        utr_value = profile.get("utr", 0)
+
+        # Check if utr_value is a list and calculate the average if it is
+        if isinstance(utr_value, list):
+            utr_value = sum(utr_value) / len(utr_value) if utr_value else 0  # Avoid division by zero
+
+        st.markdown(f"### {player1}")
+        
+        # Limit utr value to 2 decimal places
+        utr_value = round(utr_value, 2)
+        
+        st.metric("Current UTR", utr_value)
+        st.metric("Win Rate Vs. Lower UTRs", f"{round(profile.get('win_vs_lower', 0) * 100, 2)}%")
+        st.metric("Win Rate Vs. Higher UTRs", f"{round(profile.get('win_vs_higher', 0) * 100, 2)}%")
+        st.metric("Win Rate Last 10 Matches", f"{round(profile.get('recent10', 0) * 100, 2)}%")
+        try:
+            st.metric("Head-To-Head (W-L)", f"{profile.get('h2h')[player2][0]} - {profile.get('h2h')[player2][1]-profile.get('h2h')[player2][0]}")
+        except:
+            st.metric("Head-To-Head (W-L)", "0 - 0")
+
+def display_graph(player1, player2, history):
+    # Plot both UTR histories
+    if player1 != "" and player2 != "":
+        # st.markdown(history[player1])
+        utrs1 = history[player1].get("utr", [])
+        dates1 = history[player1].get("date", [])
+        utrs2 = history[player2].get("utr", [])
+        dates2 = history[player2].get("date", [])
+
+        if utrs1 and dates1 and utrs2 and dates2:
+            df1 = pd.DataFrame({"Date": pd.to_datetime(dates1), "UTR": utrs1, "Player": player1})
+            df2 = pd.DataFrame({"Date": pd.to_datetime(dates2), "UTR": utrs2, "Player": player2})
+            df_plot = pd.concat([df1, df2]).sort_values("Date")
+
+            fig, ax = plt.subplots()
+            for name, group in df_plot.groupby("Player"):
+                ax.plot(group["Date"], group["UTR"], label=name)  # No marker
+
+            ax.set_title("UTR Over Time")
+            ax.set_xlabel("Date")
+            ax.set_ylabel("UTR")
+            ax.legend()
+            ax.grid(True)
+            fig.autofmt_xdate()
+
+            st.pyplot(fig)
