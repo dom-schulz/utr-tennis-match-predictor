@@ -7,6 +7,7 @@ from google.oauth2 import service_account
 import torch
 import numpy as np
 from bs4 import BeautifulSoup
+from wordcloud import WordCloud
 
 st.title("UTR Match Predictor 🎾")
 
