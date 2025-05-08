@@ -36,6 +36,7 @@ credentials_dict = {
         "universe_domain": st.secrets["connections_gcs_universe_domain"]
 }
 
+
 @st.cache_resource(show_spinner="🔄  Loading Data & Model from the Cloud...")
 def load_everything(credentials_dict):
 
@@ -64,12 +65,17 @@ def load_everything(credentials_dict):
     
     # Get player history and profiles
     history    = get_player_history(utr_df)
-    profiles   = get_player_profiles(matches_df, history)
+    graph_hist = get_player_history_general(utr_df)
+    profiles   = get_set_player_profiles(matches_df, history, st=st)
     
-    return model, utr_df, history, profiles
+    return model, utr_df, history, profiles, graph_hist
+
+# Define custom color function
+def color_func(word, **kwargs):
+    return color_map.get(word, "black")
 
 
-model, utr_df, history, profiles = load_everything(credentials_dict)
+model, utr_df, history, profiles, graph_hist = load_everything(credentials_dict)
 player_names = sorted(set(profiles.keys()) & set(history.keys()))
 
 
@@ -79,7 +85,6 @@ player_names = sorted(set(profiles.keys()) & set(history.keys()))
 with tabs[0]:
     st.subheader("Pick two players")
 
-    # Initialize session state for player selections if not already done
     if 'p1_selection' not in st.session_state:
         st.session_state.p1_selection = None
     if 'p2_selection' not in st.session_state:
@@ -88,22 +93,17 @@ with tabs[0]:
     # Define callback functions to update session state
     def update_p1():
         st.session_state.p1_selection = st.session_state.p1_widget
-        
+    
     def update_p2():
         st.session_state.p2_selection = st.session_state.p2_widget
 
     col1, col2 = st.columns(2)
-    
     with col1:
-        p1 = st.selectbox(
-            "Player 1", 
-            [""] + player_names,  # Add empty option as first choice
-            index=0 if st.session_state.p1_selection is None else 
-                 ([""] + player_names).index(st.session_state.p1_selection),
-            key="p1_widget",
-            on_change=update_p1
-        )
-    
+        p1 = st.selectbox("Player 1", [""] + player_names, 
+        index=0 if st.session_state.p1_selection is None else
+            ([""] + player_names).index(st.session_state.p1_selection),
+            key='p1_widget',
+            on_change=update_p1)
     with col2:
         # Create full list of options first
         full_p2_options = [""] + player_names
@@ -142,17 +142,36 @@ with tabs[0]:
             st.write(f"Current UTRs – **{p1}: {p1_utr:.2f}**, **{p2}: {p2_utr:.2f}**")
 
             if st.button("Predict"):
-                match_stub = {  # minimal dict for preprocess()
-                    "p1": p1, "p2": p2, "p1_utr": p1_utr, "p2_utr": p2_utr
-                }
-                vec = np.array(preprocess_match_data(match_stub, profiles)).reshape(1, -1)
+                # match_stub = {  # minimal dict for preprocess()
+                #     "p1": p1, "p2": p2, "p1_utr": p1_utr, "p2_utr": p2_utr
+                # }
+                vec = preprocess_player_data(p1, p2, profiles)
                 
                 with torch.no_grad():
-                    prob = 1 - float(model(torch.tensor(vec, dtype=torch.float32))[0])
-                st.metric(label="Probability Player 1 Wins", value=f"{prob*100:0.1f}%")
+                    prob = model(torch.tensor(vec, dtype=torch.float32))[0]
+                    if prob >= 0.5:
+                        winner = p1
+                    else:
+                        winner = p2
+                st.metric(label="Winner", value=winner)
     else:
         st.write("Please select both players to view UTRs and make a prediction.")
 
+    # st.divider()
+    
+    # ==================== Graph ======================== #
+
+    display_graph(p1, p2, graph_hist) # Graph
+
+    # st.divider()
+
+    # =================== Metrics ======================== #
+
+    col1, col2 = st.columns(2)
+    with col1:
+        display_player_metrics(p1, p2, history, profiles)
+    with col2:
+        display_player_metrics(p2, p1, history, profiles)
 # === Tab: Upcoming Matches ===
 with tabs[1]:
     st.header("📅 Upcoming Matches")
