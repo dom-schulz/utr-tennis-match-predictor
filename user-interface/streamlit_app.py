@@ -6,6 +6,7 @@ from google.cloud import storage
 from google.oauth2 import service_account
 import torch
 import numpy as np
+from bs4 import BeautifulSoup
 
 st.title("UTR Match Predictor 🎾")
 
