@@ -150,8 +150,8 @@ with tabs[0]:
                 vec = preprocess_player_data(p1, p2, profiles)
                 
                 with torch.no_grad():
-                    prob = model(torch.tensor(vec, dtype=torch.float32))[0]
-                    print(f'prob: {prob}')
+                    prob = 1 - float(model(torch.tensor(vec, dtype=torch.float32))[0])
+
                     if prob >= 0.5:
                         winner = p1
                     else:
