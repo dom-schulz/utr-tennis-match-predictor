@@ -335,7 +335,7 @@ with tabs[3]:
         st.markdown("""
             <div style="border: 2px solid #000; padding: 20px; border-radius: 10px; font-family: Arial, sans-serif;">
                 <h3 style="text-align: center;">Top 10 ATP Rankings</h3>
-                <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                <table style="width: 100%; border-collapse: separate; border-spacing: 0 10px; text-align: center;">
                     <thead>
                         <tr style="background-color: #f1f1f1;">
                             <th style="padding: 12px 20px; border: 1px solid #ddd; font-weight: bold;">Rank</th>
