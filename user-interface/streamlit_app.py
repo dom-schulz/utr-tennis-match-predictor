@@ -167,8 +167,8 @@ with tabs[1]:
     tournament_title = soup1.find('h3', class_='tc-tournament-title').get_text(strip=True)
     match_time = soup1.find('strong', class_='-highlighted').get_text(strip=True)
     match_status = soup1.find('span', class_='tc-match__status').get_text(strip=True)  # Extract match status
-    player_home = soup1.find('a', class_='tc-player__link').get_text(strip=True)
-    player_away = soup1.find_all('a', class_='tc-player__link')[1].get_text(strip=True)
+    player_home = soup1.find('span', class_='tc-player__name').get_text(strip=True)
+    player_away = soup1.find_all('span', class_='tc-player__name')[1].get_text(strip=True)
     country_home = soup1.find('small', class_='tc-player__country').get_text(strip=True)
     country_away = soup1.find_all('small', class_='tc-player__country')[1].get_text(strip=True)
 
@@ -183,7 +183,6 @@ with tabs[1]:
     st.write(f"**Estimated Start Time**: {match_time} AM")
     st.write(f"**Home Player**: {player_home_formatted}")
     st.write(f"**Away Player**: {player_away_formatted}")
-
 
 # === Tab: Large UTR Moves ===
 with tabs[2]:
