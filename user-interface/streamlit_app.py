@@ -179,7 +179,6 @@ with tabs[1]:
     st.subheader("Stay Ahead of the Game")
     st.caption("See what's next on the pro circuit, and who's most likely to rise.")
     with tabs[1]:
-    st.header("📅 Upcoming Matches")
     st.subheader("Stay Ahead of the Game")
     st.caption("See what's next on the pro circuit, and who's most likely to rise.")
 
