@@ -330,17 +330,14 @@ with tabs[3]:
     rankings = scrape_rankings()
 
     if rankings:
-        # Display the rankings in a table format
+        # Display the rankings in a properly formatted table
         st.write("### Top 10 ATP Rankings")
-        st.write(
-            "| Rank | Name | Country | Points |"
-            "\n|------|------|---------|--------|"
-        )
+        st.markdown("| Rank | Name | Country | Points |")
+        st.markdown("|------|------|---------|--------|")
         for rank, name, country, points in rankings:
-            st.write(f"| {rank} | {name} | {country} | {points} |")
+            st.markdown(f"| {rank} | {name} | {country} | {points} |")
     else:
         st.write("Failed to retrieve rankings.")
-
 
 with tabs[4]:
     st.markdown("""
