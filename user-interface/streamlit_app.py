@@ -180,22 +180,33 @@ with tabs[1]:
     st.caption("See what's next on the pro circuit, and who's most likely to rise.")
 
     html1 = """<div class="fm-card tc-match -smaller" data-start-time="2025-05-08T09:00:00+00:00" data-match-status="prematch" data-match-slug="sr-match-60370623" data-tournament-slug="sr-tournament-2779-rome-italy" id="live-update-sr-match-60370623" data-event="Internazionali BNL d'Italia"><div class="tc-match__header"><div class="tc-match__header-top"><h3 class="tc-tournament-title"><a href="/tournaments/sr-tournament-2779-rome-italy/" class="tc-tournament-title-link" title="Internazionali BNL d'Italia">Internazionali BNL d'Italia</a></h3></div><div class="tc-match__header-bottom"><div class="tc-match__header-left"><span class="tc-match__status" js-match-card-status="">Not Started</span><div class="tc-match__cta" js-match-card-buttons=""></div><div class="tc-time" js-match-card-start-time=""><div class="tc-time__label"><span class="tc-time__label__text">Estimated Start</span></div><div class="tc-time__hour"><strong class="-highlighted" js-local-time="" data-utc-time="2025-05-08T09:00:00+00:00" data-format="hh:mm">02:00</strong> <span class="tc-time__hour--smaller" js-local-time="" data-utc-time="2025-05-08T09:00:00+00:00" data-format="A">AM</span></div></div></div><div class="tc-match__header-right"><div class="tc-match__info"><span class="tc-round-name">R128</span> <span class="mx-01">-</span> <span class="tc-event-title">Men's Singles</span></div></div></div></div><a href="/tournaments/sr-tournament-2779-rome-italy/sr-match-60370623/" class="tc-match__content-outer"><div class="tc-match__content"><div class="tc-match__items"><div class="tc-match__item -home" js-match-card-home-player=""><div class="tc-player"><div class="tc-player--wrap"><div class="tc-player--wrap--inner"><object><a class="tc-player__link" href="/players-rankings/matteo-arnaldi-sr-competitor-505550/" title="Matteo Arnaldi" data-id="sr:competitor:505550" data-slug="matteo-arnaldi-sr-competitor-505550" aria-label="Matteo Arnaldi"><div class="tc-player"><small class="tc-player__country">ITA</small> <span class="tc-player__name">M. <span>Arnaldi</span></span></div></a></object></div></div></div><div class="tc-match__stats--wrap" js-match-card-score-container=""><div><small>&nbsp;</small></div></div></div><div class="tc-match__item -away" js-match-card-away-player=""><div class="tc-player"><div class="tc-player--wrap"><div class="tc-player--wrap--inner"><object><a class="tc-player__link" href="/players-rankings/roberto-bautista-agut-sr-competitor-16720/" title="Roberto Bautista Agut" data-id="sr:competitor:16720" data-slug="roberto-bautista-agut-sr-competitor-16720" aria-label="Roberto Bautista Agut"><div class="tc-player"><small class="tc-player__country">ESP</small> <span class="tc-player__name">R. <span>Bautista Agut</span></span></div></a></object></div></div></div><div class="tc-match__stats--wrap" js-match-card-score-container=""><div><small>&nbsp;</small></div></div></div></div><div class="tc-prediction" js-match-card-predictions=""><strong class="tc-prediction__title">Win Probability</strong> <span class="tc-prediction__name">M. <strong>Arnaldi</strong></span><div class="tc-prediction__box"><span class="tc-prediction__value">73.8%</span></div></div></div></a></div>"""
-
+    html2 = """<div class="fm-card tc-match -smaller" data-start-time="2025-05-08T12:10:00+00:00" data-match-status="prematch" data-match-slug="sr-match-60370619" data-tournament-slug="sr-tournament-2779-rome-italy" id="live-update-sr-match-60370619" data-event="Internazionali BNL d'Italia"><div class="tc-match__header"><div class="tc-match__header-top"><h3 class="tc-tournament-title"><a href="/tournaments/sr-tournament-2779-rome-italy/" class="tc-tournament-title-link" title="Internazionali BNL d'Italia">Internazionali BNL d'Italia</a></h3></div><div class="tc-match__header-bottom"><div class="tc-match__header-left"><span class="tc-match__status" js-match-card-status="">Not Started</span><div class="tc-match__cta" js-match-card-buttons=""></div><div class="tc-time" js-match-card-start-time=""><div class="tc-time__label"><span class="tc-time__label__text">Estimated Start</span></div><div class="tc-time__hour"><strong class="-highlighted" js-local-time="" data-utc-time="2025-05-08T12:10:00+00:00" data-format="hh:mm">05:10</strong> <span class="tc-time__hour--smaller" js-local-time="" data-utc-time="2025-05-08T12:10:00+00:00" data-format="A">AM</span></div></div></div><div class="tc-match__header-right"><div class="tc-match__info"><span class="tc-round-name">R128</span> <span class="mx-01">-</span> <span class="tc-event-title">Men's Singles</span></div></div></div></div><a href="/tournaments/sr-tournament-2779-rome-italy/sr-match-60370619/" class="tc-match__content-outer"><div class="tc-match__content"><div class="tc-match__items"><div class="tc-match__item -home" js-match-card-home-player=""><div class="tc-player"><div class="tc-player--wrap"><div class="tc-player--wrap--inner"><object><a class="tc-player__link" href="/players-rankings/luca-nardi-sr-competitor-450477/" title="Luca Nardi" data-id="sr:competitor:450477" data-slug="luca-nardi-sr-competitor-450477" aria-label="Luca Nardi"><div class="tc-player"><small class="tc-player__country">ITA</small> <span class="tc-player__name">L. <span>Nardi</span></span></div></a></object></div></div></div><div class="tc-match__stats--wrap" js-match-card-score-container=""><div><small>&nbsp;</small></div></div></div><div class="tc-match__item -away" js-match-card-away-player=""><div class="tc-player"><div class="tc-player--wrap"><div class="tc-player--wrap--inner"><object><a class="tc-player__link" href="/players-rankings/flavio-cobolli-sr-competitor-399637/" title="Flavio Cobolli" data-id="sr:competitor:399637" data-slug="flavio-cobolli-sr-competitor-399637" aria-label="Flavio Cobolli"><div class="tc-player"><small class="tc-player__country">ITA</small> <span class="tc-player__name">F. <span>Cobolli</span></span></div></a></object></div></div></div><div class="tc-match__stats--wrap" js-match-card-score-container=""><div><small>&nbsp;</small></div></div></div></div><div class="tc-prediction" js-match-card-predictions=""><strong class="tc-prediction__title">Win Probability</strong> <span class="tc-prediction__name">F. <strong>Cobolli</strong></span><div class="tc-prediction__box"><span class="tc-prediction__value">65.2%</span></div></div></div></a></div>"""
 # Parse the HTML using BeautifulSoup
     soup1 = BeautifulSoup(html1, 'html.parser')
+    soup2 = BeautifulSoup(html2, 'html.parser')
 
 # Extract relevant information from the HTML
     tournament_title = soup1.find('h3', class_='tc-tournament-title').get_text(strip=True)
+    tournament_titletwo = soup2.find('h3', class_='tc-tournament-title').get_text(strip=True)
     match_time = soup1.find('strong', class_='-highlighted').get_text(strip=True)
+    match_timetwo = soup2.find('strong', class_='-highlighted').get_text(strip=True)
     match_status = soup1.find('span', class_='tc-match__status').get_text(strip=True)  # Extract match status
+    match_statustwo = soup2.find('span', class_='tc-match__status').get_text(strip=True) 
     player_home = soup1.find('span', class_='tc-player__name').get_text(strip=True)
+    playertwo_home = soup2.find('span', class_='tc-player__name').get_text(strip=True)
     player_away = soup1.find_all('span', class_='tc-player__name')[1].get_text(strip=True)
+    playertwo_away = soup2.find_all('span', class_='tc-player__name')[1].get_text(strip=True)
     country_home = soup1.find('small', class_='tc-player__country').get_text(strip=True)
+    countrytwo_home = soup2.find('small', class_='tc-player__country').get_text(strip=True)
     country_away = soup1.find_all('small', class_='tc-player__country')[1].get_text(strip=True)
+    countrytwo_away = soup2.find_all('small', class_='tc-player__country')[1].get_text(strip=True)
 
 # Format the player names with the desired separation and "[No seeding]" format
     player_home_formatted = f"{player_home} ({country_home})"
     player_away_formatted = f"{player_away} ({country_away})"
+
+    playertwo_home_formatted = f"{playertwo_home} ({countrytwo_home})"
+    playertwo_away_formatted = f"{playertwo_away} ({countrytwo_away})"
 
 # Directly display the match details in the Streamlit layout
     st.header("📅 Upcoming Match")
@@ -204,8 +215,16 @@ with tabs[1]:
     st.write(f"**Estimated Start Time**: {match_time} AM")
     st.write(f"**Home Player**: {player_home_formatted}")
     st.write(f"**Away Player**: {player_away_formatted}")
+    st.write("---------------------------------------")
 
-    
+    st.header("📅 Upcoming Match")
+    st.subheader(f"Tournament: {tournament_titletwo}")
+    st.write(f"**Match Status**: {match_statustwo}")
+    st.write(f"**Estimated Start Time**: {match_timetwo} AM")
+    st.write(f"**Home Player**: {playertwo_home_formatted}")
+    st.write(f"**Away Player**: {playertwo_away_formatted}")
+    st.write("---------------------------------------")
+   
 # === Tab: Large UTR Moves ===
 with tabs[2]:
     st.header("📈 Large UTR Moves")
