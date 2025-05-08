@@ -274,81 +274,72 @@ with tabs[2]:
     st.markdown("### UTR Movers")
     st.pyplot(fig)
 
+# --- ATP Rankings Tab ---
 with tabs[3]:
     st.title("ATP Rankings (Top 10)")
 
     # Function to scrape ATP rankings
-    def scrape_rankings():
-        url = "https://www.atptour.com/en/rankings/singles?rankRange=0-100"
+    def scrape_rankings(url="https://live-tennis.eu/en/atp-live-ranking"):
         headers = {
-            "User-Agent": "Mozilla/5.0"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
         }
 
-        response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.text, "html.parser")
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+            soup = BeautifulSoup(response.text, "html.parser")
 
-        rows = soup.select("table.mega-table tbody tr")
+            # Find the table containing the rankings.  Adjust the selector if needed.
+            table = soup.find("table", class_="table-main")  # Adjust class name if necessary
+            if not table:
+                st.error("Could not find the rankings table on the page.")
+                return []
 
-        rankings = []
-        count = 0
-        for row in rows:
-            try:
-                rank_td = row.find("td", class_="rank")
-                player_td = row.find("td", class_="player")
-                points_td = row.find("td", class_="points")
+            rows = table.find_all("tr")  # Get all table rows
 
-                # Skip if any piece is missing
-                if not (rank_td and player_td and points_td):
-                    continue
+            rankings = []
+            for row in rows[1:11]:  # Skip the header row and limit to top 10
+                cells = row.find_all("td")
+                if len(cells) >= 4:
+                    rank = cells[0].text.strip()
+                    name = cells[1].text.strip()
+                    country = cells[2].text.strip()  #  Get country code
+                    points = cells[3].text.strip().replace(",", "")
 
-                # Rank
-                rank = rank_td.get_text(strip=True)
+                    rankings.append((rank, name, country, points))
+                else:
+                    st.error(f"Skipping row: Not enough cells: {cells}")
 
-                # Name (full name)
-                name_tag = player_td.select_one("li.name a")
-                first_name = name_tag.get_text(strip=True).split()[0]  # Assuming first name is first part
-                last_name = name_tag.get_text(strip=True).split()[-1]  # Assuming last name is the last part
-                full_name = f"{first_name} {last_name}"
-
-                # Country code (optional)
-                flag_use = player_td.select_one("li.avatar use")
-                country_code = flag_use["href"].split("-")[-1].upper() if flag_use else "N/A"
-
-                # Points
-                points = points_td.get_text(strip=True).replace(",", "")
-
-                rankings.append((rank, full_name, country_code, points))
-                count += 1
-
-                if count == 10:
-                    break
-
-            except Exception as e:
-                st.error(f"Error parsing row: {e}")
-
-        return rankings
+            return rankings
+        except requests.exceptions.RequestException as e:
+            st.error(f"Error fetching or parsing data: {e}")
+            return []
+        except Exception as e:
+            st.error(f"An unexpected error occurred: {e}")
+            return []
 
     rankings = scrape_rankings()
 
     if rankings:
         # Display the rankings with spacing, but without boxes
         st.markdown("""
-            <div style="font-family: Arial, sans-serif;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-weight: bold; border-bottom: 1px solid #eee; margin-bottom: 5px;">
-                    <span style="width: 10%; text-align: left;">Rank</span>
-                    <span style="width: 40%; text-align: left;">Name</span>
-                    <span style="width: 25%; text-align: center;">Country</span>
-                    <span style="width: 25%; text-align: right;">Points</span>
+            <div style="font-family: Arial, sans-serif; background-color: #f8f9fa; padding: 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+                <h3 style="text-align: center; color: #007bff; margin-bottom: 25px;">Top 10 ATP Rankings</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; font-weight: bold; border-bottom: 2px solid #007bff; margin-bottom: 15px;">
+                    <span style="width: 10%; text-align: left; color: #555;">Rank</span>
+                    <span style="width: 40%; text-align: left; color: #555;">Name</span>
+                    <span style="width: 25%; text-align: center; color: #555;">Country</span>
+                    <span style="width: 25%; text-align: right; color: #555;">Points</span>
                 </div>
         """, unsafe_allow_html=True)
 
         for rank, name, country, points in rankings:
             st.markdown(f"""
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee;">
                     <span style="width: 10%; text-align: left;">{rank}</span>
-                    <span style="width: 40%; text-align: left;">{name}</span>
+                    <span style="width: 40%; text-align: left; font-weight: 500;">{name}</span>
                     <span style="width: 25%; text-align: center;">{country}</span>
-                    <span style="width: 25%; text-align: right;">{points}</span>
+                    <span style="width: 25%; text-align: right; font-weight: bold;">{points}</span>
                 </div>
             """, unsafe_allow_html=True)
 
@@ -356,8 +347,6 @@ with tabs[3]:
 
     else:
         st.write("Failed to retrieve rankings.")
-
-
 
 with tabs[4]:
     st.markdown("""
