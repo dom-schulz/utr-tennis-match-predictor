@@ -17,7 +17,7 @@ with st.sidebar:
 
 # st.button("Create Custom Player Profile (Coming Soon)", disabled=True)
 
-tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "ℹ️ About"])
+tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "🏆 ATP Rankings", "ℹ️ About"])
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Load Model & Data
@@ -271,8 +271,76 @@ with tabs[2]:
 
     st.markdown("### UTR Movers")
     st.pyplot(fig)
-
 with tabs[3]:
+    st.title("ATP Rankings (Top 10)")
+
+    # Function to scrape ATP rankings
+    def scrape_rankings():
+        url = "https://www.atptour.com/en/rankings/singles?rankRange=0-100"
+        headers = {
+            "User-Agent": "Mozilla/5.0"
+        }
+
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        rows = soup.select("table.mega-table tbody tr")
+
+        rankings = []
+        count = 0
+        for row in rows:
+            try:
+                rank_td = row.find("td", class_="rank")
+                player_td = row.find("td", class_="player")
+                points_td = row.find("td", class_="points")
+
+                # Skip if any piece is missing
+                if not (rank_td and player_td and points_td):
+                    continue
+
+                # Rank
+                rank = rank_td.get_text(strip=True)
+
+                # Name (full name)
+                name_tag = player_td.select_one("li.name a")
+                first_name = name_tag.get_text(strip=True).split()[0]  # Assuming first name is first part
+                last_name = name_tag.get_text(strip=True).split()[-1]  # Assuming last name is the last part
+                full_name = f"{first_name} {last_name}"
+
+                # Country code (optional)
+                flag_use = player_td.select_one("li.avatar use")
+                country_code = flag_use["href"].split("-")[-1].upper() if flag_use else "N/A"
+
+                # Points
+                points = points_td.get_text(strip=True).replace(",", "")
+
+                rankings.append((rank, full_name, country_code, points))
+                count += 1
+
+                if count == 10:
+                    break
+
+            except Exception as e:
+                st.error(f"Error parsing row: {e}")
+
+        return rankings
+
+    rankings = scrape_rankings()
+
+    if rankings:
+        # Display the rankings in a table format
+        st.write("### Top 10 ATP Rankings")
+        st.write(
+            "| Rank | Name | Country | Points |"
+            "\n|------|------|---------|--------|"
+        )
+        for rank, name, country, points in rankings:
+            st.write(f"| {rank} | {name} | {country} | {points} |")
+    else:
+        st.write("Failed to retrieve rankings.")
+
+
+with tabs[4]:
     st.markdown("""
     ### 📖 About This Project
 
