@@ -173,8 +173,8 @@ with tabs[1]:
     country_away = soup1.find_all('small', class_='tc-player__country')[1].get_text(strip=True)
 
 # Format the player names with the desired separation and "[No seeding]" format
-    player_home_formatted = f"{player_home} ({country_home}) [No seeding]"
-    player_away_formatted = f"{player_away} ({country_away}) [No seeding]"
+    player_home_formatted = f"{player_home} ({country_home})"
+    player_away_formatted = f"{player_away} ({country_away})"
 
 # Directly display the match details in the Streamlit layout
     st.header("📅 Upcoming Match")
