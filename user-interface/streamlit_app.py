@@ -7,6 +7,8 @@ from wordcloud import WordCloud
 import torch
 import numpy as np
 from bs4 import BeautifulSoup
+import requests
+
 
 st.title("Universal Tennis Predictions 🎾")
 
