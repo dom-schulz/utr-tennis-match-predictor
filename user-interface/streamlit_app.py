@@ -172,9 +172,9 @@ with tabs[1]:
     country_home = soup1.find('small', class_='tc-player__country').get_text(strip=True)
     country_away = soup1.find_all('small', class_='tc-player__country')[1].get_text(strip=True)
 
-# Format the player names with their countries
-    player_home_formatted = f"{country_home}   {player_home}"
-    player_away_formatted = f"{country_away}   {player_away}"
+# Format the player names with the desired separation and "[No seeding]" format
+    player_home_formatted = f"{player_home} ({country_home}) [No seeding]"
+    player_away_formatted = f"{player_away} ({country_away}) [No seeding]"
 
 # Directly display the match details in the Streamlit layout
     st.header("📅 Upcoming Match")
@@ -183,6 +183,7 @@ with tabs[1]:
     st.write(f"**Estimated Start Time**: {match_time} AM")
     st.write(f"**Home Player**: {player_home_formatted}")
     st.write(f"**Away Player**: {player_away_formatted}")
+
 
 # === Tab: Large UTR Moves ===
 with tabs[2]:
