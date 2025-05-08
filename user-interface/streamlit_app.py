@@ -275,7 +275,6 @@ with tabs[2]:
     st.pyplot(fig)
 
 # --- ATP Rankings Tab ---
-# --- ATP Rankings Tab ---
 with tabs[3]:
     st.title("ATP Rankings (Top 10)")
 
@@ -335,9 +334,9 @@ with tabs[3]:
     if rankings:
         # Display the rankings with spacing, but without boxes
         st.markdown("""
-            <div style="font-family: Arial, sans-serif; background-color: #f8f9fa; padding: 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); border: 1px solid #ddd;">
+            <div style="font-family: Arial, sans-serif;">
                 <h3 style="text-align: left; color: #212529; margin-bottom: 20px; font-size: 1.5rem; font-weight: bold;">Top 10 ATP Rankings</h3>
-                <div style="display: flex;  align-items: center; padding: 8px 0; border-bottom: 1px solid #ddd; background-color: #f8f9fa;">
+                <div style="display: flex;  align-items: center; padding: 8px 0; border-bottom: 1px solid #ddd;">
                     <span style="width: 10%; text-align: left; color: #212529; font-weight: bold;">Rank</span>
                     <span style="width: 40%; text-align: left; color: #212529; font-weight: bold;">Name</span>
                     <span style="width: 25%; text-align: center; color: #212529; font-weight: bold;">Country</span>
