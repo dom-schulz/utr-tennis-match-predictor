@@ -330,12 +330,34 @@ with tabs[3]:
     rankings = scrape_rankings()
 
     if rankings:
-        # Display the rankings in a properly formatted table
-        st.write("### Top 10 ATP Rankings")
-        st.markdown("| Rank | Name | Country | Points |")
-        st.markdown("|------|------|---------|--------|")
+        # Display the rankings in a box-like container
+        st.markdown("""
+            <div style="border: 2px solid #000; padding: 20px; border-radius: 10px;">
+                <h3>Top 10 ATP Rankings</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background-color: #f1f1f1;">
+                            <th style="padding: 8px; border: 1px solid #ddd;">Rank</th>
+                            <th style="padding: 8px; border: 1px solid #ddd;">Name</th>
+                            <th style="padding: 8px; border: 1px solid #ddd;">Country</th>
+                            <th style="padding: 8px; border: 1px solid #ddd;">Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        """, unsafe_allow_html=True)
+
         for rank, name, country, points in rankings:
-            st.markdown(f"| {rank} | {name} | {country} | {points} |")
+            st.markdown(f"""
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">{rank}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">{name}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">{country}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">{points}</td>
+                </tr>
+            """, unsafe_allow_html=True)
+
+        st.markdown("</tbody></table></div>", unsafe_allow_html=True)
+
     else:
         st.write("Failed to retrieve rankings.")
 
