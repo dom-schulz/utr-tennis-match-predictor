@@ -334,7 +334,6 @@ with tabs[3]:
         # Display the rankings with spacing, but without boxes
         st.markdown("""
             <div style="font-family: Arial, sans-serif;">
-                <h3 style="text-align: center;">Top 10 ATP Rankings</h3>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-weight: bold; border-bottom: 1px solid #eee; margin-bottom: 5px;">
                     <span style="width: 10%; text-align: left;">Rank</span>
                     <span style="width: 40%; text-align: left;">Name</span>
