@@ -273,6 +273,7 @@ with tabs[2]:
 
     st.markdown("### UTR Movers")
     st.pyplot(fig)
+
 with tabs[3]:
     st.title("ATP Rankings (Top 10)")
 
@@ -330,17 +331,17 @@ with tabs[3]:
     rankings = scrape_rankings()
 
     if rankings:
-        # Display the rankings in a box-like container
+        # Display the rankings in a styled box container with better spacing
         st.markdown("""
-            <div style="border: 2px solid #000; padding: 20px; border-radius: 10px;">
-                <h3>Top 10 ATP Rankings</h3>
-                <table style="width: 100%; border-collapse: collapse;">
+            <div style="border: 2px solid #000; padding: 20px; border-radius: 10px; font-family: Arial, sans-serif;">
+                <h3 style="text-align: center;">Top 10 ATP Rankings</h3>
+                <table style="width: 100%; border-collapse: collapse; text-align: center;">
                     <thead>
                         <tr style="background-color: #f1f1f1;">
-                            <th style="padding: 8px; border: 1px solid #ddd;">Rank</th>
-                            <th style="padding: 8px; border: 1px solid #ddd;">Name</th>
-                            <th style="padding: 8px; border: 1px solid #ddd;">Country</th>
-                            <th style="padding: 8px; border: 1px solid #ddd;">Points</th>
+                            <th style="padding: 12px 20px; border: 1px solid #ddd; font-weight: bold;">Rank</th>
+                            <th style="padding: 12px 20px; border: 1px solid #ddd; font-weight: bold;">Name</th>
+                            <th style="padding: 12px 20px; border: 1px solid #ddd; font-weight: bold;">Country</th>
+                            <th style="padding: 12px 20px; border: 1px solid #ddd; font-weight: bold;">Points</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -349,10 +350,10 @@ with tabs[3]:
         for rank, name, country, points in rankings:
             st.markdown(f"""
                 <tr>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{rank}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{name}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{country}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{points}</td>
+                    <td style="padding: 12px 20px; border: 1px solid #ddd;">{rank}</td>
+                    <td style="padding: 12px 20px; border: 1px solid #ddd;">{name}</td>
+                    <td style="padding: 12px 20px; border: 1px solid #ddd;">{country}</td>
+                    <td style="padding: 12px 20px; border: 1px solid #ddd;">{points}</td>
                 </tr>
             """, unsafe_allow_html=True)
 
@@ -360,6 +361,7 @@ with tabs[3]:
 
     else:
         st.write("Failed to retrieve rankings.")
+
 
 with tabs[4]:
     st.markdown("""
