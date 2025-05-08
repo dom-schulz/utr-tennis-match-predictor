@@ -16,7 +16,7 @@ with st.sidebar:
 
 # st.button("Create Custom Player Profile (Coming Soon)", disabled=True)
 
-tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "🎾 Player Metrics", "ℹ️ About"])
+tabs = st.tabs(["🔮 Predictions", "📅 Upcoming Matches", "📈 Large UTR Moves", "ℹ️ About"])
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Load Model & Data
