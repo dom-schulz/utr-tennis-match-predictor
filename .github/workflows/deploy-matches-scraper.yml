@@ -1,0 +1,48 @@
+name: Deploy Matches Scraper to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'automated-matches-scraper/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
+
+      - name: Copy shared secrets module
+        run: cp -r data/gcp_secrets data/automated-matches-scraper/
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/utr-repo/matches-scraper:latest -f data/automated-matches-scraper/Dockerfile data/automated-matches-scraper
+          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/utr-repo/matches-scraper:latest
+
+      - name: Deploy to Cloud Run Job
+        run: |
+          gcloud run jobs deploy matches-scraper-job \
+            --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/utr-repo/matches-scraper:latest \
+            --region ${{ secrets.GCP_REGION }} \
+            --project ${{ secrets.GCP_PROJECT_ID }} \
+            --execute-now

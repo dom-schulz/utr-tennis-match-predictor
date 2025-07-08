@@ -114,6 +114,44 @@ class TennisPredictor(nn.Module):
 
 The combination of `ReLU` in hidden layers and `Sigmoid` in the output layer allows the `TennisPredictor` model to effectively learn complex relationships while providing clear probabilistic predictions for match outcomes.
 
+## Deployment
+
+This project uses GitHub Actions for automated deployment to Google Cloud Run. Each service (matches-scraper, utr-scraper, model-train) has its own workflow file in the `.github/workflows` directory.
+
+### Automated Deployment
+
+The deployment process is triggered automatically on a push to the `main` branch if there are changes in the respective service directories. The workflows will build and push the Docker images to Google Artifact Registry and then deploy them as Cloud Run Jobs.
+
+### Secret Management
+
+The application uses a centralized secret management approach with [Google Cloud Secret Manager](https://cloud.google.com/secret-manager). A shared Python module in the `gcp_secrets` directory handles retrieving secrets, allowing for consistent access in both local development and the cloud environment.
+
+#### GCP Secret Manager Secrets
+
+You must create the following secrets in Google Cloud Secret Manager:
+
+- `UTR_EMAIL`: Your email address for the UTR website.
+- `UTR_PASSWORD`: Your password for the UTR website.
+
+#### GitHub Secrets
+
+To enable the GitHub Actions workflows, you need to configure the following secrets in your repository's settings (`Settings > Secrets and variables > Actions`):
+
+- `GCP_PROJECT_ID`: Your Google Cloud project ID.
+- `GCP_REGION`: The GCP region for your resources (e.g., `us-central1`).
+- `GCP_WORKLOAD_IDENTITY_PROVIDER`: The full identifier of your Workload Identity Provider.
+- `GCP_SERVICE_ACCOUNT`: The email address of the GCP service account with permissions to access Secret Manager, Artifact Registry, and Cloud Run.
+
+### Local Development
+
+To run the services locally, you need to authenticate with Google Cloud. Run the following command in your terminal:
+
+```bash
+gcloud auth application-default login
+```
+
+This command will open a browser window for you to log in to your Google account and grant the necessary permissions.
+
 #### Automated Model Training
 
 After each iteration of the automated scrapers, the model is retrained automatically. This allows the prediction system to:

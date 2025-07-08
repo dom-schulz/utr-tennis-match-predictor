@@ -1,0 +1,15 @@
+streamlit>=1.25.0
+openai>=1.1.0
+pydantic>=2.0.0
+pandas
+numpy<2
+scikit-learn
+st-files-connection>=0.1.0
+# Terminal coloring (for debugging)
+colorama>=0.4.6 
+matplotlib
+torch==2.2.0
+google-cloud-storage
+joblib
+wordcloud
+beautifulsoup4
