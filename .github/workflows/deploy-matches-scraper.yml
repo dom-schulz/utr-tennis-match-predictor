@@ -3,7 +3,7 @@ name: Deploy Matches Scraper to Cloud Run
 on:
   push:
     branches:
-      - main
+      - refactor
     paths:
       - 'automated-matches-scraper/**'
   workflow_dispatch:

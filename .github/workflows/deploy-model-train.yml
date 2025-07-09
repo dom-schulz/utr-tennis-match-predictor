@@ -3,7 +3,7 @@ name: Deploy Model Train to Cloud Run
 on:
   push:
     branches:
-      - main
+      - refactor
     paths:
       - 'automated-model-train/**'
   workflow_dispatch:

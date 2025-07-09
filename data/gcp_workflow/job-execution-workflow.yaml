@@ -1,0 +1,45 @@
+main:
+  params: [input]
+  steps:
+    - init:
+        assign:
+          - projectId: "cpsc324-project-452600"
+          - region: "us-central1"
+          - jobNames:
+              - "utr-scraper-job"
+              - "matches-scraper-job"
+              - "model-train-job"
+    - run_jobs_in_sequence:
+        for:
+          value: jobName
+          in: ${jobNames}
+          steps:
+            - run_job:
+                call: googleapis.run.v1.namespaces.jobs.run
+                args:
+                  name: "projects/${projectId}/locations/${region}/jobs/${jobName}"
+                result: execution
+            - log_execution:
+                call: sys.log
+                args:
+                  text: ${"Execution started for job " + jobName + ". Execution ID: " + execution.metadata.name}
+            - wait_for_completion:
+                call: googleapis.run.v1.namespaces.jobs.executions.get
+                args:
+                  name: ${execution.metadata.name}
+                result: execution_status
+                next: check_condition
+            - check_condition:
+                switch:
+                  - condition: ${execution_status.status.succeeded == 1}
+                    next: continue_loop
+                  - condition: ${execution_status.status.failed > 0}
+                    raise: ${"Job " + jobName + " failed"}
+                next: wait_for_completion
+            - continue_loop:
+                next: loop
+    - final_step:
+        call: sys.log
+        args:
+          text: "All jobs executed successfully."
+        next: end
