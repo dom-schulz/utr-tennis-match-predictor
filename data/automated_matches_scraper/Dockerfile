@@ -1,5 +1,5 @@
 # Use the official Python image as a base
-FROM python:3.8-buster
+FROM python:3.8-bullseye
 
 # Install Chrome and ChromeDriver dependencies
 RUN apt-get update && apt-get install -y \
