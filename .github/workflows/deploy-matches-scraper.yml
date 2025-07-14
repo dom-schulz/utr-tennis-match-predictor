@@ -45,5 +45,6 @@ jobs:
             --region ${{ secrets.GCP_REGION }} \
             --project ${{ secrets.GCP_PROJECT_ID }} \
             --service-account utr-jobs-runtime-sa@utr-predict.iam.gserviceaccount.com \
+            --task-timeout=6h \
             --execute-now
 
